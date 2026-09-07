@@ -365,7 +365,6 @@ class _PieceTray extends StatelessWidget {
                       data: piece,
                       maxSimultaneousDrags: enabled ? 1 : 0,
                       onDragEnd: (_) => onDragEnded(),
-                      onDraggableCanceled: (_, __) => onDragEnded(),
                       feedback: Material(
                         color: Colors.transparent,
                         child: Transform.translate(
