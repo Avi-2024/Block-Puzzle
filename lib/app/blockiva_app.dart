@@ -11,7 +11,7 @@ class BlockivaApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Blockiva',
-      theme: AppTheme.dark,
+      theme: AppTheme.bright,
       home: const HomeScreen(),
     );
   }
