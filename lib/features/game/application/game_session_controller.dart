@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/ads/ad_service.dart';
+import '../../../core/storage/game_session_repository.dart';
 import '../../../core/storage/game_stats_repository.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
+import '../domain/game_session_state.dart';
 import '../domain/game_snapshot.dart';
 import '../domain/move_result.dart';
 import '../domain/piece_generator.dart';
@@ -13,10 +15,12 @@ import '../domain/piece_generator.dart';
 class GameSessionController extends ChangeNotifier {
   GameSessionController({
     required GameStatsRepository statsRepository,
+    required GameSessionRepository sessionRepository,
     required AdService adService,
     GameEngine? engine,
     PieceGenerator? pieceGenerator,
   })  : _statsRepository = statsRepository,
+        _sessionRepository = sessionRepository,
         _adService = adService,
         engine = engine ?? GameEngine(),
         _pieceGenerator = pieceGenerator ?? PieceGenerator();
@@ -24,6 +28,7 @@ class GameSessionController extends ChangeNotifier {
   static const int maxRevivesPerGame = 1;
 
   final GameStatsRepository _statsRepository;
+  final GameSessionRepository _sessionRepository;
   final AdService _adService;
   final PieceGenerator _pieceGenerator;
   final GameEngine engine;
@@ -46,14 +51,29 @@ class GameSessionController extends ChangeNotifier {
 
   Future<void> initialize() async {
     if (initialized) return;
-    final List<int> values = await Future.wait(<Future<int>>[
-      _statsRepository.loadBestScore(),
-      _statsRepository.loadGamesPlayed(),
-    ]);
-    bestScore = values[0];
-    gamesPlayed = values[1];
-    tray = _newTray();
+
+    final Future<int> bestFuture = _statsRepository.loadBestScore();
+    final Future<int> gamesFuture = _statsRepository.loadGamesPlayed();
+    final Future<GameSessionState?> sessionFuture = _sessionRepository.load();
+
+    bestScore = await bestFuture;
+    gamesPlayed = await gamesFuture;
+    final GameSessionState? savedSession = await sessionFuture;
+
+    final bool restored = savedSession != null && _restoreSession(savedSession);
+    if (!restored) {
+      engine.reset();
+      tray = _newTray();
+      gameOver = false;
+      revivesUsed = 0;
+      _gameOverSnapshot = null;
+      if (savedSession != null) {
+        await _sessionRepository.clear();
+      }
+    }
+
     initialized = true;
+    await persistSession();
     notifyListeners();
   }
 
@@ -78,6 +98,7 @@ class GameSessionController extends ChangeNotifier {
     }
 
     _recomputeGameOver();
+    unawaited(persistSession());
     notifyListeners();
     return true;
   }
@@ -89,6 +110,7 @@ class GameSessionController extends ChangeNotifier {
     _gameOverSnapshot = null;
     gameOver = false;
     revivesUsed = 0;
+    unawaited(persistSession());
     notifyListeners();
   }
 
@@ -108,7 +130,49 @@ class GameSessionController extends ChangeNotifier {
     revivesUsed += 1;
     gameOver = false;
     _gameOverSnapshot = null;
+    await persistSession();
     notifyListeners();
+    return true;
+  }
+
+  Future<void> persistSession() async {
+    if (!initialized) return;
+    await _sessionRepository.save(
+      GameSessionState(
+        snapshot: engine.snapshot(),
+        tray: List<BlockPiece?>.from(tray),
+        gameOver: gameOver,
+        revivesUsed: revivesUsed,
+      ),
+    );
+  }
+
+  bool _restoreSession(GameSessionState state) {
+    if (state.revivesUsed > maxRevivesPerGame) return false;
+    if (state.tray.length != 3 ||
+        state.tray.every((BlockPiece? piece) => piece == null)) {
+      return false;
+    }
+
+    try {
+      engine.restore(state.snapshot);
+    } on ArgumentError {
+      return false;
+    }
+
+    tray = List<BlockPiece?>.from(state.tray);
+    revivesUsed = state.revivesUsed;
+
+    final List<BlockPiece> remaining = tray.whereType<BlockPiece>().toList();
+    final bool computedGameOver =
+        remaining.isNotEmpty && !engine.anyPieceCanBePlaced(remaining);
+    if (computedGameOver != state.gameOver) {
+      engine.reset();
+      return false;
+    }
+
+    gameOver = state.gameOver;
+    _gameOverSnapshot = gameOver ? engine.snapshot() : null;
     return true;
   }
 
