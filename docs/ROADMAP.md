@@ -18,7 +18,7 @@
 - [ ] haptics
 - [ ] sound manager + mute controls
 - [ ] pause/restart confirmation
-- [ ] session resume after app background/kill
+- [x] crash-safe active session resume
 
 ## M3 — Progression
 - [ ] coins
