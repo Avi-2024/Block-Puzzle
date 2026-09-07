@@ -12,13 +12,17 @@
 - [x] unit tests + CI
 
 ## M2 — Feel and retention
-- [ ] drag alignment refinement
-- [ ] line-clear animation
-- [ ] score pop animation
-- [ ] haptics
+- [x] drag alignment refinement
+- [x] line-clear visual feedback
+- [x] score/combo pop animation
+- [x] haptics
 - [ ] sound manager + mute controls
-- [ ] pause/restart confirmation
+- [x] restart confirmation
+- [ ] pause flow
 - [x] crash-safe active session resume
+- [x] bright colorful visual redesign
+- [x] glossy block treatment + placement preview
+- [x] polished game-over / rewarded-revive overlay
 
 ## M3 — Progression
 - [ ] coins
