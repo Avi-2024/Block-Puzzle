@@ -8,7 +8,7 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,16 +42,45 @@ jobs:
           set -o pipefail
           flutter test 2>&1 | tee test.log
 
+      - name: Generate Android platform scaffold
+        id: scaffold
+        if: steps.analyze.outcome == 'success' && steps.test.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter create --platforms=android --org com.blockiva --project-name blockiva . 2>&1 | tee scaffold.log
+
+      - name: Build debug APK
+        id: build
+        if: steps.scaffold.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build apk --debug 2>&1 | tee build.log
+
+      - name: Upload debug APK
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockiva-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+
       - name: Upload diagnostics
-        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure'
+        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.build.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-diagnostics
           path: |
             analyze.log
             test.log
+            scaffold.log
+            build.log
+          if-no-files-found: ignore
           retention-days: 7
 
       - name: Quality gate
-        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure'
+        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.build.outcome == 'failure'
         run: exit 1
