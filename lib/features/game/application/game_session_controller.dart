@@ -52,7 +52,7 @@ class GameSessionController extends ChangeNotifier {
     ]);
     bestScore = values[0];
     gamesPlayed = values[1];
-    tray = _pieceGenerator.nextTray(engine);
+    tray = _newTray();
     initialized = true;
     notifyListeners();
   }
@@ -69,7 +69,7 @@ class GameSessionController extends ChangeNotifier {
     if (trayIndex >= 0) tray[trayIndex] = null;
 
     if (tray.every((BlockPiece? piece) => piece == null)) {
-      tray = _pieceGenerator.nextTray(engine);
+      tray = _newTray();
     }
 
     if (engine.score > bestScore) {
@@ -84,7 +84,7 @@ class GameSessionController extends ChangeNotifier {
 
   void restart() {
     engine.reset();
-    tray = _pieceGenerator.nextTray(engine);
+    tray = _newTray();
     lastMove = null;
     _gameOverSnapshot = null;
     gameOver = false;
@@ -111,6 +111,9 @@ class GameSessionController extends ChangeNotifier {
     notifyListeners();
     return true;
   }
+
+  List<BlockPiece?> _newTray() =>
+      List<BlockPiece?>.from(_pieceGenerator.nextTray(engine));
 
   void _recomputeGameOver() {
     final List<BlockPiece> remaining = tray.whereType<BlockPiece>().toList();
