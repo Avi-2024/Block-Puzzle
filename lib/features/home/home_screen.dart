@@ -170,8 +170,8 @@ class _FeatureStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: const <Widget>[
+    return const Row(
+      children: <Widget>[
         Expanded(child: _FeatureChip(icon: Icons.swipe_rounded, label: 'DRAG')),
         SizedBox(width: 9),
         Expanded(child: _FeatureChip(icon: Icons.auto_awesome_rounded, label: 'CLEAR')),
