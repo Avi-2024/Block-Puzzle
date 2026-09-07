@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/ads/ad_service.dart';
 import '../../../core/storage/game_session_repository.dart';
 import '../../../core/storage/game_stats_repository.dart';
+import '../../../core/storage/shared_preferences_game_session_repository.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
 import '../domain/game_session_state.dart';
@@ -15,12 +16,13 @@ import '../domain/piece_generator.dart';
 class GameSessionController extends ChangeNotifier {
   GameSessionController({
     required GameStatsRepository statsRepository,
-    required GameSessionRepository sessionRepository,
+    GameSessionRepository? sessionRepository,
     required AdService adService,
     GameEngine? engine,
     PieceGenerator? pieceGenerator,
   })  : _statsRepository = statsRepository,
-        _sessionRepository = sessionRepository,
+        _sessionRepository =
+            sessionRepository ?? SharedPreferencesGameSessionRepository(),
         _adService = adService,
         engine = engine ?? GameEngine(),
         _pieceGenerator = pieceGenerator ?? PieceGenerator();
