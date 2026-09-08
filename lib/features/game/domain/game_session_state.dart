@@ -8,6 +8,8 @@ class GameSessionState {
     required this.tray,
     required this.gameOver,
     required this.revivesUsed,
+    this.runEndRecorded = false,
+    this.runCoinsAwarded = 0,
   });
 
   static const int schemaVersion = 1;
@@ -17,6 +19,8 @@ class GameSessionState {
   final List<BlockPiece?> tray;
   final bool gameOver;
   final int revivesUsed;
+  final bool runEndRecorded;
+  final int runCoinsAwarded;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'version': schemaVersion,
@@ -28,6 +32,8 @@ class GameSessionState {
         'tray': tray.map(_pieceToJson).toList(growable: false),
         'gameOver': gameOver,
         'revivesUsed': revivesUsed,
+        'runEndRecorded': runEndRecorded,
+        'runCoinsAwarded': runCoinsAwarded,
       };
 
   static GameSessionState? fromJson(Map<String, Object?> json) {
@@ -64,6 +70,16 @@ class GameSessionState {
       final Object? gameOverValue = json['gameOver'];
       if (gameOverValue is! bool) return null;
 
+      final Object? runEndRecordedValue = json['runEndRecorded'];
+      if (runEndRecordedValue != null && runEndRecordedValue is! bool) {
+        return null;
+      }
+      final Object? runCoinsAwardedValue = json['runCoinsAwarded'];
+      if (runCoinsAwardedValue != null &&
+          (runCoinsAwardedValue is! int || runCoinsAwardedValue < 0)) {
+        return null;
+      }
+
       return GameSessionState(
         snapshot: GameSnapshot(
           board: board,
@@ -75,6 +91,10 @@ class GameSessionState {
         tray: tray,
         gameOver: gameOverValue,
         revivesUsed: revivesUsed,
+        // Old v1 game-over saves had already incremented gamesPlayed. Treat
+        // them as settled so a migration cannot double-count the same run.
+        runEndRecorded: runEndRecordedValue as bool? ?? gameOverValue,
+        runCoinsAwarded: runCoinsAwardedValue as int? ?? 0,
       );
     } on FormatException {
       return null;
