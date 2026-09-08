@@ -83,12 +83,12 @@ class _GameAtmospherePainter extends CustomPainter {
     }
 
     final Paint vignettePaint = Paint()
-      ..shader = RadialGradient(
+      ..shader = const RadialGradient(
         colors: <Color>[
           Colors.transparent,
-          const Color(0x66030A22),
+          Color(0x66030A22),
         ],
-        stops: const <double>[.56, 1],
+        stops: <double>[.56, 1],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, vignettePaint);
   }
