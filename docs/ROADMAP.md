@@ -34,11 +34,14 @@
 - [x] 20+ fixed-orientation shape catalog
 - [x] weighted easy/medium/hard shape gating by run progress
 - [x] natural three-piece batches without forced playable-piece assistance
-- [ ] coins
-- [ ] achievements
-- [ ] themes
-- [ ] daily challenge seed
-- [ ] streak system
+- [x] offline coin economy + one-time run rewards
+- [x] run reward/game-count idempotency across rewarded revive
+- [x] daily claim reward with local-day streak logic
+- [x] achievement catalog + one-time coin rewards
+- [x] unlockable/selectable themes backed by earned coins
+- [x] compact rewards HUD + progression bottom sheet
+- [ ] deterministic daily challenge seed/mode
+- [ ] daily challenge completion reward
 
 ## M4 — Monetization
 - [x] Google Mobile Ads Flutter SDK test integration
