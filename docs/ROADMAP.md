@@ -2,7 +2,7 @@
 
 ## M1 — Core loop
 - [x] 8×8 board
-- [x] three-piece tray
+- [x] three-piece batch
 - [x] placement validation
 - [x] row/column clear
 - [x] score/combo
@@ -12,19 +12,28 @@
 - [x] unit tests + CI
 
 ## M2 — Feel and retention
-- [x] drag alignment refinement
-- [x] line-clear visual feedback
+- [x] deterministic finger-to-board drag projection
+- [x] visual piece / ghost / committed-cell alignment
+- [x] game-first navy board + HUD redesign
+- [x] large score + compact best-score hierarchy
+- [x] remove permanent combo card; transient combo feedback
+- [x] glossy 7-color block treatment
+- [x] floating three-piece tray
+- [x] exact row/column clear flash metadata
 - [x] score/combo pop animation
-- [x] haptics
-- [ ] sound manager + mute controls
-- [x] restart confirmation
-- [ ] pause flow
+- [x] placement / clear / revive haptics
+- [x] offline synthesized sound manager + persistent mute control
+- [x] game-style restart confirmation
+- [x] direct app-open → active/new puzzle flow
+- [x] portrait-first system chrome
 - [x] crash-safe active session resume
-- [x] bright colorful visual redesign
-- [x] glossy block treatment + placement preview
+- [x] seventh-color persistence migration coverage
 - [x] polished game-over / rewarded-revive overlay
 
-## M3 — Progression
+## M3 — Difficulty and progression
+- [x] 20+ fixed-orientation shape catalog
+- [x] weighted easy/medium/hard shape gating by run progress
+- [x] natural three-piece batches without forced playable-piece assistance
 - [ ] coins
 - [ ] achievements
 - [ ] themes
@@ -45,5 +54,5 @@
 - [ ] screenshots
 - [ ] privacy policy URL
 - [ ] release signing
-- [ ] AAB/APK smoke test
+- [ ] release AAB/APK smoke test
 - [ ] Indus Appstore listing package
