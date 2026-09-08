@@ -40,8 +40,12 @@
 - [x] achievement catalog + one-time coin rewards
 - [x] unlockable/selectable themes backed by earned coins
 - [x] compact rewards HUD + progression bottom sheet
-- [ ] deterministic daily challenge seed/mode
-- [ ] daily challenge completion reward
+- [x] deterministic daily challenge seed/mode
+- [x] restore-safe daily session with deterministic tray batches
+- [x] isolated daily progress that never overwrites endless run state
+- [x] 30-move daily target + success/failure flow
+- [x] once-per-day daily challenge completion reward
+- [x] shared endless/daily gameplay renderer
 
 ## M4 — Monetization
 - [x] Google Mobile Ads Flutter SDK test integration
