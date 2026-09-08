@@ -41,11 +41,16 @@
 - [ ] streak system
 
 ## M4 — Monetization
-- [ ] AdMob test integration
+- [x] Google Mobile Ads Flutter SDK test integration
+- [x] Google sample rewarded ad wired to debug revive flow
+- [x] UMP consent refresh + canRequestAds gate
+- [x] privacy-options entry point when required by UMP
+- [x] ad loading remains non-blocking; core game stays offline-playable
+- [ ] production AdMob App ID + rewarded unit ID
 - [ ] production rewarded revive
 - [ ] rewarded reroll / double coins
 - [ ] controlled interstitial frequency cap
-- [ ] consent/privacy flow as required by target regions
+- [ ] production Privacy & Messaging configuration in AdMob account
 - [ ] retention + ad funnel analytics
 
 ## M5 — Store readiness
