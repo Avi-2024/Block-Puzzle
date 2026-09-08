@@ -20,9 +20,9 @@ void main() {
 
   test('projects finger position to the same visual piece origin', () {
     // 40px cells. A 2x2 piece at row 3 / col 2 has center (120, 160).
-    // Finger sits 76px below that visual center.
+    // Finger sits at the V2 lift distance below that visual center.
     final BoardDropOrigin? origin = BoardDragProjector.project(
-      pointerInBoard: const Offset(120, 236),
+      pointerInBoard: const Offset(120, 244),
       boardSize: board,
       piece: square,
     );
@@ -30,9 +30,19 @@ void main() {
     expect(origin, const BoardDropOrigin(row: 3, col: 2));
   });
 
-  test('returns null when lifted piece would be outside the board', () {
+  test('keeps edge preview alive inside snap slack', () {
     final BoardDropOrigin? origin = BoardDragProjector.project(
       pointerInBoard: const Offset(10, 30),
+      boardSize: board,
+      piece: square,
+    );
+
+    expect(origin, const BoardDropOrigin(row: 0, col: 0));
+  });
+
+  test('returns null when lifted piece is far outside the board', () {
+    final BoardDropOrigin? origin = BoardDragProjector.project(
+      pointerInBoard: const Offset(-120, -80),
       boardSize: board,
       piece: square,
     );
