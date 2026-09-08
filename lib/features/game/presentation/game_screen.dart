@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/ads/ad_service.dart';
+import '../../../core/audio/game_audio_service.dart';
 import '../../../core/storage/shared_preferences_game_stats_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../application/game_session_controller.dart';
@@ -22,15 +23,22 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   final GlobalKey _boardGridKey = GlobalKey(debugLabel: 'blockiva-board-grid');
   late final GameSessionController _controller;
+  late final GameAudioService _audio;
 
   _PlacementPreview? _preview;
   String? _moveFeedback;
+  Set<int> _clearedRows = <int>{};
+  Set<int> _clearedCols = <int>{};
   var _feedbackToken = 0;
+  var _clearFlashToken = 0;
   var _boardPulse = false;
 
   @override
   void initState() {
     super.initState();
+    _audio = GameAudioService();
+    unawaited(_initializeAudio());
+
     _controller = GameSessionController(
       statsRepository: SharedPreferencesGameStatsRepository(),
       adService: kDebugMode
@@ -40,11 +48,17 @@ class _GameScreenState extends State<GameScreen> {
     _controller.initialize();
   }
 
+  Future<void> _initializeAudio() async {
+    await _audio.initialize();
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _controller
       ..removeListener(_refresh)
       ..dispose();
+    unawaited(_audio.dispose());
     super.dispose();
   }
 
@@ -119,6 +133,14 @@ class _GameScreenState extends State<GameScreen> {
     if (move != null && move.linesCleared > 0) {
       HapticFeedback.mediumImpact();
       unawaited(_pulseBoard());
+      unawaited(_flashClearedLines(move.clearedRows, move.clearedCols));
+
+      if (move.combo > 1) {
+        unawaited(_audio.playCombo());
+      } else {
+        unawaited(_audio.playClear());
+      }
+
       final String label = move.combo > 1
           ? 'COMBO x${move.combo}  +${move.scoreGained}'
           : move.linesCleared > 1
@@ -127,6 +149,7 @@ class _GameScreenState extends State<GameScreen> {
       unawaited(_showMoveFeedback(label));
     } else {
       HapticFeedback.selectionClick();
+      unawaited(_audio.playPlacement());
     }
 
     _setPreview(null);
@@ -135,8 +158,24 @@ class _GameScreenState extends State<GameScreen> {
   Future<void> _pulseBoard() async {
     if (!mounted) return;
     setState(() => _boardPulse = true);
-    await Future<void>.delayed(const Duration(milliseconds: 120));
+    await Future<void>.delayed(const Duration(milliseconds: 115));
     if (mounted) setState(() => _boardPulse = false);
+  }
+
+  Future<void> _flashClearedLines(List<int> rows, List<int> cols) async {
+    final int token = ++_clearFlashToken;
+    if (mounted) {
+      setState(() {
+        _clearedRows = rows.toSet();
+        _clearedCols = cols.toSet();
+      });
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    if (!mounted || token != _clearFlashToken) return;
+    setState(() {
+      _clearedRows = <int>{};
+      _clearedCols = <int>{};
+    });
   }
 
   Future<void> _showMoveFeedback(String label) async {
@@ -147,15 +186,26 @@ class _GameScreenState extends State<GameScreen> {
     setState(() => _moveFeedback = null);
   }
 
+  Future<void> _toggleSound() async {
+    await _audio.toggle();
+    if (!mounted) return;
+    setState(() {});
+    if (_audio.enabled) unawaited(_audio.playPlacement());
+  }
+
   void _restart() {
     setState(() {
       _preview = null;
       _moveFeedback = null;
+      _clearedRows = <int>{};
+      _clearedCols = <int>{};
       _boardPulse = false;
       _feedbackToken += 1;
+      _clearFlashToken += 1;
     });
     _controller.restart();
     HapticFeedback.selectionClick();
+    unawaited(_audio.playPlacement());
   }
 
   Future<void> _confirmRestart() async {
@@ -185,6 +235,7 @@ class _GameScreenState extends State<GameScreen> {
     if (!mounted || !revived) return;
 
     HapticFeedback.heavyImpact();
+    unawaited(_audio.playCombo());
     setState(() {
       _preview = null;
       _moveFeedback = 'CONTINUE!';
@@ -227,7 +278,11 @@ class _GameScreenState extends State<GameScreen> {
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
                 child: Column(
                   children: <Widget>[
-                    _GameHeader(onRestart: _confirmRestart),
+                    _GameHeader(
+                      soundEnabled: _audio.enabled,
+                      onToggleSound: _toggleSound,
+                      onRestart: _confirmRestart,
+                    ),
                     const SizedBox(height: 2),
                     _ScoreDisplay(
                       score: _controller.engine.score,
@@ -244,6 +299,8 @@ class _GameScreenState extends State<GameScreen> {
                             gridKey: _boardGridKey,
                             engine: _controller.engine,
                             preview: _preview,
+                            clearedRows: _clearedRows,
+                            clearedCols: _clearedCols,
                           ),
                         ),
                       ),
@@ -333,8 +390,14 @@ class _PlacementPreview {
 }
 
 class _GameHeader extends StatelessWidget {
-  const _GameHeader({required this.onRestart});
+  const _GameHeader({
+    required this.soundEnabled,
+    required this.onToggleSound,
+    required this.onRestart,
+  });
 
+  final bool soundEnabled;
+  final VoidCallback onToggleSound;
   final VoidCallback onRestart;
 
   @override
@@ -344,9 +407,11 @@ class _GameHeader extends StatelessWidget {
       child: Row(
         children: <Widget>[
           _HudButton(
-            icon: Icons.arrow_back_rounded,
-            tooltip: 'Back',
-            onPressed: () => Navigator.of(context).maybePop(),
+            icon: soundEnabled
+                ? Icons.volume_up_rounded
+                : Icons.volume_off_rounded,
+            tooltip: soundEnabled ? 'Mute sound' : 'Enable sound',
+            onPressed: onToggleSound,
           ),
           const Expanded(
             child: Text(
@@ -467,11 +532,15 @@ class _Board extends StatelessWidget {
     required this.gridKey,
     required this.engine,
     required this.preview,
+    required this.clearedRows,
+    required this.clearedCols,
   });
 
   final GlobalKey gridKey;
   final GameEngine engine;
   final _PlacementPreview? preview;
+  final Set<int> clearedRows;
+  final Set<int> clearedCols;
 
   @override
   Widget build(BuildContext context) {
@@ -509,12 +578,15 @@ class _Board extends StatelessWidget {
               final bool previewed = preview?.contains(row, col) ?? false;
               final bool validPreview = previewed && (preview?.valid ?? false);
               final bool invalidPreview = previewed && !(preview?.valid ?? true);
+              final bool clearFlash =
+                  clearedRows.contains(row) || clearedCols.contains(col);
 
               return _BoardCell(
                 paletteIndex: paletteIndex,
                 previewPaletteIndex:
                     validPreview ? preview!.piece.paletteIndex : null,
                 invalidPreview: invalidPreview,
+                clearFlash: clearFlash,
               );
             },
           ),
@@ -529,11 +601,13 @@ class _BoardCell extends StatelessWidget {
     required this.paletteIndex,
     required this.previewPaletteIndex,
     required this.invalidPreview,
+    required this.clearFlash,
   });
 
   final int? paletteIndex;
   final int? previewPaletteIndex;
   final bool invalidPreview;
+  final bool clearFlash;
 
   @override
   Widget build(BuildContext context) {
@@ -542,38 +616,46 @@ class _BoardCell extends StatelessWidget {
     final int? visualPalette = paletteIndex ?? previewPaletteIndex;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 80),
+      duration: const Duration(milliseconds: 90),
       curve: Curves.easeOut,
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: visualPalette == null
-            ? invalidPreview
-                ? const Color(0xFF6B3854)
-                : AppTheme.gameCell
-            : null,
-        gradient: visualPalette == null
+        color: clearFlash
+            ? const Color(0xFFFFEB8A)
+            : visualPalette == null
+                ? invalidPreview
+                    ? const Color(0xFF6B3854)
+                    : AppTheme.gameCell
+                : null,
+        gradient: clearFlash || visualPalette == null
             ? null
             : AppTheme.pieceGradient(visualPalette),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: invalidPreview
-              ? const Color(0xFFFF8B9B)
-              : occupied || validPreview
-                  ? Colors.white.withValues(alpha: .20)
-                  : AppTheme.gameCellEdge.withValues(alpha: .65),
-          width: invalidPreview ? 1.2 : .7,
+          color: clearFlash
+              ? Colors.white
+              : invalidPreview
+                  ? const Color(0xFFFF8B9B)
+                  : occupied || validPreview
+                      ? Colors.white.withValues(alpha: .20)
+                      : AppTheme.gameCellEdge.withValues(alpha: .65),
+          width: clearFlash || invalidPreview ? 1.2 : .7,
         ),
-        boxShadow: occupied
-            ? <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: .18),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
+        boxShadow: clearFlash
+            ? const <BoxShadow>[
+                BoxShadow(color: Color(0x99FFF0A8), blurRadius: 10),
               ]
-            : null,
+            : occupied
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: .18),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
       ),
-      child: visualPalette == null
+      child: visualPalette == null || clearFlash
           ? null
           : Opacity(
               opacity: validPreview && !occupied ? .58 : 1,
