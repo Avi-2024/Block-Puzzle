@@ -102,6 +102,65 @@ jobs:
           manifest.write_text(text)
           PY
 
+      - name: Generate Blockiva launcher icons
+        shell: bash
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+
+          size = 512
+          image = Image.new('RGBA', (size, size), '#0D2858')
+          draw = ImageDraw.Draw(image)
+
+          # Soft layered background.
+          for inset, color in [(20, '#12366F'), (44, '#163F7A')]:
+              draw.rounded_rectangle(
+                  (inset, inset, size-inset, size-inset),
+                  radius=92-inset//4,
+                  fill=color,
+              )
+
+          # Original Blockiva block-B mark.
+          colors = ['#2F9CFF', '#27D4F2', '#42D879', '#FFD447', '#FF9F3F', '#9B6BFF']
+          cells = [
+              (0,0,0),(0,1,0),(0,2,1),(0,3,1),(0,4,2),
+              (1,0,0),(1,2,3),(1,4,2),
+              (2,0,5),(2,1,5),(2,2,4),(2,3,4),
+              (3,0,5),(3,4,4),
+              (4,0,0),(4,1,1),(4,2,1),(4,3,2),
+          ]
+          cell = 58
+          gap = 8
+          mark_w = 5*cell + 4*gap
+          mark_h = 5*cell + 4*gap
+          ox = (size-mark_w)//2
+          oy = (size-mark_h)//2
+          for col,row,ci in cells:
+              x = ox + col*(cell+gap)
+              y = oy + row*(cell+gap)
+              base = colors[ci]
+              draw.rounded_rectangle((x,y,x+cell,y+cell), radius=13, fill=base)
+              draw.rounded_rectangle((x+6,y+5,x+cell-6,y+17), radius=6, fill='#FFFFFF55')
+
+          store = Path('store/indus')
+          store.mkdir(parents=True, exist_ok=True)
+          image.convert('RGB').save(store/'blockiva-icon-512.png', optimize=True)
+
+          targets = {
+              'mipmap-mdpi': 48,
+              'mipmap-hdpi': 72,
+              'mipmap-xhdpi': 96,
+              'mipmap-xxhdpi': 144,
+              'mipmap-xxxhdpi': 192,
+          }
+          for folder, px in targets.items():
+              target = Path('android/app/src/main/res')/folder
+              target.mkdir(parents=True, exist_ok=True)
+              image.resize((px,px), Image.Resampling.LANCZOS).save(target/'ic_launcher.png')
+          PY
+
       - name: Restore release keystore
         shell: bash
         run: |
@@ -182,4 +241,5 @@ jobs:
             release-sha256.txt
             PRIVACY_POLICY.md
             store/indus/LISTING.md
+            store/indus/blockiva-icon-512.png
           retention-days: 30
