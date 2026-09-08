@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/widgets.dart';
 
 import '../domain/block_piece.dart';
@@ -24,7 +26,19 @@ class BoardDropOrigin {
 /// same vertical offset used by the draggable feedback, so the visual piece
 /// and the logical board ghost stay locked together.
 abstract final class BoardDragProjector {
-  static const double fingerLift = 76;
+  /// Keeps the lifted piece visible above the player's finger on Android.
+  ///
+  /// The value is intentionally a little higher than the original prototype
+  /// offset, because the V2 tiles are glossier/chunkier and need more breathing
+  /// room while dragging.
+  static const double fingerLift = 84;
+
+  /// Allows the piece to snap at the board edge before disappearing.
+  ///
+  /// Without this tolerance, preview can flicker when the user approaches the
+  /// first/last row or column. The final origin is still clamped to the board,
+  /// so this improves feel without weakening placement validation.
+  static const double edgeSnapSlackCells = .72;
 
   static BoardDropOrigin? project({
     required Offset pointerInBoard,
@@ -38,13 +52,21 @@ abstract final class BoardDragProjector {
     final Offset pieceCenter = pointerInBoard.translate(0, -lift);
     final double pieceWidth = piece.width * cellSize;
     final double pieceHeight = piece.height * cellSize;
+    final double pieceLeft = pieceCenter.dx - (pieceWidth / 2);
+    final double pieceTop = pieceCenter.dy - (pieceHeight / 2);
+    final double slack = cellSize * edgeSnapSlackCells;
 
-    final int col = ((pieceCenter.dx - (pieceWidth / 2)) / cellSize).round();
-    final int row = ((pieceCenter.dy - (pieceHeight / 2)) / cellSize).round();
+    if (pieceLeft > boardSize.width + slack ||
+        pieceTop > boardSize.height + slack ||
+        pieceLeft + pieceWidth < -slack ||
+        pieceTop + pieceHeight < -slack) {
+      return null;
+    }
 
     final int maxCol = GameEngine.size - piece.width;
     final int maxRow = GameEngine.size - piece.height;
-    if (row < 0 || col < 0 || row > maxRow || col > maxCol) return null;
+    final int col = math.max(0, math.min(maxCol, (pieceLeft / cellSize).round()));
+    final int row = math.max(0, math.min(maxRow, (pieceTop / cellSize).round()));
 
     return BoardDropOrigin(row: row, col: col);
   }
