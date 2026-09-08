@@ -1,0 +1,103 @@
+name: Capture Store Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/capture_store_screenshots.yml'
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate Android scaffold
+        run: flutter create --platforms=android --org com.blockiva --project-name blockiva .
+
+      - name: Configure screenshot build
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          text = text.replace('android:label="blockiva"', 'android:label="Blockiva"')
+          activity_marker = 'android:name=".MainActivity"'
+          if 'android:screenOrientation=' not in text:
+              text = text.replace(
+                  activity_marker,
+                  activity_marker + '\n            android:screenOrientation="portrait"',
+                  1,
+              )
+          if 'android.permission.INTERNET' not in text:
+              root_end = text.index('>') + 1
+              text = text[:root_end] + '\n    <uses-permission android:name="android.permission.INTERNET" />' + text[root_end:]
+          if 'com.google.android.gms.ads.APPLICATION_ID' not in text:
+              application_start = text.index('<application')
+              application_open_end = text.index('>', application_start) + 1
+              metadata = (
+                  '\n        <meta-data\n'
+                  '            android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+                  '            android:value="ca-app-pub-3940256099942544~3347511713" />'
+              )
+              text = text[:application_open_end] + metadata + text[application_open_end:]
+          manifest.write_text(text)
+          PY
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Capture screenshots on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            mkdir -p store/indus/screenshots
+            adb install -r build/app/outputs/flutter-apk/app-debug.apk
+            adb shell am force-stop com.blockiva.blockiva
+            adb shell am start -n com.blockiva.blockiva/.MainActivity
+            sleep 6
+            adb exec-out screencap -p > store/indus/screenshots/01-gameplay.png
+
+            # Exercise the real drag interaction. Coordinates target the three
+            # tray zones and lower board cells on the Pixel 6 emulator profile.
+            adb shell input swipe 220 1850 270 1320 650 || true
+            sleep 1
+            adb shell input swipe 540 1850 540 1160 650 || true
+            sleep 1
+            adb shell input swipe 850 1850 790 1280 650 || true
+            sleep 2
+            adb exec-out screencap -p > store/indus/screenshots/02-mid-game.png
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockiva-indus-screenshots
+          path: store/indus/screenshots/*.png
+          retention-days: 30
