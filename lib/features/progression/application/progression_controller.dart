@@ -27,6 +27,7 @@ class ProgressionController extends ChangeNotifier {
 
   int get coins => state.coins;
   int get dailyStreak => state.dailyStreak;
+  int get dailyChallengesCompleted => state.dailyChallengesCompleted;
   GameThemeDefinition get selectedTheme =>
       GameThemeCatalog.byId(state.selectedThemeId);
 
@@ -133,6 +134,26 @@ class ProgressionController extends ChangeNotifier {
     return reward;
   }
 
+  bool isDailyChallengeCompleted(String dayKey) =>
+      initialized && state.lastDailyChallengeCompletedDay == dayKey;
+
+  int completeDailyChallenge({
+    required String dayKey,
+    required int rewardCoins,
+  }) {
+    if (!initialized || rewardCoins < 0 || isDailyChallengeCompleted(dayKey)) {
+      return 0;
+    }
+
+    state = state.copyWith(
+      coins: state.coins + rewardCoins,
+      lastDailyChallengeCompletedDay: dayKey,
+      dailyChallengesCompleted: state.dailyChallengesCompleted + 1,
+    );
+    _commit();
+    return rewardCoins;
+  }
+
   bool unlockAndSelectTheme(String themeId) {
     if (!initialized) return false;
     final GameThemeDefinition theme = GameThemeCatalog.byId(themeId);
@@ -200,6 +221,8 @@ class ProgressionController extends ChangeNotifier {
       a.coins == b.coins &&
       a.dailyStreak == b.dailyStreak &&
       a.lastDailyClaimDay == b.lastDailyClaimDay &&
+      a.lastDailyChallengeCompletedDay == b.lastDailyChallengeCompletedDay &&
+      a.dailyChallengesCompleted == b.dailyChallengesCompleted &&
       a.totalLinesCleared == b.totalLinesCleared &&
       a.highestCombo == b.highestCombo &&
       setEquals(a.unlockedAchievementIds, b.unlockedAchievementIds) &&
