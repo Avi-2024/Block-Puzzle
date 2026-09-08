@@ -1,7 +1,7 @@
 name: blockiva
 description: Blockiva - an original offline-first block puzzle game.
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: '>=3.9.0 <4.0.0'
@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  audioplayers: ^6.8.1
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.5
 
