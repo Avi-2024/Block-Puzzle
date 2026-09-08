@@ -6,6 +6,7 @@ import '../../../core/ads/ad_service.dart';
 import '../../../core/storage/game_session_repository.dart';
 import '../../../core/storage/game_stats_repository.dart';
 import '../../../core/storage/shared_preferences_game_session_repository.dart';
+import '../../progression/application/progression_controller.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
 import '../domain/game_session_state.dart';
@@ -18,12 +19,14 @@ class GameSessionController extends ChangeNotifier {
     required GameStatsRepository statsRepository,
     GameSessionRepository? sessionRepository,
     required AdService adService,
+    ProgressionController? progressionController,
     GameEngine? engine,
     PieceGenerator? pieceGenerator,
   })  : _statsRepository = statsRepository,
         _sessionRepository =
             sessionRepository ?? SharedPreferencesGameSessionRepository(),
         _adService = adService,
+        _progressionController = progressionController,
         engine = engine ?? GameEngine(),
         _pieceGenerator = pieceGenerator ?? PieceGenerator();
 
@@ -32,6 +35,7 @@ class GameSessionController extends ChangeNotifier {
   final GameStatsRepository _statsRepository;
   final GameSessionRepository _sessionRepository;
   final AdService _adService;
+  final ProgressionController? _progressionController;
   final PieceGenerator _pieceGenerator;
   final GameEngine engine;
 
@@ -43,6 +47,8 @@ class GameSessionController extends ChangeNotifier {
   var gamesPlayed = 0;
   var gameOver = false;
   var revivesUsed = 0;
+  var runEndRecorded = false;
+  var runCoinsAwarded = 0;
   var initialized = false;
 
   bool get rewardedReviveReady =>
@@ -68,6 +74,8 @@ class GameSessionController extends ChangeNotifier {
       tray = _newTray();
       gameOver = false;
       revivesUsed = 0;
+      runEndRecorded = false;
+      runCoinsAwarded = 0;
       _gameOverSnapshot = null;
       if (savedSession != null) {
         await _sessionRepository.clear();
@@ -99,6 +107,14 @@ class GameSessionController extends ChangeNotifier {
       unawaited(_statsRepository.saveBestScore(bestScore));
     }
 
+    _progressionController?.recordMove(
+      linesCleared: result.linesCleared,
+      combo: result.combo,
+      currentScore: engine.score,
+      bestScore: bestScore,
+      gamesPlayed: gamesPlayed,
+    );
+
     _recomputeGameOver();
     unawaited(persistSession());
     notifyListeners();
@@ -112,6 +128,8 @@ class GameSessionController extends ChangeNotifier {
     _gameOverSnapshot = null;
     gameOver = false;
     revivesUsed = 0;
+    runEndRecorded = false;
+    runCoinsAwarded = 0;
     unawaited(persistSession());
     notifyListeners();
   }
@@ -145,6 +163,8 @@ class GameSessionController extends ChangeNotifier {
         tray: List<BlockPiece?>.from(tray),
         gameOver: gameOver,
         revivesUsed: revivesUsed,
+        runEndRecorded: runEndRecorded,
+        runCoinsAwarded: runCoinsAwarded,
       ),
     );
   }
@@ -164,6 +184,8 @@ class GameSessionController extends ChangeNotifier {
 
     tray = List<BlockPiece?>.from(state.tray);
     revivesUsed = state.revivesUsed;
+    runEndRecorded = state.runEndRecorded;
+    runCoinsAwarded = state.runCoinsAwarded;
 
     final List<BlockPiece> remaining = tray.whereType<BlockPiece>().toList();
     final bool computedGameOver =
@@ -185,10 +207,22 @@ class GameSessionController extends ChangeNotifier {
     final List<BlockPiece> remaining = tray.whereType<BlockPiece>().toList();
     final bool nextGameOver =
         remaining.isNotEmpty && !engine.anyPieceCanBePlaced(remaining);
+
     if (!gameOver && nextGameOver) {
       _gameOverSnapshot = engine.snapshot();
-      gamesPlayed += 1;
-      unawaited(_statsRepository.saveGamesPlayed(gamesPlayed));
+
+      if (!runEndRecorded) {
+        runEndRecorded = true;
+        gamesPlayed += 1;
+        unawaited(_statsRepository.saveGamesPlayed(gamesPlayed));
+        runCoinsAwarded = _progressionController?.recordRunCompleted(
+              score: engine.score,
+              linesCleared: engine.totalLinesCleared,
+              bestScore: bestScore,
+              gamesPlayed: gamesPlayed,
+            ) ??
+            0;
+      }
     }
     gameOver = nextGameOver;
   }
