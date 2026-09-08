@@ -9,50 +9,50 @@ abstract final class AppTheme {
   static const Color surfaceMuted = Color(0xFFE3E8F3);
   static const Color ink = Color(0xFF24263A);
   static const Color inkMuted = Color(0xFF7D829B);
-  static const Color primary = Color(0xFF6C63FF);
-  static const Color accent = Color(0xFFFF5FA2);
-  static const Color success = Color(0xFF37E79A);
-  static const Color warning = Color(0xFFFFD257);
-  static const Color danger = Color(0xFFFF5470);
+  static const Color primary = Color(0xFF766BFF);
+  static const Color accent = Color(0xFFFF64B7);
+  static const Color success = Color(0xFF38F2A0);
+  static const Color warning = Color(0xFFFFDA64);
+  static const Color danger = Color(0xFFFF5573);
 
   // Game canvas V2 tokens. These values are tuned for a casual puzzle game:
   // saturated enough to feel premium, but dark enough to keep the 8×8 board
   // and score readable on low/mid brightness Android devices.
-  static const Color gameBackgroundTop = Color(0xFF253AA1);
-  static const Color gameBackgroundMid = Color(0xFF122D72);
-  static const Color gameBackgroundBottom = Color(0xFF071A3D);
-  static const Color gameBoard = Color(0xFF0B2A68);
-  static const Color gameBoardDeep = Color(0xFF061A47);
-  static const Color gameCell = Color(0xFF173F7F);
-  static const Color gameCellEdge = Color(0xFF2B64B4);
+  static const Color gameBackgroundTop = Color(0xFF2B41B2);
+  static const Color gameBackgroundMid = Color(0xFF15317B);
+  static const Color gameBackgroundBottom = Color(0xFF061737);
+  static const Color gameBoard = Color(0xFF0A2C70);
+  static const Color gameBoardDeep = Color(0xFF041741);
+  static const Color gameCell = Color(0xFF123A7D);
+  static const Color gameCellEdge = Color(0xFF3674C8);
   static const Color gameText = Color(0xFFF9FCFF);
-  static const Color gameTextMuted = Color(0xFFBBD1F7);
+  static const Color gameTextMuted = Color(0xFFC2D8FF);
   static const Color gameOverlay = Color(0xD9071430);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF35A5FF), // electric blue
-    Color(0xFF22E3FF), // cyan
-    Color(0xFF43F17E), // neon green
-    Color(0xFFFFD84F), // gold
-    Color(0xFFFFA33D), // orange
-    Color(0xFFFF4F6B), // coral/red
-    Color(0xFFA66BFF), // purple
+    Color(0xFF39A9FF), // electric blue
+    Color(0xFF20E9FF), // cyan
+    Color(0xFF42F889), // neon green
+    Color(0xFFFFDD58), // gold
+    Color(0xFFFFA142), // orange
+    Color(0xFFFF4F73), // coral/red
+    Color(0xFFAA70FF), // purple
   ];
 
   static LinearGradient pieceGradient(int index) {
     final Color base = piecePalette[index % piecePalette.length];
     return LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .42)!,
-        Color.lerp(base, Colors.white, .08)!,
+        Color.lerp(base, Colors.white, .54)!,
+        Color.lerp(base, Colors.white, .14)!,
         base,
-        Color.lerp(base, Colors.black, .26)!,
+        Color.lerp(base, Colors.black, .32)!,
       ],
-      stops: const <double>[0, .18, .62, 1],
+      stops: const <double>[0, .20, .64, 1],
     );
   }
 
