@@ -3,6 +3,8 @@ class ProgressionState {
     required this.coins,
     required this.dailyStreak,
     required this.lastDailyClaimDay,
+    required this.lastDailyChallengeCompletedDay,
+    required this.dailyChallengesCompleted,
     required this.totalLinesCleared,
     required this.highestCombo,
     required this.unlockedAchievementIds,
@@ -14,6 +16,8 @@ class ProgressionState {
         coins: 0,
         dailyStreak: 0,
         lastDailyClaimDay: null,
+        lastDailyChallengeCompletedDay: null,
+        dailyChallengesCompleted: 0,
         totalLinesCleared: 0,
         highestCombo: 0,
         unlockedAchievementIds: <String>{},
@@ -24,6 +28,8 @@ class ProgressionState {
   final int coins;
   final int dailyStreak;
   final String? lastDailyClaimDay;
+  final String? lastDailyChallengeCompletedDay;
+  final int dailyChallengesCompleted;
   final int totalLinesCleared;
   final int highestCombo;
   final Set<String> unlockedAchievementIds;
@@ -35,6 +41,9 @@ class ProgressionState {
     int? dailyStreak,
     String? lastDailyClaimDay,
     bool clearLastDailyClaimDay = false,
+    String? lastDailyChallengeCompletedDay,
+    bool clearLastDailyChallengeCompletedDay = false,
+    int? dailyChallengesCompleted,
     int? totalLinesCleared,
     int? highestCombo,
     Set<String>? unlockedAchievementIds,
@@ -47,6 +56,12 @@ class ProgressionState {
       lastDailyClaimDay: clearLastDailyClaimDay
           ? null
           : lastDailyClaimDay ?? this.lastDailyClaimDay,
+      lastDailyChallengeCompletedDay: clearLastDailyChallengeCompletedDay
+          ? null
+          : lastDailyChallengeCompletedDay ??
+              this.lastDailyChallengeCompletedDay,
+      dailyChallengesCompleted:
+          dailyChallengesCompleted ?? this.dailyChallengesCompleted,
       totalLinesCleared: totalLinesCleared ?? this.totalLinesCleared,
       highestCombo: highestCombo ?? this.highestCombo,
       unlockedAchievementIds:
@@ -60,6 +75,8 @@ class ProgressionState {
         'coins': coins,
         'dailyStreak': dailyStreak,
         'lastDailyClaimDay': lastDailyClaimDay,
+        'lastDailyChallengeCompletedDay': lastDailyChallengeCompletedDay,
+        'dailyChallengesCompleted': dailyChallengesCompleted,
         'totalLinesCleared': totalLinesCleared,
         'highestCombo': highestCombo,
         'unlockedAchievementIds': unlockedAchievementIds.toList()..sort(),
@@ -73,8 +90,12 @@ class ProgressionState {
       final int dailyStreak = _nonNegativeInt(json['dailyStreak']);
       final int totalLinesCleared = _nonNegativeInt(json['totalLinesCleared']);
       final int highestCombo = _nonNegativeInt(json['highestCombo']);
+      final int dailyChallengesCompleted =
+          _optionalNonNegativeInt(json['dailyChallengesCompleted']);
       final Object? lastClaim = json['lastDailyClaimDay'];
+      final Object? lastChallenge = json['lastDailyChallengeCompletedDay'];
       if (lastClaim != null && lastClaim is! String) return null;
+      if (lastChallenge != null && lastChallenge is! String) return null;
 
       final Set<String> achievements = _stringSet(json['unlockedAchievementIds']);
       final Set<String> themes = _stringSet(json['unlockedThemeIds']);
@@ -90,6 +111,8 @@ class ProgressionState {
         coins: coins,
         dailyStreak: dailyStreak,
         lastDailyClaimDay: lastClaim as String?,
+        lastDailyChallengeCompletedDay: lastChallenge as String?,
+        dailyChallengesCompleted: dailyChallengesCompleted,
         totalLinesCleared: totalLinesCleared,
         highestCombo: highestCombo,
         unlockedAchievementIds: achievements,
@@ -106,6 +129,11 @@ class ProgressionState {
       throw const FormatException('Expected non-negative integer.');
     }
     return value;
+  }
+
+  static int _optionalNonNegativeInt(Object? value) {
+    if (value == null) return 0;
+    return _nonNegativeInt(value);
   }
 
   static Set<String> _stringSet(Object? value) {
