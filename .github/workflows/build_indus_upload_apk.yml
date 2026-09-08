@@ -1,0 +1,203 @@
+name: Build Indus Upload APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build_indus_upload_apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BLOCKIVA_KEYSTORE_PATH: ${{ github.workspace }}/android/app/blockiva-release.jks
+      RECIPIENT_PUBLIC_KEY_B64: 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQm9qQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FZOEFNSUlCaWdLQ0FZRUE1a1NHd1h1SHJjME45TUVyMFBEUApobEhHRHdDWkhmbEx6cUNCRmtpQ0lybElUU1MrZGgvY1Q2NmxpSytCT1VxblRTNkZjd1ZVMHlTa3BtNERncktXCldxL0F4Z3E4ZVZkS292ckFGRmJaVFNnb0ZoSUpJSFdPa001V0FiSTIzdU1DNDdzUStKUmpiQi9FdHcxY0prdEUKR3gyUWNzT0JDaFM4TkQvM2ZSNG1ubnJQNlRwQ1R0ZmQwTzdpbE1oVExIU1JEMks3ZU9yQjBEdFJldnBEdWt3bwo2THhkSENSc0pOeGV0K2dIL2MrUGFXTmxPRU5FektYQy9WazA5Nk9BbzVUQjBiNE5pR0tqOXdIVWFDZlFURXVRCnFyVHYyRy9kYTNta2UzaHBhTnJLbTBYT2FBTjREcVd3akMrbkFMVmQzM0t1Wmt6MVhBQUZna0NrNmxYMjBXd0cKNDVNYWoxTjdhWGF2TFlNNDEwUllvYjExNkgzdFpLYi8wR3RRNmhBNzdWZ0NyVFpncitPNThZbXpaeHVlY2h2VgpuL2paOGV2cWV5SjM4Wk9wYldIRG5ZR3MzbHVOS3dvRGluME0vZExzY2krcmNvVzFEenc5SUMrNVNtM0tYSFFsCnlOb3hDTGtiZ1BXODZ1YXUvUVlwZWpjRTBaSXJSVzh3dmNzRkZwa1laeHVkQWdNQkFBRT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=='
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Generate Android scaffold
+        run: flutter create --platforms=android --org com.blockiva --project-name blockiva .
+
+      - name: Configure store manifest and branding
+        shell: bash
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          text = text.replace('android:label="blockiva"', 'android:label="Blockiva"')
+          activity_marker = 'android:name=".MainActivity"'
+          if 'android:screenOrientation=' not in text:
+              text = text.replace(
+                  activity_marker,
+                  activity_marker + '\n            android:screenOrientation="portrait"',
+                  1,
+              )
+          if 'android.permission.INTERNET' not in text:
+              root_end = text.index('>') + 1
+              text = text[:root_end] + '\n    <uses-permission android:name="android.permission.INTERNET" />' + text[root_end:]
+          if 'com.google.android.gms.ads.APPLICATION_ID' not in text:
+              app_start = text.index('<application')
+              app_end = text.index('>', app_start) + 1
+              metadata = (
+                  '\n        <meta-data\n'
+                  '            android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+                  '            android:value="ca-app-pub-3940256099942544~3347511713" />'
+              )
+              text = text[:app_end] + metadata + text[app_end:]
+          manifest.write_text(text)
+
+          size = 512
+          image = Image.new('RGBA', (size, size), '#0D2858')
+          draw = ImageDraw.Draw(image)
+          for inset, color in [(20, '#12366F'), (44, '#163F7A')]:
+              draw.rounded_rectangle((inset, inset, size-inset, size-inset), radius=92-inset//4, fill=color)
+          colors = ['#2F9CFF', '#27D4F2', '#42D879', '#FFD447', '#FF9F3F', '#9B6BFF']
+          cells = [
+              (0,0,0),(0,1,0),(0,2,1),(0,3,1),(0,4,2),
+              (1,0,0),(1,2,3),(1,4,2),
+              (2,0,5),(2,1,5),(2,2,4),(2,3,4),
+              (3,0,5),(3,4,4),
+              (4,0,0),(4,1,1),(4,2,1),(4,3,2),
+          ]
+          cell = 58
+          gap = 8
+          mark_w = 5*cell + 4*gap
+          mark_h = 5*cell + 4*gap
+          ox = (size-mark_w)//2
+          oy = (size-mark_h)//2
+          for col,row,ci in cells:
+              x = ox + col*(cell+gap)
+              y = oy + row*(cell+gap)
+              draw.rounded_rectangle((x,y,x+cell,y+cell), radius=13, fill=colors[ci])
+              draw.rounded_rectangle((x+6,y+5,x+cell-6,y+17), radius=6, fill='#FFFFFF55')
+          targets = {
+              'mipmap-mdpi':48,
+              'mipmap-hdpi':72,
+              'mipmap-xhdpi':96,
+              'mipmap-xxhdpi':144,
+              'mipmap-xxxhdpi':192,
+          }
+          for folder, px in targets.items():
+              target = Path('android/app/src/main/res')/folder
+              target.mkdir(parents=True, exist_ok=True)
+              image.resize((px,px), Image.Resampling.LANCZOS).save(target/'ic_launcher.png')
+          PY
+
+      - name: Generate stable first-release signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          KS_PASS=$(openssl rand -hex 24)
+          echo "::add-mask::$KS_PASS"
+          echo "BLOCKIVA_KEYSTORE_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+          echo "BLOCKIVA_KEY_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+          echo "BLOCKIVA_KEY_ALIAS=blockiva" >> "$GITHUB_ENV"
+          keytool -genkeypair -v \
+            -keystore "$BLOCKIVA_KEYSTORE_PATH" \
+            -storepass "$KS_PASS" \
+            -keypass "$KS_PASS" \
+            -alias blockiva \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Blockiva, OU=Mobile, O=Nexilo Labs, L=Indore, ST=Madhya Pradesh, C=IN"
+
+      - name: Configure release signing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          gradle = Path('android/app/build.gradle.kts')
+          text = gradle.read_text()
+          signing = '''
+              signingConfigs {
+                  create("release") {
+                      storeFile = file(System.getenv("BLOCKIVA_KEYSTORE_PATH"))
+                      storePassword = System.getenv("BLOCKIVA_KEYSTORE_PASSWORD")
+                      keyAlias = System.getenv("BLOCKIVA_KEY_ALIAS")
+                      keyPassword = System.getenv("BLOCKIVA_KEY_PASSWORD")
+                  }
+              }
+          '''
+          if 'create("release")' not in text:
+              text = text.replace('    buildTypes {', signing + '\n    buildTypes {', 1)
+          text = text.replace(
+              'signingConfig = signingConfigs.getByName("debug")',
+              'signingConfig = signingConfigs.getByName("release")',
+              1,
+          )
+          gradle.write_text(text)
+          PY
+
+      - name: Build signed release APK
+        run: flutter build apk --release
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          "$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Prepare encrypted signing-key backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p secure-output
+          cat > secure-output/signing-credentials.txt <<EOF
+          alias=blockiva
+          storePassword=$BLOCKIVA_KEYSTORE_PASSWORD
+          keyPassword=$BLOCKIVA_KEY_PASSWORD
+          package=com.blockiva.blockiva
+          version=1.0.0+4
+          EOF
+          cp "$BLOCKIVA_KEYSTORE_PATH" secure-output/blockiva-release.jks
+          tar -C secure-output -czf signing-bundle.tar.gz blockiva-release.jks signing-credentials.txt
+
+          echo "$RECIPIENT_PUBLIC_KEY_B64" | base64 --decode > recipient-public.pem
+          openssl rand -out aes.key 32
+          openssl rand -out aes.iv 16
+          AES_KEY_HEX=$(xxd -p -c 256 aes.key)
+          AES_IV_HEX=$(xxd -p -c 256 aes.iv)
+          openssl enc -aes-256-cbc -K "$AES_KEY_HEX" -iv "$AES_IV_HEX" \
+            -in signing-bundle.tar.gz -out signing-bundle.enc
+          openssl pkeyutl -encrypt -pubin -inkey recipient-public.pem \
+            -in aes.key -out aes.key.enc \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256
+          cp aes.iv aes.iv.bin
+          sha256sum build/app/outputs/flutter-apk/app-release.apk > release-sha256.txt
+          rm -rf secure-output signing-bundle.tar.gz aes.key recipient-public.pem
+
+      - name: Upload Indus APK and encrypted signing backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockiva-indus-upload-apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            release-sha256.txt
+            signing-bundle.enc
+            aes.key.enc
+            aes.iv.bin
+          retention-days: 7
