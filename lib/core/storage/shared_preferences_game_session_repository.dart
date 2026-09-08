@@ -6,12 +6,16 @@ import '../../features/game/domain/game_session_state.dart';
 import 'game_session_repository.dart';
 
 class SharedPreferencesGameSessionRepository implements GameSessionRepository {
-  SharedPreferencesGameSessionRepository({SharedPreferencesAsync? preferences})
-      : _preferences = preferences ?? SharedPreferencesAsync();
+  SharedPreferencesGameSessionRepository({
+    SharedPreferencesAsync? preferences,
+    String key = defaultKey,
+  })  : _preferences = preferences ?? SharedPreferencesAsync(),
+        _key = key;
 
-  static const String _key = 'game.active_session.v1';
+  static const String defaultKey = 'game.active_session.v1';
 
   final SharedPreferencesAsync _preferences;
+  final String _key;
 
   @override
   Future<GameSessionState?> load() async {
