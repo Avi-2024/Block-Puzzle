@@ -7,10 +7,8 @@ abstract interface class AdService {
   Future<bool> showRewarded(RewardPlacement placement);
 }
 
-/// Safe fallback when ads are unavailable, consent is not granted, or
-/// production ad identifiers have not been configured.
-class NoOpAdService implements AdService {
-  const NoOpAdService();
+class _DisabledAdService implements AdService {
+  const _DisabledAdService();
 
   @override
   bool get rewardedReady => false;
@@ -19,9 +17,27 @@ class NoOpAdService implements AdService {
   Future<bool> showRewarded(RewardPlacement placement) async => false;
 }
 
-/// Stable facade used by the game controller in both debug and release builds.
-/// The concrete Google Mobile Ads provider is attached asynchronously after
-/// consent and SDK initialization complete.
+/// Compatibility service used by existing GameScreen wiring.
+///
+/// In debug/test builds it remains a true no-op. In release builds it delegates
+/// to the runtime provider once consent and Google Mobile Ads initialization
+/// complete. This keeps current UI/controller code stable while allowing live
+/// rewarded ads in signed production builds.
+class NoOpAdService implements AdService {
+  const NoOpAdService();
+
+  @override
+  bool get rewardedReady =>
+      kReleaseMode ? AdRuntime.instance.rewardedReady : false;
+
+  @override
+  Future<bool> showRewarded(RewardPlacement placement) {
+    if (!kReleaseMode) return Future<bool>.value(false);
+    return AdRuntime.instance.showRewarded(placement);
+  }
+}
+
+/// Stable runtime facade used by new callers in both debug and release builds.
 class RuntimeRewardAdService implements AdService {
   const RuntimeRewardAdService();
 
@@ -38,7 +54,7 @@ class AdRuntime extends ChangeNotifier implements AdService {
 
   static final AdRuntime instance = AdRuntime._();
 
-  AdService _delegate = const NoOpAdService();
+  AdService _delegate = const _DisabledAdService();
   VoidCallback? _delegateDisposer;
 
   @override
@@ -63,13 +79,12 @@ class AdRuntime extends ChangeNotifier implements AdService {
   void reset() {
     _delegateDisposer?.call();
     _delegateDisposer = null;
-    _delegate = const NoOpAdService();
+    _delegate = const _DisabledAdService();
     notifyListeners();
   }
 }
 
-/// Backward-compatible aliases retained for older tests/callers while the
-/// runtime naming is migrated across the codebase.
+/// Backward-compatible aliases retained while callers migrate to runtime names.
 class DebugRewardAdService extends RuntimeRewardAdService {
   const DebugRewardAdService();
 }
