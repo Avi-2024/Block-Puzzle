@@ -1,0 +1,185 @@
+name: Indus Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      BLOCKIVA_KEYSTORE_PATH: ${{ github.workspace }}/android/app/blockiva-release.jks
+      BLOCKIVA_KEYSTORE_PASSWORD: ${{ secrets.BLOCKIVA_KEYSTORE_PASSWORD }}
+      BLOCKIVA_KEY_ALIAS: ${{ secrets.BLOCKIVA_KEY_ALIAS }}
+      BLOCKIVA_KEY_PASSWORD: ${{ secrets.BLOCKIVA_KEY_PASSWORD }}
+      ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
+      ADMOB_ANDROID_REWARDED_ID: ${{ secrets.ADMOB_ANDROID_REWARDED_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Validate release secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in \
+            BLOCKIVA_KEYSTORE_PASSWORD \
+            BLOCKIVA_KEY_ALIAS \
+            BLOCKIVA_KEY_PASSWORD \
+            ADMOB_ANDROID_APP_ID \
+            ADMOB_ANDROID_REWARDED_ID; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing required release secret: $key"
+              exit 1
+            fi
+          done
+          if [ -z "${{ secrets.BLOCKIVA_KEYSTORE_BASE64 }}" ]; then
+            echo "Missing required release secret: BLOCKIVA_KEYSTORE_BASE64"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Generate Android platform scaffold
+        run: flutter create --platforms=android --org com.blockiva --project-name blockiva .
+
+      - name: Configure Android release manifest
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          text = text.replace('android:label="blockiva"', 'android:label="Blockiva"')
+
+          activity_marker = 'android:name=".MainActivity"'
+          if 'android:screenOrientation=' not in text:
+              text = text.replace(
+                  activity_marker,
+                  activity_marker + '\n            android:screenOrientation="portrait"',
+                  1,
+              )
+
+          if 'android.permission.INTERNET' not in text:
+              root_end = text.index('>') + 1
+              text = (
+                  text[:root_end]
+                  + '\n    <uses-permission android:name="android.permission.INTERNET" />'
+                  + text[root_end:]
+              )
+
+          app_id = os.environ['ADMOB_ANDROID_APP_ID'].strip()
+          if not app_id.startswith('ca-app-pub-') or '~' not in app_id:
+              raise SystemExit('ADMOB_ANDROID_APP_ID does not look like an AdMob App ID')
+
+          application_start = text.index('<application')
+          application_open_end = text.index('>', application_start) + 1
+          metadata = (
+              '\n        <meta-data\n'
+              '            android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+              f'            android:value="{app_id}" />'
+          )
+          if 'com.google.android.gms.ads.APPLICATION_ID' not in text:
+              text = text[:application_open_end] + metadata + text[application_open_end:]
+
+          manifest.write_text(text)
+          PY
+
+      - name: Restore release keystore
+        shell: bash
+        run: |
+          echo '${{ secrets.BLOCKIVA_KEYSTORE_BASE64 }}' | base64 --decode > "$BLOCKIVA_KEYSTORE_PATH"
+          test -s "$BLOCKIVA_KEYSTORE_PATH"
+
+      - name: Configure release signing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle = Path('android/app/build.gradle.kts')
+          text = gradle.read_text()
+
+          signing = '''
+              signingConfigs {
+                  create("release") {
+                      storeFile = file(System.getenv("BLOCKIVA_KEYSTORE_PATH"))
+                      storePassword = System.getenv("BLOCKIVA_KEYSTORE_PASSWORD")
+                      keyAlias = System.getenv("BLOCKIVA_KEY_ALIAS")
+                      keyPassword = System.getenv("BLOCKIVA_KEY_PASSWORD")
+                  }
+              }
+          '''
+
+          if 'create("release")' not in text:
+              text = text.replace('    buildTypes {', signing + '\n    buildTypes {', 1)
+
+          debug_signing = 'signingConfig = signingConfigs.getByName("debug")'
+          if debug_signing in text:
+              text = text.replace(
+                  debug_signing,
+                  'signingConfig = signingConfigs.getByName("release")',
+                  1,
+              )
+          elif 'release {' in text and 'getByName("release")' not in text:
+              text = text.replace(
+                  'release {',
+                  'release {\n            signingConfig = signingConfigs.getByName("release")',
+                  1,
+              )
+
+          gradle.write_text(text)
+          PY
+
+      - name: Validate rewarded ad ID
+        shell: bash
+        run: |
+          case "$ADMOB_ANDROID_REWARDED_ID" in
+            ca-app-pub-*/*) ;;
+            *) echo 'ADMOB_ANDROID_REWARDED_ID does not look like a rewarded unit ID'; exit 1 ;;
+          esac
+
+      - name: Build signed release APK
+        run: >-
+          flutter build apk --release
+          --dart-define=ADMOB_ANDROID_REWARDED_ID="$ADMOB_ANDROID_REWARDED_ID"
+
+      - name: Build signed release AAB
+        run: >-
+          flutter build appbundle --release
+          --dart-define=ADMOB_ANDROID_REWARDED_ID="$ADMOB_ANDROID_REWARDED_ID"
+
+      - name: Hash release artifacts
+        shell: bash
+        run: |
+          sha256sum build/app/outputs/flutter-apk/app-release.apk | tee release-sha256.txt
+          sha256sum build/app/outputs/bundle/release/app-release.aab | tee -a release-sha256.txt
+
+      - name: Upload Indus release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockiva-indus-release
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+            release-sha256.txt
+            PRIVACY_POLICY.md
+            store/indus/LISTING.md
+          retention-days: 30
