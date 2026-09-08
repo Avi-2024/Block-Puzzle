@@ -38,7 +38,21 @@ class _ProgressionBootstrapState extends State<ProgressionBootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_runtime.initialized) return widget.child;
+    if (!_runtime.initialized) {
+      return const ColoredBox(
+        color: AppTheme.gameBackgroundBottom,
+        child: Center(
+          child: SizedBox(
+            width: 26,
+            height: 26,
+            child: CircularProgressIndicator(
+              color: AppTheme.gameText,
+              strokeWidth: 2.6,
+            ),
+          ),
+        ),
+      );
+    }
 
     final GameThemeDefinition theme = _runtime.controller.selectedTheme;
     final Widget themedGame = theme.id == 'classic'
