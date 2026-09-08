@@ -7,11 +7,15 @@ import 'progression_repository.dart';
 
 class SharedPreferencesProgressionRepository implements ProgressionRepository {
   SharedPreferencesProgressionRepository({SharedPreferencesAsync? preferences})
-      : _preferences = preferences ?? SharedPreferencesAsync();
+      : _providedPreferences = preferences;
 
   static const String _key = 'progression.state.v1';
 
-  final SharedPreferencesAsync _preferences;
+  final SharedPreferencesAsync? _providedPreferences;
+  SharedPreferencesAsync? _lazyPreferences;
+
+  SharedPreferencesAsync get _preferences =>
+      _providedPreferences ?? (_lazyPreferences ??= SharedPreferencesAsync());
 
   @override
   Future<ProgressionState?> load() async {
