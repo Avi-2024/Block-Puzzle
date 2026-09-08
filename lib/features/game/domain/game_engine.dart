@@ -64,7 +64,8 @@ class GameEngine {
       _board[originRow + cell.row][originCol + cell.col] = piece.paletteIndex;
     }
 
-    final int linesCleared = _clearCompletedLines();
+    final _ClearResult clearResult = _clearCompletedLines();
+    final int linesCleared = clearResult.count;
     combo = linesCleared > 0 ? combo + 1 : 0;
     totalLinesCleared += linesCleared;
     movesPlayed += 1;
@@ -81,6 +82,8 @@ class GameEngine {
       accepted: true,
       placedCells: piece.cells.length,
       linesCleared: linesCleared,
+      clearedRows: clearResult.rows,
+      clearedCols: clearResult.cols,
       scoreGained: gained,
       combo: combo,
     );
@@ -141,7 +144,7 @@ class GameEngine {
     return anyPieceCanBePlaced(pieces);
   }
 
-  int _clearCompletedLines() {
+  _ClearResult _clearCompletedLines() {
     final List<int> fullRows = <int>[];
     final List<int> fullCols = <int>[];
 
@@ -165,7 +168,8 @@ class GameEngine {
     for (final int col in fullCols) {
       _clearCol(col);
     }
-    return fullRows.length + fullCols.length;
+
+    return _ClearResult(rows: fullRows, cols: fullCols);
   }
 
   int _rowOccupancy(int row) =>
@@ -190,4 +194,13 @@ class GameEngine {
       _board[row][col] = null;
     }
   }
+}
+
+class _ClearResult {
+  const _ClearResult({required this.rows, required this.cols});
+
+  final List<int> rows;
+  final List<int> cols;
+
+  int get count => rows.length + cols.length;
 }
