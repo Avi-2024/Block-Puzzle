@@ -11,6 +11,7 @@ class GameSessionState {
   });
 
   static const int schemaVersion = 1;
+  static const int maxPaletteIndex = 6;
 
   final GameSnapshot snapshot;
   final List<BlockPiece?> tray;
@@ -44,7 +45,7 @@ class GameSessionState {
         }
         return rawRow.map((Object? value) {
           if (value == null) return null;
-          if (value is! int || value < 0 || value > 5) {
+          if (value is! int || value < 0 || value > maxPaletteIndex) {
             throw const FormatException('Invalid board cell.');
           }
           return value;
@@ -105,7 +106,9 @@ class GameSessionState {
     if (id is! String || id.isEmpty || shapeId is! String || shapeId.isEmpty) {
       throw const FormatException('Invalid piece identity.');
     }
-    if (paletteIndex is! int || paletteIndex < 0 || paletteIndex > 5) {
+    if (paletteIndex is! int ||
+        paletteIndex < 0 ||
+        paletteIndex > maxPaletteIndex) {
       throw const FormatException('Invalid piece palette.');
     }
     if (rawCells is! List<Object?> || rawCells.isEmpty) {
