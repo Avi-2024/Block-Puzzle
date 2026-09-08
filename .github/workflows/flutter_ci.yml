@@ -51,9 +51,32 @@ jobs:
           set -o pipefail
           flutter create --platforms=android --org com.blockiva --project-name blockiva . 2>&1 | tee scaffold.log
 
+      - name: Apply Android game branding
+        id: branding
+        if: steps.scaffold.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          text = text.replace('android:label="blockiva"', 'android:label="Blockiva"')
+          marker = 'android:name=".MainActivity"'
+          if 'android:screenOrientation=' not in text:
+              text = text.replace(
+                  marker,
+                  marker + '\n            android:screenOrientation="portrait"',
+                  1,
+              )
+          manifest.write_text(text)
+          PY
+          grep -nE 'android:label|screenOrientation' android/app/src/main/AndroidManifest.xml
+
       - name: Build debug APK
         id: build
-        if: steps.scaffold.outcome == 'success'
+        if: steps.branding.outcome == 'success'
         continue-on-error: true
         shell: bash
         run: |
@@ -69,7 +92,7 @@ jobs:
           retention-days: 7
 
       - name: Upload diagnostics
-        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.build.outcome == 'failure'
+        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.branding.outcome == 'failure' || steps.build.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-diagnostics
@@ -82,5 +105,5 @@ jobs:
           retention-days: 7
 
       - name: Quality gate
-        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.build.outcome == 'failure'
+        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.branding.outcome == 'failure' || steps.build.outcome == 'failure'
         run: exit 1
