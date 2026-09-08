@@ -7,7 +7,8 @@ abstract interface class AdService {
   Future<bool> showRewarded(RewardPlacement placement);
 }
 
-/// Release-safe fallback used until production AdMob IDs are configured.
+/// Safe fallback when ads are unavailable, consent is not granted, or
+/// production ad identifiers have not been configured.
 class NoOpAdService implements AdService {
   const NoOpAdService();
 
@@ -18,23 +19,24 @@ class NoOpAdService implements AdService {
   Future<bool> showRewarded(RewardPlacement placement) async => false;
 }
 
-/// Debug builds use this stable facade so the game controller can be created
-/// immediately while consent + the Google test-ad provider initialize later.
-class DebugRewardAdService implements AdService {
-  const DebugRewardAdService();
+/// Stable facade used by the game controller in both debug and release builds.
+/// The concrete Google Mobile Ads provider is attached asynchronously after
+/// consent and SDK initialization complete.
+class RuntimeRewardAdService implements AdService {
+  const RuntimeRewardAdService();
 
   @override
-  bool get rewardedReady => DebugAdRuntime.instance.rewardedReady;
+  bool get rewardedReady => AdRuntime.instance.rewardedReady;
 
   @override
   Future<bool> showRewarded(RewardPlacement placement) =>
-      DebugAdRuntime.instance.showRewarded(placement);
+      AdRuntime.instance.showRewarded(placement);
 }
 
-class DebugAdRuntime extends ChangeNotifier implements AdService {
-  DebugAdRuntime._();
+class AdRuntime extends ChangeNotifier implements AdService {
+  AdRuntime._();
 
-  static final DebugAdRuntime instance = DebugAdRuntime._();
+  static final AdRuntime instance = AdRuntime._();
 
   AdService _delegate = const NoOpAdService();
   VoidCallback? _delegateDisposer;
@@ -64,4 +66,14 @@ class DebugAdRuntime extends ChangeNotifier implements AdService {
     _delegate = const NoOpAdService();
     notifyListeners();
   }
+}
+
+/// Backward-compatible aliases retained for older tests/callers while the
+/// runtime naming is migrated across the codebase.
+class DebugRewardAdService extends RuntimeRewardAdService {
+  const DebugRewardAdService();
+}
+
+abstract final class DebugAdRuntime {
+  static AdRuntime get instance => AdRuntime.instance;
 }
