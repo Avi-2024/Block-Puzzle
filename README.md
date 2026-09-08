@@ -26,14 +26,18 @@ Blockiva is an original, offline-first 8×8 block puzzle built with Flutter. The
 - game-over snapshot recovery
 - custom game-over / continue overlay
 - portrait-first Android game shell
-- debug-only fake reward service for safe testing
-- production release defaults to no live ads until AdMob is configured
+- Google Mobile Ads Flutter SDK integrated for debug testing
+- official Google rewarded **test ad** wired to revive
+- UMP consent refresh + `canRequestAds()` gate
+- privacy-options entry point when UMP requires it
+- production release remains ad-disabled until real AdMob IDs are configured
 
 ## Stack
 
 - Flutter / Dart
 - `shared_preferences` for local stats, settings and active-session state
 - `audioplayers` for low-latency playback of locally synthesized SFX
+- `google_mobile_ads` for consent-gated test monetization and future production ads
 - no backend
 - no login
 - no paid API for core gameplay
@@ -54,7 +58,7 @@ flutter analyze
 flutter test
 ```
 
-GitHub Actions additionally generates an Android scaffold, applies Blockiva test-build branding, compiles a debug APK and uploads it as a workflow artifact.
+GitHub Actions additionally generates an Android scaffold, applies Blockiva branding and Google sample test-ad configuration, compiles a debug APK and uploads it as a workflow artifact.
 
 ## Architecture
 
@@ -62,4 +66,4 @@ See `docs/ARCHITECTURE.md`, `docs/MONETIZATION.md` and `docs/ROADMAP.md`.
 
 ## Product direction
 
-The next product gates are production AdMob rewarded revive, privacy/consent, coins/daily retention systems, final icon/splash assets, release signing and Indus Appstore packaging. Core gameplay remains offline and backend-free.
+The next product gates are Blockiva's production AdMob credentials, coins/daily retention systems, controlled interstitial policy, final icon/splash assets, privacy policy, release signing and Indus Appstore packaging. Core gameplay remains offline and backend-free.
