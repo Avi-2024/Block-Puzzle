@@ -82,17 +82,20 @@ jobs:
             adb install -r build/app/outputs/flutter-apk/app-debug.apk
             adb shell am force-stop com.blockiva.blockiva
             adb shell am start -n com.blockiva.blockiva/.MainActivity
-            sleep 6
+
+            # The first Flutter frame can take longer on a cold CI emulator.
+            # Wait until the actual game canvas is visible before capturing.
+            sleep 13
             adb exec-out screencap -p > store/indus/screenshots/01-gameplay.png
 
-            # Exercise the real drag interaction. Coordinates target the three
-            # tray zones and lower board cells on the Pixel 6 emulator profile.
-            adb shell input swipe 220 1850 270 1320 650 || true
-            sleep 1
-            adb shell input swipe 540 1850 540 1160 650 || true
-            sleep 1
-            adb shell input swipe 850 1850 790 1280 650 || true
+            # Pixel 6 emulator screenshot size is 1080x2400. Tray pieces sit
+            # around y=2050; drag them into lower/middle board cells.
+            adb shell input swipe 200 2055 200 1450 850 || true
             sleep 2
+            adb shell input swipe 535 2055 535 1330 850 || true
+            sleep 2
+            adb shell input swipe 870 2055 780 1510 850 || true
+            sleep 3
             adb exec-out screencap -p > store/indus/screenshots/02-mid-game.png
 
       - name: Upload screenshots
