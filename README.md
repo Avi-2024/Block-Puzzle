@@ -2,28 +2,38 @@
 
 **Place. Clear. Combo.**
 
-Blockiva is an original, offline-first 8×8 block puzzle built with Flutter. The project is designed as a real product rather than a throwaway clone: game rules are isolated from UI, local progression is persistence-ready, rewarded revive is abstracted behind an ad service, and automated tests protect the core board logic.
+Blockiva is an original, offline-first 8×8 block puzzle built with Flutter. The product uses familiar block-puzzle ergonomics while keeping its own branding, visuals, code, difficulty model and monetization architecture.
 
 ## Current milestone
 
-- playable 8×8 board
-- three-piece tray
-- drag/drop placement
-- full-piece placement preview
-- row + column clearing
-- score and combo system
+- direct app-open → active/new puzzle flow
+- 8×8 high-contrast game board
+- visible three-piece batches with fixed orientations
+- deterministic finger-to-board drag projection
+- visual piece, placement ghost and committed cells share one origin model
+- 20+ weighted shapes with progressive difficulty gating
+- row + column clearing with exact clear-line metadata
+- score system + transient combo feedback
+- large score / compact best-score HUD
+- glossy seven-color block presentation
+- line-clear flash, board pulse and haptic feedback
+- offline synthesized placement / clear / combo sounds
+- persistent sound mute control
 - best-score persistence
-- fair tray generation guard
+- crash-safe active-session restore
 - game-over detection
 - one rewarded-revive hook per run
 - game-over snapshot recovery
+- custom game-over / continue overlay
+- portrait-first Android game shell
 - debug-only fake reward service for safe testing
 - production release defaults to no live ads until AdMob is configured
 
 ## Stack
 
 - Flutter / Dart
-- `shared_preferences` using the async API for local stats
+- `shared_preferences` for local stats, settings and active-session state
+- `audioplayers` for low-latency playback of locally synthesized SFX
 - no backend
 - no login
 - no paid API for core gameplay
@@ -35,7 +45,7 @@ flutter pub get
 flutter run
 ```
 
-Recommended development SDK: Flutter 3.47.x or newer compatible stable release.
+Recommended development SDK: Flutter 3.47.x or a compatible stable release.
 
 ## Quality checks
 
@@ -44,12 +54,12 @@ flutter analyze
 flutter test
 ```
 
-GitHub Actions runs both checks on pushes and pull requests.
+GitHub Actions additionally generates an Android scaffold, applies Blockiva test-build branding, compiles a debug APK and uploads it as a workflow artifact.
 
 ## Architecture
 
-See `docs/ARCHITECTURE.md` and `docs/MONETIZATION.md`.
+See `docs/ARCHITECTURE.md`, `docs/MONETIZATION.md` and `docs/ROADMAP.md`.
 
 ## Product direction
 
-Next milestones focus on tactile polish, haptics/audio, daily challenge, coins/themes, analytics events, production AdMob rewarded revive, controlled interstitials, and Indus Appstore release packaging.
+The next product gates are production AdMob rewarded revive, privacy/consent, coins/daily retention systems, final icon/splash assets, release signing and Indus Appstore packaging. Core gameplay remains offline and backend-free.
