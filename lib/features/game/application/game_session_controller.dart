@@ -7,6 +7,7 @@ import '../../../core/storage/game_session_repository.dart';
 import '../../../core/storage/game_stats_repository.dart';
 import '../../../core/storage/shared_preferences_game_session_repository.dart';
 import '../../progression/application/progression_controller.dart';
+import '../../progression/application/progression_runtime.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
 import '../domain/game_session_state.dart';
@@ -26,7 +27,8 @@ class GameSessionController extends ChangeNotifier {
         _sessionRepository =
             sessionRepository ?? SharedPreferencesGameSessionRepository(),
         _adService = adService,
-        _progressionController = progressionController,
+        _progressionController = progressionController ??
+            ProgressionRuntime.instance.controller,
         engine = engine ?? GameEngine(),
         _pieceGenerator = pieceGenerator ?? PieceGenerator();
 
@@ -35,7 +37,7 @@ class GameSessionController extends ChangeNotifier {
   final GameStatsRepository _statsRepository;
   final GameSessionRepository _sessionRepository;
   final AdService _adService;
-  final ProgressionController? _progressionController;
+  final ProgressionController _progressionController;
   final PieceGenerator _pieceGenerator;
   final GameEngine engine;
 
@@ -107,7 +109,7 @@ class GameSessionController extends ChangeNotifier {
       unawaited(_statsRepository.saveBestScore(bestScore));
     }
 
-    _progressionController?.recordMove(
+    _progressionController.recordMove(
       linesCleared: result.linesCleared,
       combo: result.combo,
       currentScore: engine.score,
@@ -215,13 +217,12 @@ class GameSessionController extends ChangeNotifier {
         runEndRecorded = true;
         gamesPlayed += 1;
         unawaited(_statsRepository.saveGamesPlayed(gamesPlayed));
-        runCoinsAwarded = _progressionController?.recordRunCompleted(
-              score: engine.score,
-              linesCleared: engine.totalLinesCleared,
-              bestScore: bestScore,
-              gamesPlayed: gamesPlayed,
-            ) ??
-            0;
+        runCoinsAwarded = _progressionController.recordRunCompleted(
+          score: engine.score,
+          linesCleared: engine.totalLinesCleared,
+          bestScore: bestScore,
+          gamesPlayed: gamesPlayed,
+        );
       }
     }
     gameOver = nextGameOver;
