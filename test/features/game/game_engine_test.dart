@@ -1,8 +1,8 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:blockiva/features/game/domain/block_piece.dart';
 import 'package:blockiva/features/game/domain/cell_offset.dart';
 import 'package:blockiva/features/game/domain/game_engine.dart';
 import 'package:blockiva/features/game/domain/game_snapshot.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 const BlockPiece single = BlockPiece(
   id: 'single-test',
@@ -49,21 +49,25 @@ void main() {
   });
 
   group('GameEngine line clearing and scoring', () {
-    test('clears a completed row', () {
+    test('clears a completed row and reports its index', () {
       final GameEngine engine = GameEngine();
       final List<List<int?>> board = emptyBoard();
       for (var col = 0; col < 7; col++) {
         board[0][col] = 2;
       }
-      engine.restore(GameSnapshot(
-        board: board,
-        score: 0,
-        combo: 0,
-        totalLinesCleared: 0,
-        movesPlayed: 0,
-      ));
+      engine.restore(
+        GameSnapshot(
+          board: board,
+          score: 0,
+          combo: 0,
+          totalLinesCleared: 0,
+          movesPlayed: 0,
+        ),
+      );
       final result = engine.place(single, 0, 7);
       expect(result.linesCleared, 1);
+      expect(result.clearedRows, <int>[0]);
+      expect(result.clearedCols, isEmpty);
       expect(result.scoreGained, 105);
       expect(engine.combo, 1);
       for (var col = 0; col < GameEngine.size; col++) {
@@ -71,7 +75,7 @@ void main() {
       }
     });
 
-    test('counts simultaneous row and column clears', () {
+    test('reports simultaneous row and column clears', () {
       final GameEngine engine = GameEngine();
       final List<List<int?>> board = emptyBoard();
       for (var col = 0; col < 7; col++) {
@@ -80,15 +84,19 @@ void main() {
       for (var row = 1; row < 8; row++) {
         board[row][7] = 3;
       }
-      engine.restore(GameSnapshot(
-        board: board,
-        score: 0,
-        combo: 0,
-        totalLinesCleared: 0,
-        movesPlayed: 0,
-      ));
+      engine.restore(
+        GameSnapshot(
+          board: board,
+          score: 0,
+          combo: 0,
+          totalLinesCleared: 0,
+          movesPlayed: 0,
+        ),
+      );
       final result = engine.place(single, 0, 7);
       expect(result.linesCleared, 2);
+      expect(result.clearedRows, <int>[0]);
+      expect(result.clearedCols, <int>[7]);
       expect(result.scoreGained, 255);
       expect(engine.totalLinesCleared, 2);
     });
@@ -99,13 +107,15 @@ void main() {
       for (var col = 0; col < 7; col++) {
         board[0][col] = 1;
       }
-      engine.restore(GameSnapshot(
-        board: board,
-        score: 0,
-        combo: 0,
-        totalLinesCleared: 0,
-        movesPlayed: 0,
-      ));
+      engine.restore(
+        GameSnapshot(
+          board: board,
+          score: 0,
+          combo: 0,
+          totalLinesCleared: 0,
+          movesPlayed: 0,
+        ),
+      );
       engine.place(single, 0, 7);
       expect(engine.combo, 1);
       engine.place(single, 3, 3);
@@ -131,13 +141,15 @@ void main() {
         GameEngine.size,
         (_) => List<int?>.filled(GameEngine.size, 1),
       );
-      engine.restore(GameSnapshot(
-        board: board,
-        score: 2500,
-        combo: 4,
-        totalLinesCleared: 18,
-        movesPlayed: 42,
-      ));
+      engine.restore(
+        GameSnapshot(
+          board: board,
+          score: 2500,
+          combo: 4,
+          totalLinesCleared: 18,
+          movesPlayed: 42,
+        ),
+      );
       expect(engine.canPlaceAnywhere(square), isFalse);
       expect(engine.reviveFor(<BlockPiece>[square]), isTrue);
       expect(engine.canPlaceAnywhere(square), isTrue);
