@@ -18,15 +18,15 @@ abstract final class AppTheme {
   // Game canvas V2 tokens. These values are tuned for a casual puzzle game:
   // saturated enough to feel premium, but dark enough to keep the 8×8 board
   // and score readable on low/mid brightness Android devices.
-  static const Color gameBackgroundTop = Color(0xFF2B41B2);
-  static const Color gameBackgroundMid = Color(0xFF15317B);
-  static const Color gameBackgroundBottom = Color(0xFF061737);
-  static const Color gameBoard = Color(0xFF0A2C70);
-  static const Color gameBoardDeep = Color(0xFF041741);
-  static const Color gameCell = Color(0xFF123A7D);
-  static const Color gameCellEdge = Color(0xFF3674C8);
+  static const Color gameBackgroundTop = Color(0xFF3149C5);
+  static const Color gameBackgroundMid = Color(0xFF142F82);
+  static const Color gameBackgroundBottom = Color(0xFF05142F);
+  static const Color gameBoard = Color(0xFF082862);
+  static const Color gameBoardDeep = Color(0xFF031236);
+  static const Color gameCell = Color(0xFF103A80);
+  static const Color gameCellEdge = Color(0xFF56A3FF);
   static const Color gameText = Color(0xFFF9FCFF);
-  static const Color gameTextMuted = Color(0xFFC2D8FF);
+  static const Color gameTextMuted = Color(0xFFD2E4FF);
   static const Color gameOverlay = Color(0xD9071430);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
@@ -47,12 +47,12 @@ abstract final class AppTheme {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .54)!,
-        Color.lerp(base, Colors.white, .14)!,
+        Color.lerp(base, Colors.white, .62)!,
+        Color.lerp(base, Colors.white, .22)!,
         base,
-        Color.lerp(base, Colors.black, .32)!,
+        Color.lerp(base, Colors.black, .38)!,
       ],
-      stops: const <double>[0, .20, .64, 1],
+      stops: const <double>[0, .18, .62, 1],
     );
   }
 
@@ -64,13 +64,18 @@ abstract final class AppTheme {
           gameBackgroundMid,
           gameBackgroundBottom,
         ],
-        stops: <double>[0, .46, 1],
+        stops: <double>[0, .44, 1],
       );
 
   static LinearGradient get boardGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: <Color>[gameBoard, gameBoardDeep],
+        colors: <Color>[
+          Color(0xFF0D3478),
+          gameBoard,
+          gameBoardDeep,
+        ],
+        stops: <double>[0, .54, 1],
       );
 
   static ThemeData get bright => ThemeData(
