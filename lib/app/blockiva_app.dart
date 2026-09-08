@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../features/home/home_screen.dart';
+import '../features/game/presentation/game_screen.dart';
 
 class BlockivaApp extends StatelessWidget {
   const BlockivaApp({super.key});
@@ -12,7 +12,7 @@ class BlockivaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Blockiva',
       theme: AppTheme.bright,
-      home: const HomeScreen(),
+      home: const GameScreen(),
     );
   }
 }
