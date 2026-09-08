@@ -11,8 +11,8 @@ import '../../game/domain/piece_generator.dart';
 /// batch index. That means restoring a partially completed challenge never
 /// rewinds or changes the future tray sequence.
 class DailyPieceGenerator extends PieceGenerator {
-  DailyPieceGenerator({required this.seed, int paletteCount = 7})
-      : super(random: Random(seed), paletteCount: paletteCount);
+  DailyPieceGenerator({required this.seed, super.paletteCount = 7})
+      : super(random: Random(seed));
 
   final int seed;
 
