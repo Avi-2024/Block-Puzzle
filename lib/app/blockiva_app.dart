@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/ads/monetization_bootstrap.dart';
 import '../core/theme/app_theme.dart';
 import '../features/game/presentation/game_screen.dart';
+import '../features/progression/presentation/progression_bootstrap.dart';
 
 class BlockivaApp extends StatelessWidget {
   const BlockivaApp({super.key});
@@ -13,7 +14,11 @@ class BlockivaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Blockiva',
       theme: AppTheme.bright,
-      home: const MonetizationBootstrap(child: GameScreen()),
+      home: const ProgressionBootstrap(
+        child: MonetizationBootstrap(
+          child: GameScreen(),
+        ),
+      ),
     );
   }
 }
