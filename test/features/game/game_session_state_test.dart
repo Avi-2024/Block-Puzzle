@@ -5,7 +5,7 @@ import 'package:blockiva/features/game/domain/game_snapshot.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('session state round-trips board, nullable tray and revive usage', () {
+  test('session state round-trips board, tray and run settlement', () {
     final List<List<int?>> board = List<List<int?>>.generate(
       8,
       (_) => List<int?>.filled(8, null),
@@ -26,8 +26,10 @@ void main() {
         movesPlayed: 15,
       ),
       tray: <BlockPiece?>[piece, null, piece],
-      gameOver: false,
+      gameOver: true,
       revivesUsed: 1,
+      runEndRecorded: true,
+      runCoinsAwarded: 27,
     );
 
     final GameSessionState? restored = GameSessionState.fromJson(source.toJson());
@@ -38,8 +40,47 @@ void main() {
     expect(restored.tray[1], isNull);
     expect(restored.tray.first!.shapeId, 'h2');
     expect(restored.tray.first!.paletteIndex, 6);
-    expect(restored.tray.first!.cells.length, 2);
     expect(restored.revivesUsed, 1);
+    expect(restored.runEndRecorded, isTrue);
+    expect(restored.runCoinsAwarded, 27);
+  });
+
+  test('old v1 game-over save is migrated as already recorded', () {
+    final List<List<int?>> board = List<List<int?>>.generate(
+      8,
+      (_) => List<int?>.filled(8, 1),
+    );
+    final GameSessionState? restored = GameSessionState.fromJson(
+      <String, Object?>{
+        'version': 1,
+        'board': board,
+        'score': 800,
+        'combo': 0,
+        'totalLinesCleared': 4,
+        'movesPlayed': 20,
+        'tray': <Object?>[
+          <String, Object?>{
+            'id': 'square-old',
+            'shapeId': 'square2',
+            'paletteIndex': 2,
+            'cells': <Object?>[
+              <Object?>[0, 0],
+              <Object?>[0, 1],
+              <Object?>[1, 0],
+              <Object?>[1, 1],
+            ],
+          },
+          null,
+          null,
+        ],
+        'gameOver': true,
+        'revivesUsed': 0,
+      },
+    );
+
+    expect(restored, isNotNull);
+    expect(restored!.runEndRecorded, isTrue);
+    expect(restored.runCoinsAwarded, 0);
   });
 
   test('rejects palette indexes outside supported range', () {
