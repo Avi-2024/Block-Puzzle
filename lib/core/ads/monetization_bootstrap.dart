@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -27,14 +26,15 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
   @override
   void initState() {
     super.initState();
-    DebugAdRuntime.instance.addListener(_onAdRuntimeChanged);
-    unawaited(_bootstrapDebugAds());
+    AdRuntime.instance.addListener(_onAdRuntimeChanged);
+    unawaited(_bootstrapAds());
   }
 
   @override
   void dispose() {
-    DebugAdRuntime.instance.removeListener(_onAdRuntimeChanged);
-    if (kDebugMode) DebugAdRuntime.instance.reset();
+    AdRuntime.instance
+      ..removeListener(_onAdRuntimeChanged)
+      ..reset();
     super.dispose();
   }
 
@@ -42,10 +42,15 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _bootstrapDebugAds() async {
-    if (!kDebugMode || _bootstrapping) return;
-    _bootstrapping = true;
+  Future<void> _bootstrapAds() async {
+    if (_bootstrapping) return;
+    final String? rewardedUnitId = AdMobConfig.rewardedUnitId;
+    if (rewardedUnitId == null) {
+      AdRuntime.instance.reset();
+      return;
+    }
 
+    _bootstrapping = true;
     try {
       final AdsConsentState consent = await _consentManager.gather();
       if (!mounted) return;
@@ -55,7 +60,7 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
       });
 
       if (!consent.canRequestAds) {
-        DebugAdRuntime.instance.reset();
+        AdRuntime.instance.reset();
         return;
       }
 
@@ -64,10 +69,10 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
 
       late final GoogleMobileAdsRewardedService rewardedService;
       rewardedService = GoogleMobileAdsRewardedService(
-        adUnitId: AdMobConfig.rewardedTestUnitId,
-        onAvailabilityChanged: DebugAdRuntime.instance.availabilityChanged,
+        adUnitId: rewardedUnitId,
+        onAvailabilityChanged: AdRuntime.instance.availabilityChanged,
       );
-      DebugAdRuntime.instance.attach(
+      AdRuntime.instance.attach(
         delegate: rewardedService,
         disposeDelegate: rewardedService.dispose,
       );
@@ -78,14 +83,13 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
 
   Future<void> _showPrivacyOptions() async {
     await _consentManager.showPrivacyOptions();
-    final bool canRequestAds =
-        await ConsentInformation.instance.canRequestAds();
+    final bool canRequestAds = await ConsentInformation.instance.canRequestAds();
     if (!canRequestAds) {
-      DebugAdRuntime.instance.reset();
+      AdRuntime.instance.reset();
       return;
     }
-    if (!DebugAdRuntime.instance.rewardedReady) {
-      await _bootstrapDebugAds();
+    if (!AdRuntime.instance.rewardedReady) {
+      await _bootstrapAds();
     }
   }
 
@@ -94,7 +98,7 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
     return Stack(
       children: <Widget>[
         widget.child,
-        if (kDebugMode && _privacyOptionsRequired)
+        if (_privacyOptionsRequired)
           Positioned(
             top: MediaQuery.paddingOf(context).top + 8,
             right: 62,
