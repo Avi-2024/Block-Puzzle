@@ -79,28 +79,44 @@ jobs:
           disable-animations: true
           script: |
             mkdir -p store/indus/screenshots
+            adb shell wm size 1080x1920
+            adb shell wm density 420
             adb install -r build/app/outputs/flutter-apk/app-debug.apk
             adb shell am force-stop com.blockiva.blockiva
             adb shell am start -n com.blockiva.blockiva/.MainActivity
 
-            # The first Flutter frame can take longer on a cold CI emulator.
-            # Wait until the actual game canvas is visible before capturing.
-            sleep 13
+            # Cold Flutter startup can take a few seconds in CI. Capture only
+            # after the game canvas is definitely rendered.
+            sleep 14
             adb exec-out screencap -p > store/indus/screenshots/01-gameplay.png
 
-            # Pixel 6 emulator screenshot size is 1080x2400. Tray pieces sit
-            # around y=2050; drag them into lower/middle board cells.
-            adb shell input swipe 200 2055 200 1450 850 || true
+            # Exercise real drag/drop at the forced 1080x1920 store size.
+            adb shell input swipe 200 1660 220 1230 850 || true
             sleep 2
-            adb shell input swipe 535 2055 535 1330 850 || true
+            adb shell input swipe 540 1660 520 1120 850 || true
             sleep 2
-            adb shell input swipe 870 2055 780 1510 850 || true
+            adb shell input swipe 870 1660 800 1260 850 || true
             sleep 3
             adb exec-out screencap -p > store/indus/screenshots/02-mid-game.png
+
+      - name: Verify screenshot dimensions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          for path in sorted(Path('store/indus/screenshots').glob('*.png')):
+              with path.open('rb') as f:
+                  f.read(16)
+                  width, height = struct.unpack('>II', f.read(8))
+              print(path, width, height)
+              if (width, height) != (1080, 1920):
+                  raise SystemExit(f'Unexpected screenshot size: {path} {width}x{height}')
+          PY
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: blockiva-indus-screenshots
+          name: blockiva-indus-screenshots-1080x1920
           path: store/indus/screenshots/*.png
           retention-days: 30
