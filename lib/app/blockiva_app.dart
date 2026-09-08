@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/ads/monetization_bootstrap.dart';
 import '../core/theme/app_theme.dart';
 import '../features/game/presentation/game_screen.dart';
 
@@ -12,7 +13,7 @@ class BlockivaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Blockiva',
       theme: AppTheme.bright,
-      home: const GameScreen(),
+      home: const MonetizationBootstrap(child: GameScreen()),
     );
   }
 }
