@@ -51,7 +51,7 @@ jobs:
           set -o pipefail
           flutter create --platforms=android --org com.blockiva --project-name blockiva . 2>&1 | tee scaffold.log
 
-      - name: Apply Android game branding
+      - name: Apply Android game and test-ad configuration
         id: branding
         if: steps.scaffold.outcome == 'success'
         continue-on-error: true
@@ -63,16 +63,41 @@ jobs:
           manifest = Path('android/app/src/main/AndroidManifest.xml')
           text = manifest.read_text()
           text = text.replace('android:label="blockiva"', 'android:label="Blockiva"')
-          marker = 'android:name=".MainActivity"'
+
+          activity_marker = 'android:name=".MainActivity"'
           if 'android:screenOrientation=' not in text:
               text = text.replace(
-                  marker,
-                  marker + '\n            android:screenOrientation="portrait"',
+                  activity_marker,
+                  activity_marker + '\n            android:screenOrientation="portrait"',
                   1,
               )
+
+          if 'android.permission.INTERNET' not in text:
+              root_end = text.index('>') + 1
+              text = (
+                  text[:root_end]
+                  + '\n    <uses-permission android:name="android.permission.INTERNET" />'
+                  + text[root_end:]
+              )
+
+          if 'com.google.android.gms.ads.APPLICATION_ID' not in text:
+              application_start = text.index('<application')
+              application_open_end = text.index('>', application_start) + 1
+              metadata = (
+                  '\n        <!-- Google sample App ID: test APKs only. -->\n'
+                  '        <meta-data\n'
+                  '            android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+                  '            android:value="ca-app-pub-3940256099942544~3347511713" />'
+              )
+              text = (
+                  text[:application_open_end]
+                  + metadata
+                  + text[application_open_end:]
+              )
+
           manifest.write_text(text)
           PY
-          grep -nE 'android:label|screenOrientation' android/app/src/main/AndroidManifest.xml
+          grep -nE 'android:label|screenOrientation|INTERNET|APPLICATION_ID' android/app/src/main/AndroidManifest.xml
 
       - name: Build debug APK
         id: build
