@@ -76,6 +76,9 @@ class _GameAtmospherePainter extends CustomPainter {
       intensity: .72,
     );
 
+    _drawScoreAndTrayBands(canvas, size);
+    _drawPlayfieldFocus(canvas, size, shortestSide);
+
     final Paint sweepPaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
@@ -110,7 +113,10 @@ class _GameAtmospherePainter extends CustomPainter {
           Color(0x00FFFFFF),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * .20));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height * .20), edgeLightPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height * .20),
+      edgeLightPaint,
+    );
 
     final Paint vignettePaint = Paint()
       ..shader = const RadialGradient(
@@ -121,6 +127,76 @@ class _GameAtmospherePainter extends CustomPainter {
         stops: <double>[.55, 1],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, vignettePaint);
+  }
+
+  void _drawScoreAndTrayBands(Canvas canvas, Size size) {
+    final Paint scoreBandPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00000000),
+          Color(0x16FFFFFF),
+          Color(0x00000000),
+        ],
+      ).createShader(Rect.fromLTWH(0, size.height * .13, size.width, 74));
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * .13, size.width, 74),
+      scoreBandPaint,
+    );
+
+    final Paint trayBandPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00000000),
+          Color(0x1238F2A0),
+          Color(0x00FFFFFF),
+        ],
+      ).createShader(Rect.fromLTWH(0, size.height * .78, size.width, 118));
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * .78, size.width, 118),
+      trayBandPaint,
+    );
+  }
+
+  void _drawPlayfieldFocus(Canvas canvas, Size size, double shortestSide) {
+    final double boardFocusSize = math.min(size.width - 28, shortestSide * .92);
+    final Rect focusRect = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .50),
+      width: boardFocusSize,
+      height: boardFocusSize,
+    );
+
+    final Paint haloPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          Colors.white.withValues(alpha: .105),
+          AppTheme.primary.withValues(alpha: .065),
+          Colors.transparent,
+        ],
+        stops: const <double>[0, .42, 1],
+      ).createShader(focusRect.inflate(84));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        focusRect.inflate(30),
+        const Radius.circular(36),
+      ),
+      haloPaint,
+    );
+
+    final Paint boardEdgePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: .055);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        focusRect.inflate(11),
+        const Radius.circular(28),
+      ),
+      boardEdgePaint,
+    );
   }
 
   @override
