@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/ads/monetization_bootstrap.dart';
 import '../core/theme/app_theme.dart';
+import '../features/game/presentation/game_canvas_v2_shell.dart';
 import '../features/game/presentation/unified_game_screen.dart';
 import '../features/progression/presentation/progression_bootstrap.dart';
 
@@ -16,7 +17,9 @@ class BlockivaApp extends StatelessWidget {
       theme: AppTheme.bright,
       home: const ProgressionBootstrap(
         child: MonetizationBootstrap(
-          child: UnifiedGameScreen.endless(),
+          child: GameCanvasV2Shell(
+            child: UnifiedGameScreen.endless(),
+          ),
         ),
       ),
     );
