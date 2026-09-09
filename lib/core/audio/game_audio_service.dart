@@ -16,21 +16,21 @@ class GameAudioService {
   final AudioPlayer _comboPlayer = AudioPlayer();
 
   late final Uint8List _placementBytes = _synthesizeTone(
-    durationMs: 72,
+    durationMs: 74,
     frequencies: const <double>[520, 780],
     volume: .34,
   );
   late final Uint8List _clearBytes = _synthesizeTone(
-    durationMs: 165,
-    frequencies: const <double>[610, 900, 1210],
-    sweepHz: 220,
-    volume: .32,
+    durationMs: 190,
+    frequencies: const <double>[620, 920, 1240, 1560],
+    sweepHz: 280,
+    volume: .36,
   );
   late final Uint8List _comboBytes = _synthesizeTone(
-    durationMs: 225,
-    frequencies: const <double>[700, 1040, 1380],
-    sweepHz: 360,
-    volume: .34,
+    durationMs: 265,
+    frequencies: const <double>[680, 1010, 1320, 1700],
+    sweepHz: 480,
+    volume: .38,
   );
 
   bool enabled = true;
@@ -57,13 +57,13 @@ class GameAudioService {
   Future<void> playClear() => _play(
         _clearPlayer,
         _clearBytes,
-        volume: .50,
+        volume: .56,
       );
 
   Future<void> playCombo() => _play(
         _comboPlayer,
         _comboBytes,
-        volume: .54,
+        volume: .62,
       );
 
   Future<void> _play(
