@@ -84,6 +84,7 @@ class _GameAtmospherePainter extends CustomPainter {
     _drawReferenceAnchors(canvas, size);
     _drawHudScoreAccents(canvas, size);
     _drawTrayPieceWells(canvas, size);
+    _drawPieceColorEchoes(canvas, size);
 
     final Paint sweepPaint = Paint()
       ..shader = const LinearGradient(
@@ -442,6 +443,26 @@ class _GameAtmospherePainter extends CustomPainter {
       canvas
         ..drawRRect(slot, wellFillPaint)
         ..drawRRect(slot, wellStrokePaint);
+    }
+  }
+
+  void _drawPieceColorEchoes(Canvas canvas, Size size) {
+    final double baseY = size.height * .925;
+    final double step = size.width / (AppTheme.piecePalette.length + 1);
+    final Paint echoPaint = Paint()..style = PaintingStyle.fill;
+
+    for (var i = 0; i < AppTheme.piecePalette.length; i++) {
+      final Color color = AppTheme.piecePalette[i];
+      final Offset center = Offset(step * (i + 1), baseY - (i.isEven ? 4 : 0));
+      echoPaint.shader = RadialGradient(
+        colors: <Color>[
+          color.withValues(alpha: .115),
+          color.withValues(alpha: .032),
+          color.withValues(alpha: 0),
+        ],
+        stops: const <double>[0, .50, 1],
+      ).createShader(Rect.fromCircle(center: center, radius: 28));
+      canvas.drawCircle(center, 28, echoPaint);
     }
   }
 
