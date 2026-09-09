@@ -39,9 +39,9 @@ abstract final class BoardDragProjector {
   /// so this improves feel without weakening placement validation.
   static const double edgeSnapSlackCells = .92;
 
-  /// Large pieces need a little extra forgiveness near edges because their
-  /// visual footprint exits the board faster than small pieces.
-  static const double largePieceSlackBoostCells = .10;
+  /// Large pieces need extra forgiveness near edges because their visual
+  /// footprint exits the board faster than small pieces.
+  static const double largePieceSlackBoostCells = .24;
 
   static BoardDropOrigin? project({
     required Offset pointerInBoard,
