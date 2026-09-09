@@ -85,6 +85,7 @@ class _GameAtmospherePainter extends CustomPainter {
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
     _drawHudScoreAccents(canvas, size);
+    _drawComboRewardSparkles(canvas, size);
     _drawTrayPieceWells(canvas, size);
     _drawPieceColorEchoes(canvas, size);
 
@@ -329,7 +330,10 @@ class _GameAtmospherePainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(
-            center: Offset(size.width * .50, boardRect.top + boardRect.height * ratio),
+            center: Offset(
+              size.width * .50,
+              boardRect.top + boardRect.height * ratio,
+            ),
             width: boardRect.width + 58,
             height: 4.8,
           ),
@@ -340,7 +344,10 @@ class _GameAtmospherePainter extends CustomPainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(
-            center: Offset(boardRect.left + boardRect.width * ratio, size.height * .50),
+            center: Offset(
+              boardRect.left + boardRect.width * ratio,
+              size.height * .50,
+            ),
             width: 4.8,
             height: boardRect.height + 58,
           ),
@@ -528,6 +535,50 @@ class _GameAtmospherePainter extends CustomPainter {
       RRect.fromRectAndRadius(scorePlate, const Radius.circular(24)),
       scoreStrokePaint,
     );
+  }
+
+  void _drawComboRewardSparkles(Canvas canvas, Size size) {
+    final Offset scoreCenter = Offset(size.width * .50, size.height * .205);
+    final Paint sparklePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final List<Color> sparkleColors = <Color>[
+      AppTheme.warning,
+      AppTheme.success,
+      AppTheme.accent,
+      AppTheme.primary,
+    ];
+
+    for (var i = 0; i < 10; i++) {
+      final double angle = (-math.pi * .88) + i * (math.pi * 1.76 / 9);
+      final double radius = i.isEven ? 88 : 104;
+      final Offset start = scoreCenter.translate(
+        math.cos(angle) * radius,
+        math.sin(angle) * radius * .50,
+      );
+      final Offset end = scoreCenter.translate(
+        math.cos(angle) * (radius + 9),
+        math.sin(angle) * (radius + 9) * .50,
+      );
+      sparklePaint
+        ..strokeWidth = i.isEven ? 1.7 : 1.15
+        ..color = sparkleColors[i % sparkleColors.length].withValues(
+          alpha: i.isEven ? .090 : .060,
+        );
+      canvas.drawLine(start, end, sparklePaint);
+    }
+
+    final Paint dotPaint = Paint()..style = PaintingStyle.fill;
+    for (var i = 0; i < 7; i++) {
+      final double angle = -math.pi + i * (math.pi / 3);
+      final Offset center = scoreCenter.translate(
+        math.cos(angle) * 122,
+        math.sin(angle) * 34,
+      );
+      dotPaint.color = sparkleColors[(i + 1) % sparkleColors.length]
+          .withValues(alpha: .070);
+      canvas.drawCircle(center, i.isEven ? 1.9 : 1.3, dotPaint);
+    }
   }
 
   void _drawTrayPieceWells(Canvas canvas, Size size) {
