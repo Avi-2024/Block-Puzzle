@@ -59,6 +59,31 @@ jobs:
           manifest.write_text(text)
           PY
 
+      - name: Configure R8 keep rules for WorkManager and Room
+        shell: bash
+        run: |
+          cat > android/app/proguard-rules.pro <<'EOF'
+          # google_mobile_ads pulls WorkManager/Room classes that are created
+          # reflectively during AndroidX Startup. AGP 9/R8 can otherwise strip
+          # WorkDatabase_Impl constructors and crash before Flutter main().
+          -keep class androidx.work.** { *; }
+          -keep interface androidx.work.** { *; }
+          -keep class androidx.room.** { *; }
+          -keep interface androidx.room.** { *; }
+          -keep class **_Impl { *; }
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+          gradle = Path('android/app/build.gradle.kts')
+          text = gradle.read_text()
+          marker = 'release {\n'
+          rule = '            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")\n'
+          if rule.strip() not in text:
+              text = text.replace(marker, marker + rule, 1)
+          gradle.write_text(text)
+          PY
+
       - name: Build release APK
         run: flutter build apk --release
 
@@ -85,16 +110,8 @@ jobs:
             sleep 12
             adb logcat -d > smoke-output/logcat.txt
             adb exec-out screencap -p > smoke-output/release-startup.png || true
-
-            PID="$(adb shell pidof com.blockiva.blockiva | tr -d '\r' || true)"
-            echo "PID=$PID" | tee smoke-output/process.txt
             adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity' | tee smoke-output/activity.txt || true
-
-            if [ -z "$PID" ]; then
-              echo 'Release process exited after launch.'
-              grep -E -i 'FATAL EXCEPTION|AndroidRuntime|Process: com.blockiva.blockiva|flutter|E/.*blockiva|Exception|Error' smoke-output/logcat.txt | tail -n 300 || true
-              exit 1
-            fi
+            adb shell pidof com.blockiva.blockiva | tee smoke-output/process.txt | grep -q .
 
       - name: Upload smoke diagnostics
         if: always()
