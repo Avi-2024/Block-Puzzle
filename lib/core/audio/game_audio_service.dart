@@ -10,6 +10,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// not depend on remote files, paid APIs, or third-party audio assets.
 class GameAudioService {
   static const String _soundEnabledKey = 'settings.sound_enabled';
+  static const int _sampleRate = 22050;
+  static const int _bytesPerSample = 2;
+  static const int _wavHeaderBytes = 44;
+  static const int _pcmPeak = 32767;
+
+  @visibleForTesting
+  static const int wavSampleRateForTest = _sampleRate;
+
+  @visibleForTesting
+  static const int wavBytesPerSampleForTest = _bytesPerSample;
+
+  @visibleForTesting
+  static const int wavHeaderBytesForTest = _wavHeaderBytes;
+
+  @visibleForTesting
+  static const int wavPcmPeakForTest = _pcmPeak;
 
   final AudioPlayer _placementPlayer = AudioPlayer();
   final AudioPlayer _clearPlayer = AudioPlayer();
@@ -125,11 +141,9 @@ class GameAudioService {
     double sparkle = 0,
     double snap = 0,
   }) {
-    const int sampleRate = 22050;
-    const int bytesPerSample = 2;
-    final int sampleCount = (sampleRate * durationMs / 1000).round();
-    final int dataLength = sampleCount * bytesPerSample;
-    final ByteData wav = ByteData(44 + dataLength);
+    final int sampleCount = (_sampleRate * durationMs / 1000).round();
+    final int dataLength = sampleCount * _bytesPerSample;
+    final ByteData wav = ByteData(_wavHeaderBytes + dataLength);
 
     void writeAscii(int offset, String text) {
       for (var index = 0; index < text.length; index++) {
@@ -144,9 +158,9 @@ class GameAudioService {
     wav.setUint32(16, 16, Endian.little);
     wav.setUint16(20, 1, Endian.little);
     wav.setUint16(22, 1, Endian.little);
-    wav.setUint32(24, sampleRate, Endian.little);
-    wav.setUint32(28, sampleRate * bytesPerSample, Endian.little);
-    wav.setUint16(32, bytesPerSample, Endian.little);
+    wav.setUint32(24, _sampleRate, Endian.little);
+    wav.setUint32(28, _sampleRate * _bytesPerSample, Endian.little);
+    wav.setUint16(32, _bytesPerSample, Endian.little);
     wav.setUint16(34, 16, Endian.little);
     writeAscii(36, 'data');
     wav.setUint32(40, dataLength, Endian.little);
@@ -158,7 +172,7 @@ class GameAudioService {
       final double envelope = math.min(attack, release);
       final double sparkleEnvelope = (1 - progress) * sparkle;
       final double snapEnvelope = math.max(0, 1 - (progress / .075)) * snap;
-      final double seconds = index / sampleRate;
+      final double seconds = index / _sampleRate;
 
       var sample = 0.0;
       for (final double baseFrequency in frequencies) {
@@ -173,8 +187,8 @@ class GameAudioService {
       sample /= frequencies.length;
       sample *= envelope * volume;
 
-      final int pcm = (sample.clamp(-1.0, 1.0) * 32767).round();
-      wav.setInt16(44 + (index * bytesPerSample), pcm, Endian.little);
+      final int pcm = (sample.clamp(-1.0, 1.0) * _pcmPeak).round();
+      wav.setInt16(_wavHeaderBytes + (index * _bytesPerSample), pcm, Endian.little);
     }
 
     return wav.buffer.asUint8List();
