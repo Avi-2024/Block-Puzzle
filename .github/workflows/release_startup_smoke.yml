@@ -63,9 +63,8 @@ jobs:
         shell: bash
         run: |
           cat > android/app/proguard-rules.pro <<'EOF'
-          # google_mobile_ads pulls WorkManager/Room classes that are created
-          # reflectively during AndroidX Startup. AGP 9/R8 can otherwise strip
-          # WorkDatabase_Impl constructors and crash before Flutter main().
+          # WorkManager/Room generated classes are created reflectively during
+          # AndroidX Startup and must survive AGP 9/R8 release optimization.
           -keep class androidx.work.** { *; }
           -keep interface androidx.work.** { *; }
           -keep class androidx.room.** { *; }
@@ -112,6 +111,13 @@ jobs:
             adb exec-out screencap -p > smoke-output/release-startup.png || true
             adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity' | tee smoke-output/activity.txt || true
             adb shell pidof com.blockiva.blockiva | tee smoke-output/process.txt | grep -q .
+
+      - name: Upload verified release-mode APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockiva-release-smoke-verified-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
 
       - name: Upload smoke diagnostics
         if: always()
