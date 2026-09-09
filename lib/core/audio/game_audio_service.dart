@@ -21,6 +21,7 @@ class GameAudioService {
     sweepHz: 68,
     volume: .32,
     sparkle: .13,
+    snap: .10,
   );
   late final Uint8List _clearBytes = _synthesizeTone(
     durationMs: 210,
@@ -28,6 +29,7 @@ class GameAudioService {
     sweepHz: 330,
     volume: .35,
     sparkle: .22,
+    snap: .14,
   );
   late final Uint8List _comboBytes = _synthesizeTone(
     durationMs: 305,
@@ -35,6 +37,7 @@ class GameAudioService {
     sweepHz: 560,
     volume: .36,
     sparkle: .30,
+    snap: .18,
   );
 
   bool enabled = true;
@@ -102,6 +105,7 @@ class GameAudioService {
     required double volume,
     double sweepHz = 0,
     double sparkle = 0,
+    double snap = 0,
   }) {
     const int sampleRate = 22050;
     const int bytesPerSample = 2;
@@ -135,14 +139,18 @@ class GameAudioService {
       final double release = math.min(1, (1 - progress) / .38);
       final double envelope = math.min(attack, release);
       final double sparkleEnvelope = (1 - progress) * sparkle;
+      final double snapEnvelope = math.max(0, 1 - (progress / .075)) * snap;
       final double seconds = index / sampleRate;
 
       var sample = 0.0;
       for (final double baseFrequency in frequencies) {
         final double frequency = baseFrequency + (sweepHz * progress);
         final double phase = 2 * math.pi * frequency * seconds;
+        final double snapPhase = 2 * math.pi * (frequency * 3.5 + 1800) * seconds;
         sample += math.sin(phase);
         sample += math.sin(phase * 2) * sparkleEnvelope;
+        sample += math.sin(phase * 3) * sparkleEnvelope * .32;
+        sample += math.sin(snapPhase) * snapEnvelope * .22;
       }
       sample /= frequencies.length;
       sample *= envelope * volume;
