@@ -118,6 +118,8 @@ class _GameAtmospherePainter extends CustomPainter {
       edgeLightPaint,
     );
 
+    _drawGameplayChrome(canvas, size);
+
     final Paint vignettePaint = Paint()
       ..shader = const RadialGradient(
         colors: <Color>[
@@ -196,6 +198,70 @@ class _GameAtmospherePainter extends CustomPainter {
         const Radius.circular(28),
       ),
       boardEdgePaint,
+    );
+  }
+
+  void _drawGameplayChrome(Canvas canvas, Size size) {
+    final RRect topChrome = RRect.fromRectAndRadius(
+      Rect.fromLTWH(18, 22, size.width - 36, 52),
+      const Radius.circular(28),
+    );
+    final Paint topChromePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0x10FFFFFF),
+          Color(0x05000000),
+        ],
+      ).createShader(topChrome.outerRect);
+    canvas.drawRRect(topChrome, topChromePaint);
+
+    final Paint chromeStrokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00FFFFFF),
+          Color(0x22FFFFFF),
+          Color(0x00FFFFFF),
+        ],
+      ).createShader(topChrome.outerRect);
+    canvas.drawRRect(topChrome, chromeStrokePaint);
+
+    final Rect bottomRailRect = Rect.fromLTWH(22, size.height - 150, size.width - 44, 92);
+    final Paint bottomRailPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0x00000000),
+          Color(0x1438F2A0),
+          Color(0x09000000),
+        ],
+        stops: <double>[0, .62, 1],
+      ).createShader(bottomRailRect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(bottomRailRect, const Radius.circular(34)),
+      bottomRailPaint,
+    );
+
+    final Paint sideRailPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00FFFFFF),
+          Color(0x10FFFFFF),
+          Color(0x00FFFFFF),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Rect.fromLTWH(0, 0, 1.2, size.height), sideRailPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(size.width - 1.2, 0, 1.2, size.height),
+      sideRailPaint,
     );
   }
 
