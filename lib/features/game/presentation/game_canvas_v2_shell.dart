@@ -81,6 +81,7 @@ class _GameAtmospherePainter extends CustomPainter {
     _drawBoardDepthPlate(canvas, size, shortestSide);
     _drawBoardTargetingGuides(canvas, size, shortestSide);
     _drawBoardLaneEnergy(canvas, size, shortestSide);
+    _drawInvalidGuardAccents(canvas, size, shortestSide);
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
     _drawHudScoreAccents(canvas, size);
@@ -347,6 +348,57 @@ class _GameAtmospherePainter extends CustomPainter {
         ),
         verticalLanePaint,
       );
+    }
+  }
+
+  void _drawInvalidGuardAccents(Canvas canvas, Size size, double shortestSide) {
+    final double boardFocusSize = math.min(size.width - 34, shortestSide * .90);
+    final Rect boardRect = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .50),
+      width: boardFocusSize,
+      height: boardFocusSize,
+    );
+    final Paint guardGlowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          AppTheme.danger.withValues(alpha: .046),
+          AppTheme.accent.withValues(alpha: .018),
+          Colors.transparent,
+        ],
+        stops: const <double>[0, .42, 1],
+      ).createShader(boardRect.inflate(52));
+
+    final List<Offset> dangerAnchors = <Offset>[
+      boardRect.topLeft.translate(10, 10),
+      boardRect.topRight.translate(-10, 10),
+      boardRect.bottomRight.translate(-10, -10),
+      boardRect.bottomLeft.translate(10, -10),
+    ];
+
+    for (final Offset anchor in dangerAnchors) {
+      canvas.drawCircle(anchor, 34, guardGlowPaint);
+    }
+
+    final Paint guardTickPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round
+      ..color = AppTheme.danger.withValues(alpha: .052);
+    const double guardLength = 17;
+    for (final Offset anchor in dangerAnchors) {
+      final double xDirection = anchor.dx < size.width / 2 ? 1 : -1;
+      final double yDirection = anchor.dy < size.height / 2 ? 1 : -1;
+      canvas
+        ..drawLine(
+          anchor,
+          anchor.translate(guardLength * xDirection, 0),
+          guardTickPaint,
+        )
+        ..drawLine(
+          anchor,
+          anchor.translate(0, guardLength * yDirection),
+          guardTickPaint,
+        );
     }
   }
 
