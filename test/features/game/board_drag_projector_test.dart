@@ -17,12 +17,23 @@ void main() {
     ],
     paletteIndex: 0,
   );
+  const BlockPiece verticalLine = BlockPiece(
+    id: 'vertical-line',
+    shapeId: 'line4v',
+    cells: <CellOffset>[
+      CellOffset(0, 0),
+      CellOffset(1, 0),
+      CellOffset(2, 0),
+      CellOffset(3, 0),
+    ],
+    paletteIndex: 1,
+  );
 
   test('projects finger position to the same visual piece origin', () {
     // 40px cells. A 2x2 piece at row 3 / col 2 has center (120, 160).
     // Finger sits at the V2 lift distance below that visual center.
     final BoardDropOrigin? origin = BoardDragProjector.project(
-      pointerInBoard: const Offset(120, 244),
+      pointerInBoard: const Offset(120, 248),
       boardSize: board,
       piece: square,
     );
@@ -35,6 +46,16 @@ void main() {
       pointerInBoard: const Offset(10, 30),
       boardSize: board,
       piece: square,
+    );
+
+    expect(origin, const BoardDropOrigin(row: 0, col: 0));
+  });
+
+  test('keeps tall piece preview stable near the top edge', () {
+    final BoardDropOrigin? origin = BoardDragProjector.project(
+      pointerInBoard: const Offset(20, -27),
+      boardSize: board,
+      piece: verticalLine,
     );
 
     expect(origin, const BoardDropOrigin(row: 0, col: 0));
