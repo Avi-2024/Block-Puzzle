@@ -21,10 +21,10 @@ abstract final class AppTheme {
   static const Color gameBackgroundTop = Color(0xFF3149C5);
   static const Color gameBackgroundMid = Color(0xFF142F82);
   static const Color gameBackgroundBottom = Color(0xFF05142F);
-  static const Color gameBoard = Color(0xFF082862);
-  static const Color gameBoardDeep = Color(0xFF031236);
-  static const Color gameCell = Color(0xFF103A80);
-  static const Color gameCellEdge = Color(0xFF56A3FF);
+  static const Color gameBoard = Color(0xFF092D6E);
+  static const Color gameBoardDeep = Color(0xFF020F31);
+  static const Color gameCell = Color(0xFF0D377D);
+  static const Color gameCellEdge = Color(0xFF65B7FF);
   static const Color gameText = Color(0xFFF9FCFF);
   static const Color gameTextMuted = Color(0xFFD2E4FF);
   static const Color gameOverlay = Color(0xD9071430);
@@ -47,12 +47,13 @@ abstract final class AppTheme {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .62)!,
-        Color.lerp(base, Colors.white, .22)!,
+        Color.lerp(base, Colors.white, .74)!,
+        Color.lerp(base, Colors.white, .30)!,
         base,
-        Color.lerp(base, Colors.black, .38)!,
+        Color.lerp(base, Colors.black, .28)!,
+        Color.lerp(base, Colors.black, .48)!,
       ],
-      stops: const <double>[0, .18, .62, 1],
+      stops: const <double>[0, .16, .52, .78, 1],
     );
   }
 
@@ -71,11 +72,12 @@ abstract final class AppTheme {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          Color(0xFF0D3478),
+          Color(0xFF124292),
           gameBoard,
+          Color(0xFF061D50),
           gameBoardDeep,
         ],
-        stops: <double>[0, .54, 1],
+        stops: <double>[0, .38, .72, 1],
       );
 
   static ThemeData get bright => ThemeData(
