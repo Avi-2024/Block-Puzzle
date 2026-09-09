@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Small, offline-only game SFX service.
@@ -98,6 +99,24 @@ class GameAudioService {
       _comboPlayer.dispose(),
     ]);
   }
+
+  @visibleForTesting
+  static Uint8List synthesizeToneForTest({
+    required int durationMs,
+    required List<double> frequencies,
+    required double volume,
+    double sweepHz = 0,
+    double sparkle = 0,
+    double snap = 0,
+  }) =>
+      _synthesizeTone(
+        durationMs: durationMs,
+        frequencies: frequencies,
+        volume: volume,
+        sweepHz: sweepHz,
+        sparkle: sparkle,
+        snap: snap,
+      );
 
   static Uint8List _synthesizeTone({
     required int durationMs,
