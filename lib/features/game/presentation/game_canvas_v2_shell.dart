@@ -80,6 +80,7 @@ class _GameAtmospherePainter extends CustomPainter {
     _drawPlayfieldFocus(canvas, size, shortestSide);
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
+    _drawTrayPieceWells(canvas, size);
 
     final Paint sweepPaint = Paint()
       ..shader = const LinearGradient(
@@ -268,6 +269,40 @@ class _GameAtmospherePainter extends CustomPainter {
         ),
         anchorPaint,
       );
+    }
+  }
+
+  void _drawTrayPieceWells(Canvas canvas, Size size) {
+    final double slotY = size.height * .855;
+    final double gap = size.width * .285;
+    final double startX = (size.width - gap * 2) / 2;
+    final Paint wellFillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Colors.white.withValues(alpha: .052),
+          Colors.black.withValues(alpha: .105),
+        ],
+      ).createShader(Rect.fromLTWH(0, slotY - 42, size.width, 84));
+    final Paint wellStrokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: .080);
+
+    for (var i = 0; i < 3; i++) {
+      final Rect slotRect = Rect.fromCenter(
+        center: Offset(startX + gap * i, slotY),
+        width: 88,
+        height: 76,
+      );
+      final RRect slot = RRect.fromRectAndRadius(
+        slotRect,
+        const Radius.circular(24),
+      );
+      canvas
+        ..drawRRect(slot, wellFillPaint)
+        ..drawRRect(slot, wellStrokePaint);
     }
   }
 
