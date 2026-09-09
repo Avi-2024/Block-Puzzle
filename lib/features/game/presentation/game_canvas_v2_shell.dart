@@ -78,6 +78,8 @@ class _GameAtmospherePainter extends CustomPainter {
 
     _drawScoreAndTrayBands(canvas, size);
     _drawPlayfieldFocus(canvas, size, shortestSide);
+    _drawMobileChromeCues(canvas, size);
+    _drawReferenceAnchors(canvas, size);
 
     final Paint sweepPaint = Paint()
       ..shader = const LinearGradient(
@@ -117,8 +119,6 @@ class _GameAtmospherePainter extends CustomPainter {
       Rect.fromLTWH(0, 0, size.width, size.height * .20),
       edgeLightPaint,
     );
-
-    _drawGameplayChrome(canvas, size);
 
     final Paint vignettePaint = Paint()
       ..shader = const RadialGradient(
@@ -201,68 +201,74 @@ class _GameAtmospherePainter extends CustomPainter {
     );
   }
 
-  void _drawGameplayChrome(Canvas canvas, Size size) {
-    final RRect topChrome = RRect.fromRectAndRadius(
-      Rect.fromLTWH(18, 22, size.width - 36, 52),
-      const Radius.circular(28),
-    );
+  void _drawMobileChromeCues(Canvas canvas, Size size) {
     final Paint topChromePaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[
-          Color(0x10FFFFFF),
-          Color(0x05000000),
+          Color(0x22000000),
+          Color(0x00000000),
         ],
-      ).createShader(topChrome.outerRect);
-    canvas.drawRRect(topChrome, topChromePaint);
+      ).createShader(Rect.fromLTWH(0, 0, size.width, 116));
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, 116), topChromePaint);
 
-    final Paint chromeStrokePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..shader = const LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
+    final Rect trayRail = Rect.fromLTWH(
+      22,
+      size.height * .79,
+      math.max(0, size.width - 44),
+      86,
+    );
+    final Paint trayRailPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
         colors: <Color>[
-          Color(0x00FFFFFF),
-          Color(0x22FFFFFF),
-          Color(0x00FFFFFF),
+          Colors.white.withValues(alpha: .075),
+          Colors.white.withValues(alpha: .028),
+          Colors.black.withValues(alpha: .12),
         ],
-      ).createShader(topChrome.outerRect);
-    canvas.drawRRect(topChrome, chromeStrokePaint);
+        stops: const <double>[0, .52, 1],
+      ).createShader(trayRail);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(trayRail, const Radius.circular(28)),
+      trayRailPaint,
+    );
 
-    final Rect bottomRailRect = Rect.fromLTWH(22, size.height - 150, size.width - 44, 92);
-    final Paint bottomRailPaint = Paint()
+    final Paint railPaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[
-          Color(0x00000000),
-          Color(0x1438F2A0),
-          Color(0x09000000),
-        ],
-        stops: <double>[0, .62, 1],
-      ).createShader(bottomRailRect);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(bottomRailRect, const Radius.circular(34)),
-      bottomRailPaint,
-    );
-
-    final Paint sideRailPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: <Color>[
           Color(0x00FFFFFF),
-          Color(0x10FFFFFF),
+          Color(0x13FFFFFF),
           Color(0x00FFFFFF),
         ],
       ).createShader(Offset.zero & size);
-    canvas.drawRect(Rect.fromLTWH(0, 0, 1.2, size.height), sideRailPaint);
-    canvas.drawRect(
-      Rect.fromLTWH(size.width - 1.2, 0, 1.2, size.height),
-      sideRailPaint,
-    );
+    canvas
+      ..drawRect(Rect.fromLTWH(0, 0, 1.2, size.height), railPaint)
+      ..drawRect(Rect.fromLTWH(size.width - 1.2, 0, 1.2, size.height), railPaint);
+  }
+
+  void _drawReferenceAnchors(Canvas canvas, Size size) {
+    final double anchorY = size.height * .215;
+    final double gap = size.width * .28;
+    final double startX = (size.width - gap * 2) / 2;
+    final Paint anchorPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: .075);
+
+    for (var i = 0; i < 3; i++) {
+      final Offset center = Offset(startX + gap * i, anchorY);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: center, width: 74, height: 46),
+          const Radius.circular(14),
+        ),
+        anchorPaint,
+      );
+    }
   }
 
   @override
