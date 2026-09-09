@@ -30,18 +30,18 @@ abstract final class BoardDragProjector {
   ///
   /// The V2 tiles are glossy and chunky, so the lift gives the player a clearer
   /// sightline to the target cells while dragging.
-  static const double fingerLift = 88;
+  static const double fingerLift = 92;
 
   /// Allows the piece to snap at the board edge before disappearing.
   ///
   /// Without this tolerance, preview can flicker when the user approaches the
   /// first/last row or column. The final origin is still clamped to the board,
   /// so this improves feel without weakening placement validation.
-  static const double edgeSnapSlackCells = .84;
+  static const double edgeSnapSlackCells = .92;
 
   /// Large pieces need a little extra forgiveness near edges because their
   /// visual footprint exits the board faster than small pieces.
-  static const double largePieceSlackBoostCells = .08;
+  static const double largePieceSlackBoostCells = .10;
 
   static BoardDropOrigin? project({
     required Offset pointerInBoard,
