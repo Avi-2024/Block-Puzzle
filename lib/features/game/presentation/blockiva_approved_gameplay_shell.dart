@@ -78,14 +78,30 @@ class _ApprovedBackgroundPainter extends CustomPainter {
     }
 
     final double shortSide = math.min(size.width, size.height);
-    glow(Offset(size.width * .50, size.height * .34), shortSide * .62,
-        const Color(0xFF8C60FF), .26);
-    glow(Offset(size.width * .12, size.height * .16), shortSide * .42,
-        const Color(0xFF20D8FF), .20);
-    glow(Offset(size.width * .92, size.height * .82), shortSide * .48,
-        const Color(0xFFFF6CC8), .16);
-    glow(Offset(size.width * .48, size.height * .86), shortSide * .40,
-        const Color(0xFF38F2A0), .10);
+    glow(
+      Offset(size.width * .50, size.height * .34),
+      shortSide * .62,
+      const Color(0xFF8C60FF),
+      .26,
+    );
+    glow(
+      Offset(size.width * .12, size.height * .16),
+      shortSide * .42,
+      const Color(0xFF20D8FF),
+      .20,
+    );
+    glow(
+      Offset(size.width * .92, size.height * .82),
+      shortSide * .48,
+      const Color(0xFFFF6CC8),
+      .16,
+    );
+    glow(
+      Offset(size.width * .48, size.height * .86),
+      shortSide * .40,
+      const Color(0xFF38F2A0),
+      .10,
+    );
   }
 
   void _drawFloatingCubes(Canvas canvas, Size size) {
@@ -96,7 +112,8 @@ class _ApprovedBackgroundPainter extends CustomPainter {
     for (var i = 0; i < 14; i++) {
       final double seed = i * 23.0;
       final double x = (math.sin(seed) * .5 + .5) * size.width;
-      final double y = size.height * (.13 + ((math.cos(seed * .83) * .5 + .5) * .77));
+      final double y = size.height *
+          (.13 + ((math.cos(seed * .83) * .5 + .5) * .77));
       final double side = 10 + (i % 4) * 6;
       final RRect cube = RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset(x, y), width: side, height: side),
@@ -130,7 +147,9 @@ class _ApprovedBackgroundPainter extends CustomPainter {
       final double x = (math.sin(seed) * .5 + .5) * size.width;
       final double y = (math.cos(seed * 1.31) * .5 + .5) * size.height;
       final double radius = .7 + (i % 5) * .24;
-      particlePaint.color = Colors.white.withValues(alpha: i.isEven ? .12 : .052);
+      particlePaint.color = Colors.white.withValues(
+        alpha: i.isEven ? .12 : .052,
+      );
       canvas.drawCircle(Offset(x, y), radius, particlePaint);
     }
   }
@@ -145,12 +164,111 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double shortSide = math.min(size.width, size.height);
+    _drawLogoGlowShelf(canvas, size);
+    _drawTopHudGlassAnchors(canvas, size);
     _drawHeroScoreAura(canvas, size, shortSide);
     _drawBoardHeroFrame(canvas, size, shortSide);
     _drawClearEnergyPreview(canvas, size, shortSide);
     _drawTrayPedestal(canvas, size);
     _drawBottomCrystalGlow(canvas, size, shortSide);
     _drawEdgeVignette(canvas, size);
+  }
+
+  void _drawLogoGlowShelf(Canvas canvas, Size size) {
+    final Rect shelfRect = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .085),
+      width: math.min(size.width * .66, 310),
+      height: 86,
+    );
+    final Paint shelfGlowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          Colors.white.withValues(alpha: .13),
+          const Color(0xFF20D8FF).withValues(alpha: .09),
+          AppTheme.primary.withValues(alpha: .04),
+          Colors.transparent,
+        ],
+        stops: const <double>[0, .40, .68, 1],
+      ).createShader(shelfRect.inflate(48));
+    canvas.drawOval(shelfRect.inflate(40), shelfGlowPaint);
+
+    final Paint shinePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00000000),
+          Color(0x33FFFFFF),
+          Color(0x00000000),
+        ],
+      ).createShader(shelfRect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: shelfRect.center.translate(0, shelfRect.height * .33),
+          width: shelfRect.width * .72,
+          height: 3,
+        ),
+        const Radius.circular(99),
+      ),
+      shinePaint,
+    );
+  }
+
+  void _drawTopHudGlassAnchors(Canvas canvas, Size size) {
+    final double top = size.height * .055;
+    final Rect leftPill = Rect.fromLTWH(16, top + 54, 118, 48);
+    final Rect rightPill = Rect.fromLTWH(size.width - 134, top + 54, 118, 48);
+    final RRect left = RRect.fromRectAndRadius(leftPill, const Radius.circular(18));
+    final RRect right = RRect.fromRectAndRadius(rightPill, const Radius.circular(18));
+
+    final Paint glassPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Color(0x26FFFFFF),
+          Color(0x111DDCFF),
+          Color(0x19000000),
+        ],
+      ).createShader(leftPill.expandToInclude(rightPill));
+    final Paint rimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.15
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x66FFFFFF),
+          Color(0x7732B6FF),
+          Color(0x55FFFFFF),
+        ],
+      ).createShader(leftPill.expandToInclude(rightPill));
+
+    for (final RRect pill in <RRect>[left, right]) {
+      canvas.drawRRect(pill, glassPaint);
+      canvas.drawRRect(pill, rimPaint);
+    }
+
+    final Paint orbPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          AppTheme.warning.withValues(alpha: .36),
+          AppTheme.warning.withValues(alpha: .10),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: leftPill.centerLeft, radius: 28));
+    canvas.drawCircle(leftPill.centerLeft.translate(22, 0), 28, orbPaint);
+
+    final Paint trophyGlowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          AppTheme.warning.withValues(alpha: .24),
+          AppTheme.accent.withValues(alpha: .08),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: rightPill.center, radius: 46));
+    canvas.drawCircle(rightPill.center, 46, trophyGlowPaint);
   }
 
   void _drawHeroScoreAura(Canvas canvas, Size size, double shortSide) {
@@ -249,6 +367,24 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
         stops: <double>[0, .30, .72, 1],
       ).createShader(outerBoard.outerRect);
     canvas.drawRRect(outerBoard, rimPaint);
+
+    final Paint innerSparkPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x0020D8FF),
+          Color(0x7720D8FF),
+          Color(0x33FFFFFF),
+          Color(0x00FF6CC8),
+        ],
+      ).createShader(boardRect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(boardRect.inflate(5), const Radius.circular(24)),
+      innerSparkPaint,
+    );
   }
 
   void _drawClearEnergyPreview(Canvas canvas, Size size, double shortSide) {
@@ -312,8 +448,8 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
     final Paint trayGlowPaint = Paint()
       ..shader = RadialGradient(
         colors: <Color>[
-          const Color(0xFF20D8FF).withValues(alpha: .16),
-          AppTheme.primary.withValues(alpha: .11),
+          const Color(0xFF20D8FF).withValues(alpha: .22),
+          AppTheme.primary.withValues(alpha: .13),
           Colors.transparent,
         ],
         stops: const <double>[0, .58, 1],
@@ -325,9 +461,9 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[
-          Color(0x22FFFFFF),
-          Color(0x100D2D86),
-          Color(0x22000000),
+          Color(0x2EFFFFFF),
+          Color(0x151DDCFF),
+          Color(0x26000000),
         ],
         stops: <double>[0, .48, 1],
       ).createShader(trayRect);
@@ -335,15 +471,15 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
 
     final Paint rimPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
+      ..strokeWidth = 1.9
       ..shader = const LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
         colors: <Color>[
+          Color(0x77FFFFFF),
+          Color(0xBB20D8FF),
+          Color(0x884A5CFF),
           Color(0x66FFFFFF),
-          Color(0x9920D8FF),
-          Color(0x774A5CFF),
-          Color(0x55FFFFFF),
         ],
       ).createShader(trayRect);
     canvas.drawRRect(tray, rimPaint);
@@ -353,16 +489,16 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
     final Paint slotPaint = Paint()
       ..shader = const RadialGradient(
         colors: <Color>[
-          Color(0x181DDCFF),
-          Color(0x0AFFFFFF),
+          Color(0x221DDCFF),
+          Color(0x0EFFFFFF),
           Color(0x00000000),
         ],
         stops: <double>[0, .55, 1],
       ).createShader(trayRect);
     final Paint slotStrokePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = Colors.white.withValues(alpha: .10);
+      ..strokeWidth = 1.1
+      ..color = Colors.white.withValues(alpha: .13);
     for (var i = 0; i < 3; i++) {
       final Rect slot = Rect.fromLTWH(
         trayRect.left + slotGap + (slotWidth + slotGap) * i,
@@ -391,7 +527,11 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
         center: Offset(size.width * .50, size.height * .94),
         radius: shortSide * .55,
       ));
-    canvas.drawCircle(Offset(size.width * .50, size.height * .94), shortSide * .55, glowPaint);
+    canvas.drawCircle(
+      Offset(size.width * .50, size.height * .94),
+      shortSide * .55,
+      glowPaint,
+    );
   }
 
   void _drawEdgeVignette(Canvas canvas, Size size) {
