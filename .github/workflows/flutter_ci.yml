@@ -27,37 +27,28 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        id: analyze
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           flutter analyze 2>&1 | tee analyze.log
 
       - name: Test
-        id: test
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           flutter test 2>&1 | tee test.log
 
       - name: Generate Android platform scaffold
-        id: scaffold
-        if: steps.analyze.outcome == 'success' && steps.test.outcome == 'success'
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           flutter create --platforms=android --org com.blockiva --project-name blockiva . 2>&1 | tee scaffold.log
 
       - name: Apply Android game and test-ad configuration
-        id: branding
-        if: steps.scaffold.outcome == 'success'
-        continue-on-error: true
         shell: bash
         run: |
-          python3 - <<'PY'
+          set -o pipefail
+          python3 - <<'PY' 2>&1 | tee branding.log
           from pathlib import Path
 
           manifest = Path('android/app/src/main/AndroidManifest.xml')
@@ -97,19 +88,15 @@ jobs:
 
           manifest.write_text(text)
           PY
-          grep -nE 'android:label|screenOrientation|INTERNET|APPLICATION_ID' android/app/src/main/AndroidManifest.xml
+          grep -nE 'android:label|screenOrientation|INTERNET|APPLICATION_ID' android/app/src/main/AndroidManifest.xml | tee -a branding.log
 
       - name: Build debug APK
-        id: build
-        if: steps.branding.outcome == 'success'
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           flutter build apk --debug 2>&1 | tee build.log
 
       - name: Upload debug APK
-        if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: blockiva-debug-apk
@@ -117,7 +104,7 @@ jobs:
           retention-days: 7
 
       - name: Upload diagnostics
-        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.branding.outcome == 'failure' || steps.build.outcome == 'failure'
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: flutter-diagnostics
@@ -125,10 +112,7 @@ jobs:
             analyze.log
             test.log
             scaffold.log
+            branding.log
             build.log
           if-no-files-found: ignore
           retention-days: 7
-
-      - name: Quality gate
-        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure' || steps.scaffold.outcome == 'failure' || steps.branding.outcome == 'failure' || steps.build.outcome == 'failure'
-        run: exit 1
