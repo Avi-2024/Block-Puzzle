@@ -18,8 +18,10 @@ void main() {
       snap: .10,
     );
     final ByteData data = ByteData.sublistView(bytes);
-    final int expectedSampleCount = (22050 * durationMs / 1000).round();
-    final int expectedDataLength = expectedSampleCount * 2;
+    final int expectedSampleCount =
+        (GameAudioService.wavSampleRateForTest * durationMs / 1000).round();
+    final int expectedDataLength =
+        expectedSampleCount * GameAudioService.wavBytesPerSampleForTest;
 
     expect(ascii(bytes, 0, 4), 'RIFF');
     expect(ascii(bytes, 8, 12), 'WAVE');
@@ -27,10 +29,13 @@ void main() {
     expect(ascii(bytes, 36, 40), 'data');
     expect(data.getUint16(20, Endian.little), 1);
     expect(data.getUint16(22, Endian.little), 1);
-    expect(data.getUint32(24, Endian.little), 22050);
+    expect(
+      data.getUint32(24, Endian.little),
+      GameAudioService.wavSampleRateForTest,
+    );
     expect(data.getUint16(34, Endian.little), 16);
     expect(data.getUint32(40, Endian.little), expectedDataLength);
-    expect(bytes.length, 44 + expectedDataLength);
+    expect(bytes.length, GameAudioService.wavHeaderBytesForTest + expectedDataLength);
   });
 
   test('synthesized tone contains audible non-silent pcm samples', () {
@@ -45,12 +50,16 @@ void main() {
     final ByteData data = ByteData.sublistView(bytes);
 
     var peak = 0;
-    for (var offset = 44; offset < bytes.length; offset += 2) {
+    for (
+      var offset = GameAudioService.wavHeaderBytesForTest;
+      offset < bytes.length;
+      offset += GameAudioService.wavBytesPerSampleForTest
+    ) {
       final int sample = data.getInt16(offset, Endian.little).abs();
       if (sample > peak) peak = sample;
     }
 
     expect(peak, greaterThan(0));
-    expect(peak, lessThanOrEqualTo(32767));
+    expect(peak, lessThanOrEqualTo(GameAudioService.wavPcmPeakForTest));
   });
 }
