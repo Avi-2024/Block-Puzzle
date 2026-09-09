@@ -80,6 +80,7 @@ class _GameAtmospherePainter extends CustomPainter {
     _drawPlayfieldFocus(canvas, size, shortestSide);
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
+    _drawHudScoreAccents(canvas, size);
     _drawTrayPieceWells(canvas, size);
 
     final Paint sweepPaint = Paint()
@@ -270,6 +271,58 @@ class _GameAtmospherePainter extends CustomPainter {
         anchorPaint,
       );
     }
+  }
+
+  void _drawHudScoreAccents(Canvas canvas, Size size) {
+    final double hudY = math.min(54, size.height * .095);
+    final Offset leftHudCenter = Offset(34, hudY);
+    final Offset rightHudCenter = Offset(size.width - 34, hudY);
+    final Paint hudHaloPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          Colors.white.withValues(alpha: .090),
+          AppTheme.primary.withValues(alpha: .052),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: leftHudCenter, radius: 46));
+    canvas.drawCircle(leftHudCenter, 46, hudHaloPaint);
+
+    hudHaloPaint.shader = RadialGradient(
+      colors: <Color>[
+        Colors.white.withValues(alpha: .090),
+        AppTheme.accent.withValues(alpha: .050),
+        Colors.transparent,
+      ],
+    ).createShader(Rect.fromCircle(center: rightHudCenter, radius: 46));
+    canvas.drawCircle(rightHudCenter, 46, hudHaloPaint);
+
+    final Rect scorePlate = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .205),
+      width: math.min(188, size.width * .54),
+      height: 76,
+    );
+    final Paint scoreGlowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          Colors.white.withValues(alpha: .070),
+          AppTheme.warning.withValues(alpha: .038),
+          Colors.transparent,
+        ],
+        stops: const <double>[0, .48, 1],
+      ).createShader(scorePlate.inflate(42));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(scorePlate.inflate(18), const Radius.circular(34)),
+      scoreGlowPaint,
+    );
+
+    final Paint scoreStrokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: .058);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(scorePlate, const Radius.circular(24)),
+      scoreStrokePaint,
+    );
   }
 
   void _drawTrayPieceWells(Canvas canvas, Size size) {
