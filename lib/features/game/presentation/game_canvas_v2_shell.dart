@@ -80,6 +80,7 @@ class _GameAtmospherePainter extends CustomPainter {
     _drawPlayfieldFocus(canvas, size, shortestSide);
     _drawBoardDepthPlate(canvas, size, shortestSide);
     _drawBoardTargetingGuides(canvas, size, shortestSide);
+    _drawBoardLaneEnergy(canvas, size, shortestSide);
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
     _drawHudScoreAccents(canvas, size);
@@ -290,6 +291,65 @@ class _GameAtmospherePainter extends CustomPainter {
     }
   }
 
+  void _drawBoardLaneEnergy(Canvas canvas, Size size, double shortestSide) {
+    final double boardFocusSize = math.min(size.width - 34, shortestSide * .90);
+    final Rect boardRect = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .50),
+      width: boardFocusSize,
+      height: boardFocusSize,
+    );
+    final Paint horizontalLanePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00000000),
+          Color(0x1438F2A0),
+          Color(0x10FFFFFF),
+          Color(0x00000000),
+        ],
+        stops: <double>[0, .28, .55, 1],
+      ).createShader(boardRect.inflate(38));
+    final Paint verticalLanePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0x00000000),
+          Color(0x1056A3FF),
+          Color(0x10FFFFFF),
+          Color(0x00000000),
+        ],
+        stops: <double>[0, .32, .62, 1],
+      ).createShader(boardRect.inflate(38));
+
+    for (var i = 1; i <= 3; i++) {
+      final double ratio = i / 4;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(size.width * .50, boardRect.top + boardRect.height * ratio),
+            width: boardRect.width + 58,
+            height: 4.8,
+          ),
+          const Radius.circular(99),
+        ),
+        horizontalLanePaint,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(boardRect.left + boardRect.width * ratio, size.height * .50),
+            width: 4.8,
+            height: boardRect.height + 58,
+          ),
+          const Radius.circular(99),
+        ),
+        verticalLanePaint,
+      );
+    }
+  }
+
   void _drawMobileChromeCues(Canvas canvas, Size size) {
     final Paint topChromePaint = Paint()
       ..shader = const LinearGradient(
@@ -336,7 +396,10 @@ class _GameAtmospherePainter extends CustomPainter {
       ).createShader(Offset.zero & size);
     canvas
       ..drawRect(Rect.fromLTWH(0, 0, 1.2, size.height), railPaint)
-      ..drawRect(Rect.fromLTWH(size.width - 1.2, 0, 1.2, size.height), railPaint);
+      ..drawRect(
+        Rect.fromLTWH(size.width - 1.2, 0, 1.2, size.height),
+        railPaint,
+      );
   }
 
   void _drawReferenceAnchors(Canvas canvas, Size size) {
@@ -398,7 +461,10 @@ class _GameAtmospherePainter extends CustomPainter {
         stops: const <double>[0, .48, 1],
       ).createShader(scorePlate.inflate(42));
     canvas.drawRRect(
-      RRect.fromRectAndRadius(scorePlate.inflate(18), const Radius.circular(34)),
+      RRect.fromRectAndRadius(
+        scorePlate.inflate(18),
+        const Radius.circular(34),
+      ),
       scoreGlowPaint,
     );
 
