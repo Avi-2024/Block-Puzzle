@@ -78,6 +78,7 @@ class _GameAtmospherePainter extends CustomPainter {
 
     _drawScoreAndTrayBands(canvas, size);
     _drawPlayfieldFocus(canvas, size, shortestSide);
+    _drawBoardDepthPlate(canvas, size, shortestSide);
     _drawBoardTargetingGuides(canvas, size, shortestSide);
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
@@ -202,6 +203,42 @@ class _GameAtmospherePainter extends CustomPainter {
       ),
       boardEdgePaint,
     );
+  }
+
+  void _drawBoardDepthPlate(Canvas canvas, Size size, double shortestSide) {
+    final double plateSize = math.min(size.width - 24, shortestSide * .94);
+    final Rect plateRect = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .50),
+      width: plateSize,
+      height: plateSize,
+    );
+    final RRect outerPlate = RRect.fromRectAndRadius(
+      plateRect.inflate(18),
+      const Radius.circular(34),
+    );
+    final Paint plateShadowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          Colors.black.withValues(alpha: .18),
+          Colors.black.withValues(alpha: .075),
+          Colors.transparent,
+        ],
+        stops: const <double>[0, .58, 1],
+      ).createShader(plateRect.inflate(68));
+    canvas.drawRRect(outerPlate, plateShadowPaint);
+
+    final Paint plateSheenPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Color(0x0EFFFFFF),
+          Color(0x00000000),
+          Color(0x12000000),
+        ],
+        stops: <double>[0, .48, 1],
+      ).createShader(outerPlate.outerRect);
+    canvas.drawRRect(outerPlate, plateSheenPaint);
   }
 
   void _drawBoardTargetingGuides(Canvas canvas, Size size, double shortestSide) {
