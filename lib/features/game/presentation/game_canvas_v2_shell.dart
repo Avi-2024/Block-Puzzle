@@ -78,6 +78,7 @@ class _GameAtmospherePainter extends CustomPainter {
 
     _drawScoreAndTrayBands(canvas, size);
     _drawPlayfieldFocus(canvas, size, shortestSide);
+    _drawBoardTargetingGuides(canvas, size, shortestSide);
     _drawMobileChromeCues(canvas, size);
     _drawReferenceAnchors(canvas, size);
     _drawHudScoreAccents(canvas, size);
@@ -201,6 +202,54 @@ class _GameAtmospherePainter extends CustomPainter {
       ),
       boardEdgePaint,
     );
+  }
+
+  void _drawBoardTargetingGuides(Canvas canvas, Size size, double shortestSide) {
+    final double boardFocusSize = math.min(size.width - 34, shortestSide * .90);
+    final Rect boardRect = Rect.fromCenter(
+      center: Offset(size.width * .50, size.height * .50),
+      width: boardFocusSize,
+      height: boardFocusSize,
+    );
+    final RRect guideRect = RRect.fromRectAndRadius(
+      boardRect.inflate(17),
+      const Radius.circular(31),
+    );
+    final Paint guideGlowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5.5
+      ..color = AppTheme.primary.withValues(alpha: .020)
+      ..strokeCap = StrokeCap.round;
+    canvas.drawRRect(guideRect, guideGlowPaint);
+
+    final Paint tickPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.35
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: .075);
+    const double tickLength = 23;
+    final List<Offset> corners = <Offset>[
+      boardRect.topLeft,
+      boardRect.topRight,
+      boardRect.bottomRight,
+      boardRect.bottomLeft,
+    ];
+
+    for (final Offset corner in corners) {
+      final double horizontalDirection = corner.dx < size.width / 2 ? 1 : -1;
+      final double verticalDirection = corner.dy < size.height / 2 ? 1 : -1;
+      canvas
+        ..drawLine(
+          corner,
+          corner.translate(tickLength * horizontalDirection, 0),
+          tickPaint,
+        )
+        ..drawLine(
+          corner,
+          corner.translate(0, tickLength * verticalDirection),
+          tickPaint,
+        );
+    }
   }
 
   void _drawMobileChromeCues(Canvas canvas, Size size) {
