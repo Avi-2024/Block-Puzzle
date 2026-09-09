@@ -1,0 +1,105 @@
+name: Release Startup Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release_startup_smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  release-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate Android scaffold
+        run: flutter create --platforms=android --org com.blockiva --project-name blockiva .
+
+      - name: Configure release smoke manifest
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          text = text.replace('android:label="blockiva"', 'android:label="Blockiva"')
+          activity_marker = 'android:name=".MainActivity"'
+          if 'android:screenOrientation=' not in text:
+              text = text.replace(
+                  activity_marker,
+                  activity_marker + '\n            android:screenOrientation="portrait"',
+                  1,
+              )
+          if 'android.permission.INTERNET' not in text:
+              root_end = text.index('>') + 1
+              text = text[:root_end] + '\n    <uses-permission android:name="android.permission.INTERNET" />' + text[root_end:]
+          if 'com.google.android.gms.ads.APPLICATION_ID' not in text:
+              app_start = text.index('<application')
+              app_end = text.index('>', app_start) + 1
+              metadata = (
+                  '\n        <meta-data\n'
+                  '            android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+                  '            android:value="ca-app-pub-3940256099942544~3347511713" />'
+              )
+              text = text[:app_end] + metadata + text[app_end:]
+          manifest.write_text(text)
+          PY
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch release APK and verify startup
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            mkdir -p smoke-output
+            adb logcat -c
+            adb install -r build/app/outputs/flutter-apk/app-release.apk
+            adb shell am force-stop com.blockiva.blockiva
+            adb shell am start -W -n com.blockiva.blockiva/.MainActivity | tee smoke-output/am-start.txt
+            sleep 12
+            adb logcat -d > smoke-output/logcat.txt
+            adb exec-out screencap -p > smoke-output/release-startup.png || true
+
+            PID="$(adb shell pidof com.blockiva.blockiva | tr -d '\r' || true)"
+            echo "PID=$PID" | tee smoke-output/process.txt
+            adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity' | tee smoke-output/activity.txt || true
+
+            if [ -z "$PID" ]; then
+              echo 'Release process exited after launch.'
+              grep -E -i 'FATAL EXCEPTION|AndroidRuntime|Process: com.blockiva.blockiva|flutter|E/.*blockiva|Exception|Error' smoke-output/logcat.txt | tail -n 300 || true
+              exit 1
+            fi
+
+      - name: Upload smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blockiva-release-startup-diagnostics
+          path: smoke-output/*
+          retention-days: 7
