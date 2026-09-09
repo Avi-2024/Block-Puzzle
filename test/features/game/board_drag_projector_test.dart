@@ -33,7 +33,7 @@ void main() {
     // 40px cells. A 2x2 piece at row 3 / col 2 has center (120, 160).
     // Finger sits at the V2 lift distance below that visual center.
     final BoardDropOrigin? origin = BoardDragProjector.project(
-      pointerInBoard: const Offset(120, 248),
+      pointerInBoard: const Offset(120, 252),
       boardSize: board,
       piece: square,
     );
@@ -53,7 +53,17 @@ void main() {
 
   test('keeps tall piece preview stable near the top edge', () {
     final BoardDropOrigin? origin = BoardDragProjector.project(
-      pointerInBoard: const Offset(20, -27),
+      pointerInBoard: const Offset(20, -31),
+      boardSize: board,
+      piece: verticalLine,
+    );
+
+    expect(origin, const BoardDropOrigin(row: 0, col: 0));
+  });
+
+  test('keeps large piece preview stable closer to top edge', () {
+    final BoardDropOrigin? origin = BoardDragProjector.project(
+      pointerInBoard: const Offset(20, -34),
       boardSize: board,
       piece: verticalLine,
     );
