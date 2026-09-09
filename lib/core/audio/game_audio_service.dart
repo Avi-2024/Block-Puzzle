@@ -16,25 +16,25 @@ class GameAudioService {
   final AudioPlayer _comboPlayer = AudioPlayer();
 
   late final Uint8List _placementBytes = _synthesizeTone(
-    durationMs: 74,
-    frequencies: const <double>[520, 780],
-    sweepHz: 35,
-    volume: .34,
+    durationMs: 82,
+    frequencies: const <double>[540, 720, 980],
+    sweepHz: 68,
+    volume: .32,
     sparkle: .13,
   );
   late final Uint8List _clearBytes = _synthesizeTone(
-    durationMs: 190,
-    frequencies: const <double>[620, 920, 1240, 1560],
-    sweepHz: 280,
-    volume: .36,
-    sparkle: .18,
+    durationMs: 210,
+    frequencies: const <double>[640, 920, 1220, 1640],
+    sweepHz: 330,
+    volume: .35,
+    sparkle: .22,
   );
   late final Uint8List _comboBytes = _synthesizeTone(
-    durationMs: 265,
-    frequencies: const <double>[680, 1010, 1320, 1700],
-    sweepHz: 480,
-    volume: .38,
-    sparkle: .24,
+    durationMs: 305,
+    frequencies: const <double>[660, 980, 1320, 1760, 2120],
+    sweepHz: 560,
+    volume: .36,
+    sparkle: .30,
   );
 
   bool enabled = true;
@@ -131,8 +131,8 @@ class GameAudioService {
 
     for (var index = 0; index < sampleCount; index++) {
       final double progress = index / sampleCount;
-      final double attack = math.min(1, progress / .045);
-      final double release = math.min(1, (1 - progress) / .34);
+      final double attack = math.min(1, progress / .040);
+      final double release = math.min(1, (1 - progress) / .38);
       final double envelope = math.min(attack, release);
       final double sparkleEnvelope = (1 - progress) * sparkle;
       final double seconds = index / sampleRate;
