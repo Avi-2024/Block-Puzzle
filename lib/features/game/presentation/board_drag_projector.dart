@@ -28,17 +28,20 @@ class BoardDropOrigin {
 abstract final class BoardDragProjector {
   /// Keeps the lifted piece visible above the player's finger on Android.
   ///
-  /// The value is intentionally a little higher than the original prototype
-  /// offset, because the V2 tiles are glossier/chunkier and need more breathing
-  /// room while dragging.
-  static const double fingerLift = 84;
+  /// The V2 tiles are glossy and chunky, so the lift gives the player a clearer
+  /// sightline to the target cells while dragging.
+  static const double fingerLift = 88;
 
   /// Allows the piece to snap at the board edge before disappearing.
   ///
   /// Without this tolerance, preview can flicker when the user approaches the
   /// first/last row or column. The final origin is still clamped to the board,
   /// so this improves feel without weakening placement validation.
-  static const double edgeSnapSlackCells = .72;
+  static const double edgeSnapSlackCells = .84;
+
+  /// Large pieces need a little extra forgiveness near edges because their
+  /// visual footprint exits the board faster than small pieces.
+  static const double largePieceSlackBoostCells = .08;
 
   static BoardDropOrigin? project({
     required Offset pointerInBoard,
@@ -54,7 +57,7 @@ abstract final class BoardDragProjector {
     final double pieceHeight = piece.height * cellSize;
     final double pieceLeft = pieceCenter.dx - (pieceWidth / 2);
     final double pieceTop = pieceCenter.dy - (pieceHeight / 2);
-    final double slack = cellSize * edgeSnapSlackCells;
+    final double slack = _edgeSlack(piece, cellSize);
 
     if (pieceLeft > boardSize.width + slack ||
         pieceTop > boardSize.height + slack ||
@@ -69,6 +72,13 @@ abstract final class BoardDragProjector {
     final int row = math.max(0, math.min(maxRow, (pieceTop / cellSize).round()));
 
     return BoardDropOrigin(row: row, col: col);
+  }
+
+  static double _edgeSlack(BlockPiece piece, double cellSize) {
+    final int span = math.max(piece.width, piece.height);
+    final double largePieceBoost =
+        math.max(0, span - 3) * largePieceSlackBoostCells;
+    return cellSize * (edgeSnapSlackCells + largePieceBoost);
   }
 
   static double feedbackCellSize(Size boardSize) =>
