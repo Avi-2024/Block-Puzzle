@@ -168,8 +168,10 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
     _drawTopHudGlassAnchors(canvas, size);
     _drawHeroScoreAura(canvas, size, shortSide);
     _drawBoardHeroFrame(canvas, size, shortSide);
+    _drawBoardTargetLattice(canvas, size, shortSide);
     _drawClearEnergyPreview(canvas, size, shortSide);
     _drawTrayPedestal(canvas, size);
+    _drawTrayLiftCues(canvas, size);
     _drawBottomCrystalGlow(canvas, size, shortSide);
     _drawEdgeVignette(canvas, size);
   }
@@ -387,6 +389,53 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
     );
   }
 
+  void _drawBoardTargetLattice(Canvas canvas, Size size, double shortSide) {
+    final Rect boardRect = _boardRect(size, shortSide).deflate(9);
+    final double cellSize = boardRect.width / 8;
+    final Paint railPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .72
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0x00FFFFFF),
+          Color(0x1DFFFFFF),
+          Color(0x0920D8FF),
+          Color(0x00FFFFFF),
+        ],
+        stops: <double>[0, .18, .74, 1],
+      ).createShader(boardRect);
+
+    for (var i = 1; i < 8; i++) {
+      final double offset = cellSize * i;
+      canvas.drawLine(
+        Offset(boardRect.left + offset, boardRect.top),
+        Offset(boardRect.left + offset, boardRect.bottom),
+        railPaint,
+      );
+      canvas.drawLine(
+        Offset(boardRect.left, boardRect.top + offset),
+        Offset(boardRect.right, boardRect.top + offset),
+        railPaint,
+      );
+    }
+
+    final Paint nodePaint = Paint()..style = PaintingStyle.fill;
+    for (var row = 1; row < 8; row += 2) {
+      for (var col = 1; col < 8; col += 2) {
+        final bool accentNode = (row + col).isEven;
+        nodePaint.color = (accentNode ? Colors.white : const Color(0xFF20D8FF))
+            .withValues(alpha: accentNode ? .070 : .045);
+        canvas.drawCircle(
+          Offset(boardRect.left + cellSize * col, boardRect.top + cellSize * row),
+          accentNode ? 1.55 : 1.15,
+          nodePaint,
+        );
+      }
+    }
+  }
+
   void _drawClearEnergyPreview(Canvas canvas, Size size, double shortSide) {
     final Rect boardRect = _boardRect(size, shortSide);
     final double y = boardRect.top + boardRect.height * .57;
@@ -512,6 +561,63 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
       );
       canvas.drawRRect(slotShape, slotPaint);
       canvas.drawRRect(slotShape, slotStrokePaint);
+    }
+  }
+
+  void _drawTrayLiftCues(Canvas canvas, Size size) {
+    final Rect trayRect = Rect.fromLTWH(
+      18,
+      size.height * .785,
+      math.max(0, size.width - 36),
+      math.min(138, size.height * .15),
+    );
+    final double slotGap = 12;
+    final double slotWidth = (trayRect.width - (slotGap * 4)) / 3;
+    final Paint shadowPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: <Color>[
+          Color(0x34000000),
+          Color(0x11000000),
+          Color(0x00000000),
+        ],
+      ).createShader(trayRect);
+    final Paint liftPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x0020D8FF),
+          Color(0x5520D8FF),
+          Color(0x44FFFFFF),
+          Color(0x0020D8FF),
+        ],
+        stops: <double>[0, .28, .58, 1],
+      ).createShader(trayRect);
+
+    for (var i = 0; i < 3; i++) {
+      final Rect slot = Rect.fromLTWH(
+        trayRect.left + slotGap + (slotWidth + slotGap) * i,
+        trayRect.top + 18,
+        slotWidth,
+        math.max(0, trayRect.height - 34),
+      );
+      final Rect shadow = Rect.fromCenter(
+        center: Offset(slot.center.dx, slot.bottom - 8),
+        width: slot.width * .72,
+        height: 16,
+      );
+      canvas.drawOval(shadow, shadowPaint);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(slot.center.dx, slot.top + 2),
+            width: slot.width * .68,
+            height: 2.8,
+          ),
+          const Radius.circular(99),
+        ),
+        liftPaint,
+      );
     }
   }
 
