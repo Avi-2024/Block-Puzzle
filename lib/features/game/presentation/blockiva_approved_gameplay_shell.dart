@@ -166,7 +166,9 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
     final double shortSide = math.min(size.width, size.height);
     _drawLogoGlowShelf(canvas, size);
     _drawTopHudGlassAnchors(canvas, size);
+    _drawHudButtonRings(canvas, size);
     _drawHeroScoreAura(canvas, size, shortSide);
+    _drawComboBadgeStage(canvas, size);
     _drawBoardHeroFrame(canvas, size, shortSide);
     _drawBoardTargetLattice(canvas, size, shortSide);
     _drawClearEnergyPreview(canvas, size, shortSide);
@@ -273,6 +275,50 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
     canvas.drawCircle(rightPill.center, 46, trophyGlowPaint);
   }
 
+  void _drawHudButtonRings(Canvas canvas, Size size) {
+    final double centerY = math.max(28, size.height * .056);
+    final List<Offset> centers = <Offset>[
+      Offset(36, centerY),
+      Offset(size.width - 36, centerY),
+    ];
+    final Paint haloPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          Colors.white.withValues(alpha: .14),
+          const Color(0xFF20D8FF).withValues(alpha: .09),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: Offset(size.width * .5, centerY), radius: 78));
+    final Paint ringPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.45;
+    final Paint shinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.1
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: .34);
+
+    for (final Offset center in centers) {
+      canvas.drawCircle(center, 31, haloPaint);
+      ringPaint.shader = SweepGradient(
+        colors: <Color>[
+          Colors.white.withValues(alpha: .62),
+          const Color(0xFF20D8FF).withValues(alpha: .52),
+          AppTheme.primary.withValues(alpha: .22),
+          Colors.white.withValues(alpha: .62),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: 23));
+      canvas.drawCircle(center, 23.5, ringPaint);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: 18.5),
+        -math.pi * .76,
+        math.pi * .32,
+        false,
+        shinePaint,
+      );
+    }
+  }
+
   void _drawHeroScoreAura(Canvas canvas, Size size, double shortSide) {
     final Offset scoreCenter = Offset(size.width * .50, size.height * .19);
     final Rect scoreRect = Rect.fromCenter(
@@ -322,6 +368,59 @@ class _ApprovedGameplayOverlayPainter extends CustomPainter {
         radius: 44,
       ));
     canvas.drawCircle(scoreCenter.translate(0, -42), 44, crownGlowPaint);
+  }
+
+  void _drawComboBadgeStage(Canvas canvas, Size size) {
+    final Rect badgeRect = Rect.fromCenter(
+      center: Offset(size.width * .50, math.max(104, size.height * .145)),
+      width: math.min(size.width * .54, 230),
+      height: 42,
+    );
+    final RRect badge = RRect.fromRectAndRadius(badgeRect, const Radius.circular(99));
+    final Paint glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          AppTheme.warning.withValues(alpha: .16),
+          AppTheme.accent.withValues(alpha: .08),
+          Colors.transparent,
+        ],
+      ).createShader(badgeRect.inflate(44));
+    final Paint glassPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Color(0x16FFFFFF),
+          Color(0x091DDCFF),
+          Color(0x00000000),
+        ],
+      ).createShader(badgeRect);
+    final Paint rimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..shader = const LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          Color(0x00FFFFFF),
+          Color(0x55FFE04F),
+          Color(0x33FFFFFF),
+          Color(0x00FFFFFF),
+        ],
+      ).createShader(badgeRect);
+
+    canvas.drawRRect(badge.inflate(20), glowPaint);
+    canvas.drawRRect(badge, glassPaint);
+    canvas.drawRRect(badge, rimPaint);
+
+    final Paint sparklePaint = Paint()..style = PaintingStyle.fill;
+    for (var i = 0; i < 9; i++) {
+      final double progress = i / 8;
+      final double x = badgeRect.left + badgeRect.width * progress;
+      final double y = badgeRect.center.dy + math.sin(i * 1.3) * 12;
+      sparklePaint.color = Colors.white.withValues(alpha: i.isEven ? .20 : .10);
+      canvas.drawCircle(Offset(x, y), i.isEven ? 1.35 : .95, sparklePaint);
+    }
   }
 
   void _drawBoardHeroFrame(Canvas canvas, Size size, double shortSide) {
