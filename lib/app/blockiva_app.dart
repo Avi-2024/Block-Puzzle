@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/ads/monetization_bootstrap.dart';
 import '../core/theme/app_theme.dart';
 import '../features/game/presentation/blockiva_approved_gameplay_shell.dart';
+import '../features/game/presentation/blockiva_gameplay_motion_layer.dart';
 import '../features/game/presentation/unified_game_screen.dart';
 import '../features/progression/presentation/progression_bootstrap.dart';
 
@@ -18,7 +19,9 @@ class BlockivaApp extends StatelessWidget {
       home: const ProgressionBootstrap(
         child: MonetizationBootstrap(
           child: BlockivaApprovedGameplayShell(
-            child: UnifiedGameScreen.endless(),
+            child: BlockivaGameplayMotionLayer(
+              child: UnifiedGameScreen.endless(),
+            ),
           ),
         ),
       ),
