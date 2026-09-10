@@ -15,30 +15,30 @@ abstract final class AppTheme {
   static const Color warning = Color(0xFFFFDA64);
   static const Color danger = Color(0xFFFF5573);
 
-  // Game canvas V2 tokens. These values are tuned for a casual puzzle game:
-  // saturated enough to feel premium, but dark enough to keep the 8×8 board
-  // and score readable on low/mid brightness Android devices.
-  static const Color gameBackgroundTop = Color(0xFF3B55E2);
-  static const Color gameBackgroundMid = Color(0xFF193B9D);
-  static const Color gameBackgroundBottom = Color(0xFF04122D);
-  static const Color gameBoard = Color(0xFF07327B);
-  static const Color gameBoardDeep = Color(0xFF020B28);
-  static const Color gameCell = Color(0xFF0B3B8E);
-  static const Color gameCellEdge = Color(0xFF7AD2FF);
-  static const Color gameText = Color(0xFFF9FCFF);
-  static const Color gameTextMuted = Color(0xFFD2E4FF);
-  static const Color gameOverlay = Color(0xD9071430);
+  // Approved gameplay direction: Blockiva should feel board-first, glossy,
+  // colorful and relaxed. These tokens deliberately keep the screen close to
+  // the approved reference while staying original and readable on Android.
+  static const Color gameBackgroundTop = Color(0xFF142CC8);
+  static const Color gameBackgroundMid = Color(0xFF35218A);
+  static const Color gameBackgroundBottom = Color(0xFF061032);
+  static const Color gameBoard = Color(0xFF071A54);
+  static const Color gameBoardDeep = Color(0xFF020819);
+  static const Color gameCell = Color(0xFF102761);
+  static const Color gameCellEdge = Color(0xFF3D82FF);
+  static const Color gameText = Color(0xFFFFFFFF);
+  static const Color gameTextMuted = Color(0xFFD9E7FF);
+  static const Color gameOverlay = Color(0xDC071330);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF32B6FF), // electric blue
-    Color(0xFF21F4FF), // cyan
-    Color(0xFF3BFF87), // neon green
-    Color(0xFFFFE04F), // gold
-    Color(0xFFFF9D35), // orange
-    Color(0xFFFF456F), // coral/red
-    Color(0xFFB76BFF), // purple
+    Color(0xFF17A8FF), // blue
+    Color(0xFF19DFFF), // cyan
+    Color(0xFF31E85F), // green
+    Color(0xFFFFD735), // yellow
+    Color(0xFFFF861E), // orange
+    Color(0xFFFF334A), // red
+    Color(0xFF9E45FF), // purple
   ];
 
   static LinearGradient pieceGradient(int index) {
@@ -47,13 +47,13 @@ abstract final class AppTheme {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .78)!,
-        Color.lerp(base, Colors.white, .34)!,
+        Color.lerp(base, Colors.white, .82)!,
+        Color.lerp(base, Colors.white, .38)!,
         base,
-        Color.lerp(base, Colors.black, .24)!,
-        Color.lerp(base, Colors.black, .52)!,
+        Color.lerp(base, Colors.black, .18)!,
+        Color.lerp(base, Colors.black, .50)!,
       ],
-      stops: const <double>[0, .15, .50, .76, 1],
+      stops: const <double>[0, .16, .46, .76, 1],
     );
   }
 
@@ -65,19 +65,19 @@ abstract final class AppTheme {
           gameBackgroundMid,
           gameBackgroundBottom,
         ],
-        stops: <double>[0, .44, 1],
+        stops: <double>[0, .50, 1],
       );
 
   static LinearGradient get boardGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          Color(0xFF1550A8),
+          Color(0xFF123B93),
           gameBoard,
-          Color(0xFF061E55),
+          Color(0xFF061944),
           gameBoardDeep,
         ],
-        stops: <double>[0, .36, .72, 1],
+        stops: <double>[0, .34, .74, 1],
       );
 
   static ThemeData get bright => ThemeData(
