@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/capture_store_screenshots.yml'
       - 'lib/**'
+      - 'tool/capture_android_ui.sh'
 
 jobs:
   screenshots:
@@ -64,6 +65,9 @@ jobs:
       - name: Build debug APK
         run: flutter build apk --debug
 
+      - name: Release build daemon memory before emulator
+        run: ./android/gradlew -p android --stop
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -76,29 +80,11 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_6
+          ram-size: 2048M
+          cores: 2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: |
-            mkdir -p store/indus/screenshots
-            adb shell wm size 1080x1920
-            adb shell wm density 420
-            adb install -r build/app/outputs/flutter-apk/app-debug.apk
-            adb shell am force-stop com.blockiva.blockiva
-            adb shell am start -n com.blockiva.blockiva/.MainActivity
-
-            # Cold Flutter startup can take a few seconds in CI. Capture only
-            # after the game canvas is definitely rendered.
-            sleep 14
-            adb exec-out screencap -p > store/indus/screenshots/01-gameplay.png
-
-            # Exercise real drag/drop at the forced 1080x1920 store size.
-            adb shell input swipe 200 1660 220 1230 850 || true
-            sleep 2
-            adb shell input swipe 540 1660 520 1120 850 || true
-            sleep 2
-            adb shell input swipe 870 1660 800 1260 850 || true
-            sleep 3
-            adb exec-out screencap -p > store/indus/screenshots/02-mid-game.png
+          script: bash tool/capture_android_ui.sh
 
       - name: Verify screenshot dimensions
         shell: bash
@@ -107,20 +93,27 @@ jobs:
           import struct
           from pathlib import Path
           paths = sorted(Path('store/indus/screenshots').glob('*.png'))
-          if len(paths) != 2:
-              raise SystemExit('Expected both startup and mid-game screenshots')
+          expected = {
+              '01-gameplay.png': (1080, 1920),
+              '02-mid-game.png': (1080, 1920),
+              '03-small-screen.png': (720, 1280),
+          }
+          if {path.name for path in paths} != set(expected):
+              raise SystemExit('Expected startup, mid-game and small-screen captures')
           for path in paths:
               with path.open('rb') as f:
                   f.read(16)
                   width, height = struct.unpack('>II', f.read(8))
               print(path, width, height)
-              if (width, height) != (1080, 1920):
+              if (width, height) != expected[path.name]:
                   raise SystemExit(f'Unexpected screenshot size: {path} {width}x{height}')
           PY
 
-      - name: Upload screenshots
+      - name: Upload screenshots and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: blockiva-indus-screenshots-1080x1920
-          path: store/indus/screenshots/*.png
+          name: blockiva-android-visual-qa
+          path: store/indus/screenshots/
+          if-no-files-found: warn
           retention-days: 30
