@@ -63,9 +63,22 @@ this checkout; claims of a visual match require newly captured app evidence.
   and preservation of untouched cells (no gravity).
 - Run `dart run tool/verify_game_rules.dart` to repeat that check. This is rule
   correctness coverage, not generator fairness or an FPS benchmark.
-- Commit `671b167` passed CI analysis, tests and the seeded rules check. APK
-  build and emulator capture were still running at this checkpoint. Additional
-  pointer-cancellation protection and normal-piece sizing require a fresh run.
+- Commit `cd2400c` passed [Flutter CI run 34988544352](https://github.com/Avi-2024/Block-Puzzle/actions/runs/34988544352):
+  analyzer clean, 44 tests, the seeded rule oracle, and debug APK build. This
+  includes pointer-cancellation protection and responsive normal-piece sizing.
+- [Android capture run 34988544446](https://github.com/Avi-2024/Block-Puzzle/actions/runs/34988544446)
+  passed on an API 35 emulator. Inspected startup and mid-game 1080x1920 PNGs
+  and a 720x1280 small-screen PNG. Two drag placements appeared on the board
+  and score advanced from 0 to 30; HUD, board and remaining tray piece fit
+  both captured sizes without the former ghost overlay. Captured logcat had
+  no FATAL EXCEPTION, E/flutter, RenderFlex overflow or Unhandled Exception.
+- Visual issues remain: diagonal seams appear on glossy blocks in emulator
+  captures; their cause has not been established. System bars and tray/board
+  styling also need the planned component-level design pass. These captures
+  validate a basic interaction flow, not final visual acceptance or device FPS.
+- Downloaded APK artifact ZIP matched GitHub SHA256
+  `e2d901b7d7e37b4800a1f5cd8691b48d811d50191045b6bfea8a2e10bed3de00`
+  and passed ZIP integrity validation before extracting the installable APK.
 - Local Flutter bootstrap was blocked by automatic approval review when the SDK
   attempted cloud metadata access. Local Flutter processes were stopped; existing
   GitHub Actions runners perform Flutter validation instead.
