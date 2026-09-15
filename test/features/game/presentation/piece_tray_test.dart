@@ -137,4 +137,40 @@ void main() {
     expect(ends.last, same(vertical));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('system pointer cancellation never commits a drop', (tester) async {
+    var cancellations = 0;
+    final ends = <BlockPiece>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: Center(child: SizedBox(
+        width: 332,
+        child: PieceTray(
+          pieces: const <BlockPiece?>[corner, null, null],
+          enabled: true,
+          feedbackCellSize: () => 40,
+          onDragStarted: () {},
+          onDragUpdate: (_, _) {},
+          onDragEnded: ends.add,
+          onDragCancelled: () => cancellations++,
+        ),
+      ))),
+    ));
+    // Small pieces retain their normal size rather than reserving room for a
+    // five-cell shape that is not in this tray.
+    expect(tester.getSize(find.byType(PieceView).first), const Size(50, 50));
+    final piece = find.byType(Draggable<BlockPiece>).first;
+    final gesture = await tester.startGesture(tester.getCenter(piece));
+    await gesture.moveBy(const Offset(0, -50));
+    await tester.pump();
+    await gesture.cancel();
+    await tester.pumpAndSettle();
+    expect(cancellations, 1);
+    expect(ends, isEmpty);
+    expect(find.byWidgetPredicate((widget) =>
+      widget is PieceView && widget.elevated), findsNothing);
+    await tester.drag(piece, const Offset(0, -50));
+    await tester.pumpAndSettle();
+    expect(ends, <BlockPiece>[corner]);
+    expect(tester.takeException(), isNull);
+  });
 }

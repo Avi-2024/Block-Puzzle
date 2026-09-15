@@ -410,6 +410,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                       onDragStarted: () => HapticFeedback.selectionClick(),
                       onDragUpdate: _updateDragPreview,
                       onDragEnded: _finishDrag,
+                      onDragCancelled: () => _setPreview(null),
                     ),
                   ],
                 ),

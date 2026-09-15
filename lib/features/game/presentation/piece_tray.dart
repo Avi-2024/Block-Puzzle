@@ -15,6 +15,7 @@ class PieceTray extends StatefulWidget {
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnded,
+    this.onDragCancelled,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class PieceTray extends StatefulWidget {
   // Read after layout, when the feedback is built, including on the first move.
   final double Function() feedbackCellSize;
   final VoidCallback onDragStarted;
+  final VoidCallback? onDragCancelled;
   final void Function(BlockPiece piece, Offset globalPointer) onDragUpdate;
   final void Function(BlockPiece piece) onDragEnded;
 
@@ -32,33 +34,60 @@ class PieceTray extends StatefulWidget {
 
 class _PieceTrayState extends State<PieceTray> {
   BlockPiece? _activePiece;
+  final Map<BlockPiece, int> _pointers = <BlockPiece, int>{};
+  int? _activePointer;
 
   void _start(BlockPiece piece) {
     if (_activePiece != null || !widget.enabled) return;
-    setState(() => _activePiece = piece);
+    setState(() {
+      _activePiece = piece;
+      _activePointer = _pointers[piece];
+    });
     widget.onDragStarted();
   }
 
   void _end(BlockPiece piece) {
     if (!identical(_activePiece, piece)) return;
-    setState(() => _activePiece = null);
+    setState(() {
+      _activePiece = null;
+      _activePointer = null;
+      _pointers.remove(piece);
+    });
     if (widget.enabled) widget.onDragEnded(piece);
+  }
+
+  void _cancel(PointerCancelEvent event) {
+    if (event.pointer != _activePointer) return;
+    setState(() {
+      _pointers.remove(_activePiece);
+      _activePiece = null;
+      _activePointer = null;
+    });
+    widget.onDragCancelled?.call();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Listener(
+      onPointerCancel: _cancel,
+      child: SizedBox(
       height: 116,
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          // Reserve space for every 5-cell shape in both directions. Uniform
-          // cells keep the three pieces comparable on narrow phones.
+          // Keep normal pieces large, shrinking a batch only when one of its
+          // actual shapes needs more room. Use one cell size across the tray.
+          final int widthCells = widget.pieces.whereType<BlockPiece>().fold<int>(
+            1, (value, piece) => math.max(value, piece.width),
+          );
+          final int heightCells = widget.pieces.whereType<BlockPiece>().fold<int>(
+            1, (value, piece) => math.max(value, piece.height),
+          );
           final double cellSize = math
               .min(
                 25,
                 math.min(
-                  (constraints.maxWidth / 3 - 12) / 5,
-                  (constraints.maxHeight - 12) / 5,
+                  (constraints.maxWidth / 3 - 12) / widthCells,
+                  (constraints.maxHeight - 12) / heightCells,
                 ),
               )
               .clamp(1.0, 25.0).toDouble();
@@ -71,7 +100,11 @@ class _PieceTrayState extends State<PieceTray> {
                 child: Center(
                   child: piece == null
                       ? const SizedBox.shrink()
-                      : Draggable<BlockPiece>(
+                      : Listener(
+                          onPointerDown: (PointerDownEvent event) {
+                            if (_activePiece == null) _pointers[piece] = event.pointer;
+                          },
+                          child: Draggable<BlockPiece>(
                           key: ObjectKey(piece),
                           data: piece,
                           rootOverlay: true,
@@ -96,6 +129,9 @@ class _PieceTrayState extends State<PieceTray> {
                           onDragEnd: (_) => _end(piece),
                           feedback: Builder(
                             builder: (BuildContext context) {
+                              if (!identical(_activePiece, piece)) {
+                                return const SizedBox.shrink();
+                              }
                               final double size = widget.feedbackCellSize();
                               return Material(
                                 color: Colors.transparent,
@@ -124,11 +160,13 @@ class _PieceTrayState extends State<PieceTray> {
                             child: PieceView(piece: piece, cellSize: cellSize),
                           ),
                         ),
+                      ),
                 ),
               );
             }),
           );
         },
+      ),
       ),
     );
   }

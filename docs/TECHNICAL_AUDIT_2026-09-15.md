@@ -31,7 +31,8 @@ No gravity is applied.
 | --- | --- | --- |
 | P0 | `placePiece` called engine.place before checking tray membership; used/foreign/stale pieces could mutate board and score. | Validate live object ownership before any mutation; regression tests. |
 | P0 | Per-slot Draggable limits permitted simultaneous drags while the screen shared one preview. | One active piece across tray; callbacks validate ownership; two-pointer test. |
-| P0 | Tray fixed at 116 high, pieces used 25px cells: a v5 needs 125px and an h5 can exceed narrow slot width. | Uniform responsive cell size constrained by both axes; test 292/332/402px trays. |
+| P0 | Flutter calls drag-end even on PointerCancel; a system-cancelled gesture could commit the last valid preview. | Track the owning pointer and clear preview before the drag-end callback; cancellation regression test. |
+| P0 | Tray fixed at 116 high, pieces used 25px cells: a v5 needs 125px and an h5 can exceed narrow slot width. | Uniform responsive cell size constrained by actual tray shapes and both axes; test 292/332/402px trays. |
 | P0 | Feedback size was read while building before board layout, falling back to 38px on the first drag. | Read board measurement when feedback is built; test first-drag geometry. |
 | P0 | Smart generator requirements are not implemented: current generator only weights by moves played and does not inspect board, congestion, score or session duration. | Pending configurable board-aware generator plus difficulty/fairness simulations. Preserve separate deterministic daily sequence. |
 | P0 | 60 FPS, pause/resume and long-session behavior lack measured Android evidence. | Pending real-device profile; do not infer FPS from unit tests. |
@@ -62,6 +63,10 @@ this checkout; claims of a visual match require newly captured app evidence.
   and preservation of untouched cells (no gravity).
 - Run `dart run tool/verify_game_rules.dart` to repeat that check. This is rule
   correctness coverage, not generator fairness or an FPS benchmark.
-- Targeted controller/widget regressions, full analysis/tests and rendered app
-  preview must be recorded with the fix commit before calling it verified.
+- Commit `671b167` passed CI analysis, tests and the seeded rules check. APK
+  build and emulator capture were still running at this checkpoint. Additional
+  pointer-cancellation protection and normal-piece sizing require a fresh run.
+- Local Flutter bootstrap was blocked by automatic approval review when the SDK
+  attempted cloud metadata access. Local Flutter processes were stopped; existing
+  GitHub Actions runners perform Flutter validation instead.
 - Release APK/AAB remains gated on real Android QA and release validation.
