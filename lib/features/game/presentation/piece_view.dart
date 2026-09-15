@@ -8,6 +8,7 @@ class PieceView extends StatelessWidget {
     required this.piece,
     required this.cellSize,
     this.elevated = false,
+    super.key,
   });
 
   final BlockPiece piece;
@@ -57,7 +58,7 @@ class PieceView extends StatelessWidget {
 }
 
 class TileGloss extends StatelessWidget {
-  const TileGloss();
+  const TileGloss({super.key});
 
   @override
   Widget build(BuildContext context) {

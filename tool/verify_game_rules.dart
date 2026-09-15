@@ -1,9 +1,9 @@
 import 'dart:math';
 
-import '../lib/features/game/domain/block_piece.dart';
-import '../lib/features/game/domain/game_engine.dart';
-import '../lib/features/game/domain/game_snapshot.dart';
-import '../lib/features/game/domain/piece_catalog.dart';
+import 'package:blockiva/features/game/domain/block_piece.dart';
+import 'package:blockiva/features/game/domain/game_engine.dart';
+import 'package:blockiva/features/game/domain/game_snapshot.dart';
+import 'package:blockiva/features/game/domain/piece_catalog.dart';
 
 // Independent board oracle. Run with: dart run tool/verify_game_rules.dart
 // This checks correctness, not device FPS or human-player difficulty.
