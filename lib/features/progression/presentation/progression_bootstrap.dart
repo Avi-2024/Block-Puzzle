@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../daily_challenge/domain/daily_challenge_definition.dart';
-import '../../game/presentation/game_canvas_v2_shell.dart';
 import '../../game/presentation/unified_game_screen.dart';
 import '../application/progression_runtime.dart';
 import '../domain/game_theme_definition.dart';
@@ -40,13 +39,12 @@ class _ProgressionBootstrapState extends State<ProgressionBootstrap> {
   }
 
   void _openDailyChallenge() {
-    final DailyChallengeDefinition challenge =
-        DailyChallengeDefinition.forDate(DateTime.now());
+    final DailyChallengeDefinition challenge = DailyChallengeDefinition.forDate(
+      DateTime.now(),
+    );
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => GameCanvasV2Shell(
-          child: UnifiedGameScreen.daily(challenge: challenge),
-        ),
+        builder: (_) => UnifiedGameScreen.daily(challenge: challenge),
       ),
     );
   }
@@ -70,10 +68,12 @@ class _ProgressionBootstrapState extends State<ProgressionBootstrap> {
     }
 
     final GameThemeDefinition theme = _runtime.controller.selectedTheme;
-    final DailyChallengeDefinition challenge =
-        DailyChallengeDefinition.forDate(DateTime.now());
-    final bool challengeDone = _runtime.controller
-        .isDailyChallengeCompleted(challenge.dayKey);
+    final DailyChallengeDefinition challenge = DailyChallengeDefinition.forDate(
+      DateTime.now(),
+    );
+    final bool challengeDone = _runtime.controller.isDailyChallengeCompleted(
+      challenge.dayKey,
+    );
     final Widget themedGame = theme.id == 'classic'
         ? widget.child
         : ColorFiltered(

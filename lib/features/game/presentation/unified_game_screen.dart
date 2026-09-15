@@ -18,6 +18,8 @@ import '../application/game_session_controller.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
 import 'board_drag_projector.dart';
+import 'piece_tray.dart';
+import 'piece_view.dart';
 
 class UnifiedGameScreen extends StatefulWidget {
   const UnifiedGameScreen.endless({super.key}) : dailyChallenge = null;
@@ -155,6 +157,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
 
   void _setPreview(_PlacementPreview? next) {
     if (!mounted || _preview == next) return;
+    if (next != null && next.valid) {
+      HapticFeedback.selectionClick();
+    }
     setState(() => _preview = next);
   }
 
@@ -189,8 +194,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
       final String label = move.combo > 1
           ? 'COMBO x${move.combo}  +${move.scoreGained}'
           : move.linesCleared > 1
-              ? '${move.linesCleared} LINES  +${move.scoreGained}'
-              : '+${move.scoreGained}';
+          ? '${move.linesCleared} LINES  +${move.scoreGained}'
+          : '+${move.scoreGained}';
       unawaited(_showMoveFeedback(label));
     } else {
       HapticFeedback.selectionClick();
@@ -219,9 +224,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
     if (targetReached && !alreadyCompleted) {
       _dailyRewardGranted = ProgressionRuntime.instance.controller
           .completeDailyChallenge(
-        dayKey: daily.dayKey,
-        rewardCoins: daily.rewardCoins,
-      );
+            dayKey: daily.dayKey,
+            rewardCoins: daily.rewardCoins,
+          );
     }
 
     if (!wasFinished && _dailyFinished && playFeedback) {
@@ -275,8 +280,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
   void _restart() {
     final DailyChallengeDefinition? daily = _daily;
     if (daily != null &&
-        ProgressionRuntime.instance.controller
-            .isDailyChallengeCompleted(daily.dayKey)) {
+        ProgressionRuntime.instance.controller.isDailyChallengeCompleted(
+          daily.dayKey,
+        )) {
       return;
     }
 
@@ -397,10 +403,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _PieceTray(
+                    PieceTray(
                       pieces: _controller.tray,
                       enabled: !_terminal,
-                      feedbackCellSize: _feedbackCellSize,
+                      feedbackCellSize: () => _feedbackCellSize,
                       onDragStarted: () => HapticFeedback.selectionClick(),
                       onDragUpdate: _updateDragPreview,
                       onDragEnded: _finishDrag,
@@ -483,8 +489,8 @@ class _PlacementPreview {
   final bool valid;
 
   bool contains(int row, int col) => piece.cells.any(
-        (cell) => this.row + cell.row == row && this.col + cell.col == col,
-      );
+    (cell) => this.row + cell.row == row && this.col + cell.col == col,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -521,13 +527,13 @@ class _GameHeader extends StatelessWidget {
             icon: daily
                 ? Icons.arrow_back_rounded
                 : soundEnabled
-                    ? Icons.volume_up_rounded
-                    : Icons.volume_off_rounded,
+                ? Icons.volume_up_rounded
+                : Icons.volume_off_rounded,
             tooltip: daily
                 ? 'Back to endless'
                 : soundEnabled
-                    ? 'Mute sound'
-                    : 'Enable sound',
+                ? 'Mute sound'
+                : 'Enable sound',
             onPressed: onLeftAction,
           ),
           Expanded(
@@ -615,7 +621,9 @@ class _ScoreDisplay extends StatelessWidget {
             ),
             const SizedBox(width: 5),
             Text(
-              challenge == null ? '$bestScore' : 'TARGET ${challenge.targetScore}',
+              challenge == null
+                  ? '$bestScore'
+                  : 'TARGET ${challenge.targetScore}',
               style: const TextStyle(
                 color: AppTheme.gameTextMuted,
                 fontSize: 14,
@@ -758,10 +766,10 @@ class _BoardCell extends StatelessWidget {
         color: clearFlash
             ? const Color(0xFFFFEB8A)
             : visualPalette == null
-                ? invalidPreview
-                    ? const Color(0xFF6B3854)
-                    : AppTheme.gameCell
-                : null,
+            ? invalidPreview
+                  ? const Color(0xFF6B3854)
+                  : AppTheme.gameCell
+            : null,
         gradient: clearFlash || visualPalette == null
             ? null
             : AppTheme.pieceGradient(visualPalette),
@@ -770,10 +778,10 @@ class _BoardCell extends StatelessWidget {
           color: clearFlash
               ? Colors.white
               : invalidPreview
-                  ? const Color(0xFFFF8B9B)
-                  : occupied || validPreview
-                      ? Colors.white.withValues(alpha: .20)
-                      : AppTheme.gameCellEdge.withValues(alpha: .65),
+              ? const Color(0xFFFF8B9B)
+              : occupied || validPreview
+              ? Colors.white.withValues(alpha: .20)
+              : AppTheme.gameCellEdge.withValues(alpha: .65),
           width: clearFlash || invalidPreview ? 1.2 : .7,
         ),
       ),
@@ -781,170 +789,8 @@ class _BoardCell extends StatelessWidget {
           ? null
           : Opacity(
               opacity: validPreview && !occupied ? .58 : 1,
-              child: const _TileGloss(),
+              child: const TileGloss(),
             ),
-    );
-  }
-}
-
-class _TileGloss extends StatelessWidget {
-  const _TileGloss();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        Align(
-          alignment: const Alignment(0, -.82),
-          child: FractionallySizedBox(
-            widthFactor: .70,
-            heightFactor: .12,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .34),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: FractionallySizedBox(
-            widthFactor: .82,
-            heightFactor: .11,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PieceTray extends StatelessWidget {
-  const _PieceTray({
-    required this.pieces,
-    required this.enabled,
-    required this.feedbackCellSize,
-    required this.onDragStarted,
-    required this.onDragUpdate,
-    required this.onDragEnded,
-  });
-
-  final List<BlockPiece?> pieces;
-  final bool enabled;
-  final double feedbackCellSize;
-  final VoidCallback onDragStarted;
-  final void Function(BlockPiece piece, Offset globalPointer) onDragUpdate;
-  final void Function(BlockPiece piece) onDragEnded;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 116,
-      child: Row(
-        children: List<Widget>.generate(3, (int index) {
-          final BlockPiece? piece = index < pieces.length ? pieces[index] : null;
-          return Expanded(
-            child: Center(
-              child: piece == null
-                  ? const SizedBox.shrink()
-                  : Draggable<BlockPiece>(
-                      data: piece,
-                      rootOverlay: true,
-                      dragAnchorStrategy: pointerDragAnchorStrategy,
-                      maxSimultaneousDrags: enabled ? 1 : 0,
-                      hitTestBehavior: HitTestBehavior.opaque,
-                      onDragStarted: onDragStarted,
-                      onDragUpdate: (DragUpdateDetails details) {
-                        onDragUpdate(piece, details.globalPosition);
-                      },
-                      onDragEnd: (_) => onDragEnded(piece),
-                      feedback: Material(
-                        color: Colors.transparent,
-                        child: Transform.translate(
-                          offset: Offset(
-                            -(piece.width * feedbackCellSize) / 2,
-                            -(piece.height * feedbackCellSize) / 2 -
-                                BoardDragProjector.fingerLift,
-                          ),
-                          child: _PieceView(
-                            piece: piece,
-                            cellSize: feedbackCellSize,
-                            elevated: true,
-                          ),
-                        ),
-                      ),
-                      childWhenDragging: Opacity(
-                        opacity: .10,
-                        child: _PieceView(piece: piece, cellSize: 25),
-                      ),
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 100),
-                        opacity: enabled ? 1 : .28,
-                        child: _PieceView(piece: piece, cellSize: 25),
-                      ),
-                    ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-class _PieceView extends StatelessWidget {
-  const _PieceView({
-    required this.piece,
-    required this.cellSize,
-    this.elevated = false,
-  });
-
-  final BlockPiece piece;
-  final double cellSize;
-  final bool elevated;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color color = AppTheme.piecePalette[
-      piece.paletteIndex % AppTheme.piecePalette.length
-    ];
-    return SizedBox(
-      width: piece.width * cellSize,
-      height: piece.height * cellSize,
-      child: Stack(
-        children: piece.cells.map((cell) {
-          return Positioned(
-            left: cell.col * cellSize,
-            top: cell.row * cellSize,
-            width: cellSize,
-            height: cellSize,
-            child: Container(
-              margin: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                gradient: AppTheme.pieceGradient(piece.paletteIndex),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: .20),
-                  width: .8,
-                ),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: color.withValues(alpha: elevated ? .42 : .20),
-                    blurRadius: elevated ? 12 : 5,
-                    offset: Offset(0, elevated ? 7 : 3),
-                  ),
-                ],
-              ),
-              child: const _TileGloss(),
-            ),
-          );
-        }).toList(growable: false),
-      ),
     );
   }
 }
@@ -1116,8 +962,8 @@ class _DailyOutcomeOverlay extends StatelessWidget {
       title: success ? 'DAILY COMPLETE!' : 'CHALLENGE OVER',
       subtitle: success
           ? rewardGranted > 0
-              ? '+$rewardGranted coins added'
-              : 'Today’s reward is already secured.'
+                ? '+$rewardGranted coins added'
+                : 'Today’s reward is already secured.'
           : 'Target ${challenge.targetScore} • ${math.min(movesPlayed, challenge.moveLimit)}/${challenge.moveLimit} moves',
       score: score,
       secondary: success

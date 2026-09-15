@@ -23,14 +23,14 @@ class GameSessionController extends ChangeNotifier {
     ProgressionController? progressionController,
     GameEngine? engine,
     PieceGenerator? pieceGenerator,
-  })  : _statsRepository = statsRepository,
-        _sessionRepository =
-            sessionRepository ?? SharedPreferencesGameSessionRepository(),
-        _adService = adService,
-        _progressionController = progressionController ??
-            ProgressionRuntime.instance.controller,
-        engine = engine ?? GameEngine(),
-        _pieceGenerator = pieceGenerator ?? PieceGenerator();
+  }) : _statsRepository = statsRepository,
+       _sessionRepository =
+           sessionRepository ?? SharedPreferencesGameSessionRepository(),
+       _adService = adService,
+       _progressionController =
+           progressionController ?? ProgressionRuntime.instance.controller,
+       engine = engine ?? GameEngine(),
+       _pieceGenerator = pieceGenerator ?? PieceGenerator();
 
   static const int maxRevivesPerGame = 1;
 
@@ -91,14 +91,19 @@ class GameSessionController extends ChangeNotifier {
 
   bool placePiece(BlockPiece piece, int row, int col) {
     if (!initialized || gameOver) return false;
+    // A drag belongs to one live tray instance. Check before touching the
+    // engine: stale callbacks (including callbacks from a previous run) must
+    // never add blocks or score, even if their IDs happen to match.
+    final int trayIndex = tray.indexWhere(
+      (BlockPiece? candidate) => identical(candidate, piece),
+    );
+    if (trayIndex < 0) return false;
+
     final MoveResult result = engine.place(piece, row, col);
     if (!result.accepted) return false;
 
     lastMove = result;
-    final int trayIndex = tray.indexWhere(
-      (BlockPiece? candidate) => candidate?.id == piece.id,
-    );
-    if (trayIndex >= 0) tray[trayIndex] = null;
+    tray[trayIndex] = null;
 
     if (tray.every((BlockPiece? piece) => piece == null)) {
       tray = _newTray();
@@ -138,8 +143,9 @@ class GameSessionController extends ChangeNotifier {
 
   Future<bool> rewardedRevive() async {
     if (!rewardedReviveReady) return false;
-    final bool rewardGranted =
-        await _adService.showRewarded(RewardPlacement.revive);
+    final bool rewardGranted = await _adService.showRewarded(
+      RewardPlacement.revive,
+    );
     if (!rewardGranted) return false;
 
     final GameSnapshot? snapshot = _gameOverSnapshot;

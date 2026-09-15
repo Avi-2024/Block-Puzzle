@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/capture_store_screenshots.yml'
+      - 'lib/**'
 
 jobs:
   screenshots:
@@ -105,7 +106,10 @@ jobs:
           python3 - <<'PY'
           import struct
           from pathlib import Path
-          for path in sorted(Path('store/indus/screenshots').glob('*.png')):
+          paths = sorted(Path('store/indus/screenshots').glob('*.png'))
+          if len(paths) != 2:
+              raise SystemExit('Expected both startup and mid-game screenshots')
+          for path in paths:
               with path.open('rb') as f:
                   f.read(16)
                   width, height = struct.unpack('>II', f.read(8))
