@@ -5,9 +5,9 @@ capture_dir=store/indus/screenshots
 mkdir -p "$capture_dir"
 adb shell wm size 1080x1920
 adb shell wm density 420
-adb install -r build/app/outputs/flutter-apk/app-debug.apk
+adb install -r build/qa/gameplay.apk
 adb logcat -c
-adb logcat -v threadtime > "$capture_dir/android-logcat.txt" 2>&1 &
+adb logcat -v epoch > "$capture_dir/android-logcat.txt" 2>&1 &
 log_pid=$!
 trap 'kill "$log_pid" 2>/dev/null || true' EXIT
 adb shell am force-stop com.blockiva.blockiva
@@ -22,7 +22,13 @@ capture() {
   test -s "$capture_dir/$1"
 }
 
+adb shell cmd media_session volume --stream 3 --set 12
 capture 01-gameplay.png
+# Record the real gameplay with host audio, not a simulated UI video.
+ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 25 -ac 1 -ar 22050 "$capture_dir/gameplay.wav" &
+game_audio_pid=$!
+adb shell screenrecord --size 540x960 --bit-rate 2000000 --time-limit 25 /sdcard/blockiva-gameplay.mp4 &
+game_video_pid=$!
 timeout 15 adb shell input swipe 200 1660 220 1230 850
 sleep 2
 timeout 15 adb shell input swipe 540 1660 520 1120 850
@@ -35,3 +41,21 @@ adb shell wm size 720x1280
 adb shell wm density 360
 sleep 3
 capture 03-small-screen.png
+
+wait "$game_video_pid"
+wait "$game_audio_pid"
+adb pull /sdcard/blockiva-gameplay.mp4 "$capture_dir/gameplay-silent.mp4"
+ffmpeg -y -loglevel error -i "$capture_dir/gameplay-silent.mp4" -i "$capture_dir/gameplay.wav" -c:v copy -c:a aac -shortest "$capture_dir/gameplay.mp4"
+rm "$capture_dir/gameplay-silent.mp4"
+
+# Exercise all production SFX plus mute/unmute with the native Android plugin.
+adb shell am force-stop com.blockiva.blockiva
+adb install -r build/qa/audio-smoke.apk
+adb shell date +%s > "$capture_dir/device-time.txt"
+date +%s.%N > "$capture_dir/audio-recording-start.txt"
+ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 40 -ac 1 -ar 22050 "$capture_dir/audio-smoke.wav" &
+smoke_audio_pid=$!
+adb shell am start -W -n com.blockiva.blockiva/.MainActivity
+wait "$smoke_audio_pid"
+adb logcat -d -v epoch > "$capture_dir/audio-smoke-logcat.txt"
+grep -q 'BLOCKIVA_AUDIO_DONE' "$capture_dir/audio-smoke-logcat.txt"

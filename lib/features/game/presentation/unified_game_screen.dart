@@ -18,6 +18,7 @@ import '../application/game_session_controller.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
 import 'board_drag_projector.dart';
+import 'board_clear_effect.dart';
 import 'piece_tray.dart';
 import 'piece_view.dart';
 
@@ -173,6 +174,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
       return;
     }
     HapticFeedback.lightImpact();
+    unawaited(_audio.playInvalid());
     _setPreview(null);
   }
 
@@ -254,7 +256,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
         _clearedCols = cols.toSet();
       });
     }
-    await Future<void>.delayed(const Duration(milliseconds: 220));
+    await Future<void>.delayed(const Duration(milliseconds: 420));
     if (!mounted || token != _clearFlashToken) return;
     setState(() {
       _clearedRows = <int>{};
@@ -398,6 +400,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                             preview: _preview,
                             clearedRows: _clearedRows,
                             clearedCols: _clearedCols,
+                            clearToken: _clearFlashToken,
                           ),
                         ),
                       ),
@@ -407,7 +410,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                       pieces: _controller.tray,
                       enabled: !_terminal,
                       feedbackCellSize: () => _feedbackCellSize,
-                      onDragStarted: () => HapticFeedback.selectionClick(),
+                      onDragStarted: () {
+                        HapticFeedback.selectionClick();
+                        unawaited(_audio.playPickup());
+                      },
                       onDragUpdate: _updateDragPreview,
                       onDragEnded: _finishDrag,
                       onDragCancelled: () => _setPreview(null),
@@ -421,7 +427,13 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                 right: 0,
                 child: IgnorePointer(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 160),
+                    duration: const Duration(milliseconds: 180),
+                    transitionBuilder: (Widget child, Animation<double> animation) =>
+                        FadeTransition(opacity: animation, child: ScaleTransition(
+                          scale: Tween<double>(begin: .8, end: 1).animate(
+                            CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+                          ), child: child,
+                        )),
                     child: _moveFeedback == null
                         ? const SizedBox.shrink()
                         : Center(
@@ -686,6 +698,7 @@ class _Board extends StatelessWidget {
     required this.preview,
     required this.clearedRows,
     required this.clearedCols,
+    required this.clearToken,
   });
 
   final GlobalKey gridKey;
@@ -693,6 +706,7 @@ class _Board extends StatelessWidget {
   final _PlacementPreview? preview;
   final Set<int> clearedRows;
   final Set<int> clearedCols;
+  final int clearToken;
 
   @override
   Widget build(BuildContext context) {
@@ -714,7 +728,9 @@ class _Board extends StatelessWidget {
         ),
         child: RepaintBoundary(
           key: gridKey,
-          child: GridView.builder(
+          child: Stack(
+          children: <Widget>[
+          GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: GameEngine.size,
@@ -731,10 +747,14 @@ class _Board extends StatelessWidget {
                 paletteIndex: paletteIndex,
                 previewPaletteIndex: valid ? preview!.piece.paletteIndex : null,
                 invalidPreview: invalid,
-                clearFlash:
-                    clearedRows.contains(row) || clearedCols.contains(col),
               );
             },
+          ),
+          if (clearedRows.isNotEmpty || clearedCols.isNotEmpty)
+            Positioned.fill(child: BoardClearEffect(
+              key: ValueKey<int>(clearToken), rows: clearedRows, cols: clearedCols,
+            )),
+          ],
           ),
         ),
       ),
@@ -747,51 +767,43 @@ class _BoardCell extends StatelessWidget {
     required this.paletteIndex,
     required this.previewPaletteIndex,
     required this.invalidPreview,
-    required this.clearFlash,
   });
 
   final int? paletteIndex;
   final int? previewPaletteIndex;
   final bool invalidPreview;
-  final bool clearFlash;
 
   @override
   Widget build(BuildContext context) {
     final bool occupied = paletteIndex != null;
     final bool validPreview = previewPaletteIndex != null;
     final int? visualPalette = paletteIndex ?? previewPaletteIndex;
-    return AnimatedContainer(
+    return Opacity(
+      opacity: validPreview && !occupied ? .42 : 1,
+      child: AnimatedContainer(
       duration: const Duration(milliseconds: 90),
       margin: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: clearFlash
-            ? const Color(0xFFFFEB8A)
-            : visualPalette == null
+        color: visualPalette == null
             ? invalidPreview
                   ? const Color(0xFF6B3854)
                   : AppTheme.gameCell
             : null,
-        gradient: clearFlash || visualPalette == null
+        gradient: visualPalette == null
             ? null
             : AppTheme.pieceGradient(visualPalette),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: clearFlash
-              ? Colors.white
-              : invalidPreview
+          color: invalidPreview
               ? const Color(0xFFFF8B9B)
               : occupied || validPreview
               ? Colors.white.withValues(alpha: .20)
               : AppTheme.gameCellEdge.withValues(alpha: .65),
-          width: clearFlash || invalidPreview ? 1.2 : .7,
+          width: invalidPreview ? 1.2 : .7,
         ),
       ),
-      child: visualPalette == null || clearFlash
-          ? null
-          : Opacity(
-              opacity: validPreview && !occupied ? .58 : 1,
-              child: const TileGloss(),
-            ),
+      child: visualPalette == null ? null : const TileGloss(),
+      ),
     );
   }
 }

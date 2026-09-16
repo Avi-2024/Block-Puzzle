@@ -1,8 +1,12 @@
 import 'dart:math' as math;
 
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'game_sound_player.dart';
+import 'sfx_source.dart';
 
 /// Small, offline-only game SFX service.
 ///
@@ -27,92 +31,135 @@ class GameAudioService {
   @visibleForTesting
   static const int wavPcmPeakForTest = _pcmPeak;
 
-  final AudioPlayer _placementPlayer = AudioPlayer();
-  final AudioPlayer _clearPlayer = AudioPlayer();
-  final AudioPlayer _comboPlayer = AudioPlayer();
+  GameAudioService({GameSoundPlayer Function()? playerFactory})
+      : _playerFactory = playerFactory ?? NativeGameSoundPlayer.new;
 
-  late final Uint8List _placementBytes = _synthesizeTone(
-    durationMs: 82,
-    frequencies: const <double>[540, 720, 980],
-    sweepHz: 68,
-    volume: .32,
-    sparkle: .13,
-    snap: .10,
-  );
-  late final Uint8List _clearBytes = _synthesizeTone(
-    durationMs: 210,
-    frequencies: const <double>[640, 920, 1220, 1640],
-    sweepHz: 330,
-    volume: .35,
-    sparkle: .22,
-    snap: .14,
-  );
-  late final Uint8List _comboBytes = _synthesizeTone(
-    durationMs: 305,
-    frequencies: const <double>[660, 980, 1320, 1760, 2120],
-    sweepHz: 560,
-    volume: .36,
-    sparkle: .30,
-    snap: .18,
-  );
+  final GameSoundPlayer Function() _playerFactory;
+  final SfxSourceCache _sources = SfxSourceCache();
+  final Map<String, GameSoundPlayer> _players = <String, GameSoundPlayer>{};
+  final Map<String, Future<void>> _pending = <String, Future<void>>{};
+  Future<void>? _initialization;
+  Future<void>? _disposal;
+  bool _disposed = false;
+  bool _enabled = true;
+  int _generation = 0;
+  String? lastError;
 
-  bool enabled = true;
+  bool get enabled => _enabled;
 
-  Future<void> initialize() async {
-    final SharedPreferences preferences = await SharedPreferences.getInstance();
-    enabled = preferences.getBool(_soundEnabledKey) ?? true;
-  }
+  Future<void> initialize() => _initialization ??= _initialize();
 
-  Future<void> setEnabled(bool value) async {
-    enabled = value;
-    final SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_soundEnabledKey, value);
-  }
-
-  Future<void> toggle() => setEnabled(!enabled);
-
-  Future<void> playPlacement() => _play(
-        _placementPlayer,
-        _placementBytes,
-        volume: .42,
-      );
-
-  Future<void> playClear() => _play(
-        _clearPlayer,
-        _clearBytes,
-        volume: .56,
-      );
-
-  Future<void> playCombo() => _play(
-        _comboPlayer,
-        _comboBytes,
-        volume: .62,
-      );
-
-  Future<void> _play(
-    AudioPlayer player,
-    Uint8List bytes, {
-    required double volume,
-  }) async {
-    if (!enabled) return;
+  Future<void> _initialize() async {
     try {
-      await player.stop();
-      await player.play(
-        BytesSource(bytes, mimeType: 'audio/wav'),
-        volume: volume,
-        mode: PlayerMode.lowLatency,
-      );
-    } catch (_) {
-      // Audio must never be able to interrupt gameplay.
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      if (_disposed) return;
+      _enabled = preferences.getBool(_soundEnabledKey) ?? true;
+      for (final String name in <String>[
+        'pickup', 'placement', 'invalid', 'clear', 'combo',
+      ]) {
+        if (_disposed) return;
+        final GameSoundPlayer player = _playerFactory();
+        _players[name] = player;
+        final Source source = await _sources.source(name, _soundBytes(name));
+        await player.prepare(source, name == 'pickup' ? .55 : .85);
+      }
+    } catch (error) {
+      _report('initialize', error);
     }
   }
 
-  Future<void> dispose() async {
-    await Future.wait(<Future<void>>[
-      _placementPlayer.dispose(),
-      _clearPlayer.dispose(),
-      _comboPlayer.dispose(),
-    ]);
+  Future<void> setEnabled(bool value) async {
+    await initialize();
+    if (_disposed) return;
+    _enabled = value;
+    _generation++;
+    if (!value) {
+      // Drain in-flight commands before stopping: a late native resume must
+      // never undo mute. New requests are rejected immediately by _enabled.
+      await Future.wait(_pending.values.toList());
+      for (final GameSoundPlayer player in _players.values) {
+        try {
+          await player.stop();
+        } catch (error) {
+          _report('mute', error);
+        }
+      }
+    }
+    try {
+      final SharedPreferences preferences = await SharedPreferences.getInstance();
+      await preferences.setBool(_soundEnabledKey, _enabled);
+    } catch (error) {
+      _report('save preference', error);
+    }
+  }
+
+  Future<void> toggle() => setEnabled(!enabled);
+  Future<void> playPickup() => _play('pickup');
+  Future<void> playPlacement() => _play('placement');
+  Future<void> playInvalid() => _play('invalid');
+  Future<void> playClear() => _play('clear');
+  Future<void> playCombo() => _play('combo');
+
+  Future<void> _play(String name) {
+    if (_disposed || !_enabled) return Future<void>.value();
+    final int generation = _generation;
+    final Future<void> command = (_pending[name] ?? Future<void>.value())
+        .then((_) async {
+      await initialize();
+      if (_disposed || !_enabled || generation != _generation) return;
+      try {
+        await _players[name]?.restart();
+      } catch (error) {
+        _report(name, error);
+      }
+    });
+    _pending[name] = command;
+    return command;
+  }
+
+  void _report(String action, Object error) {
+    lastError = '$action: $error';
+    debugPrint('Blockiva audio error: $lastError');
+  }
+
+  Future<void> dispose() => _disposal ??= _dispose();
+
+  Future<void> _dispose() async {
+    _disposed = true;
+    _generation++;
+    await _initialization;
+    await Future.wait(_pending.values.toList());
+    for (final GameSoundPlayer player in _players.values) {
+      try {
+        await player.dispose();
+      } catch (error) {
+        _report('dispose', error);
+      }
+    }
+    await _sources.dispose();
+  }
+
+  static Uint8List _soundBytes(String name) {
+    switch (name) {
+      case 'pickup':
+        return _synthesizeTone(durationMs: 48,
+          frequencies: const <double>[440, 660], volume: .42, sweepHz: 40);
+      case 'invalid':
+        return _synthesizeTone(durationMs: 95,
+          frequencies: const <double>[180, 240], volume: .50, sweepHz: -65);
+      case 'placement':
+        return _synthesizeTone(durationMs: 82,
+          frequencies: const <double>[540, 720, 980], volume: .60,
+          sweepHz: 68, sparkle: .13, snap: .10);
+      case 'clear':
+        return _synthesizeTone(durationMs: 210,
+          frequencies: const <double>[640, 920, 1220, 1640], volume: .65,
+          sweepHz: 330, sparkle: .22, snap: .14);
+      default:
+        return _synthesizeTone(durationMs: 305,
+          frequencies: const <double>[660, 980, 1320, 1760, 2120], volume: .68,
+          sweepHz: 560, sparkle: .30, snap: .18);
+    }
   }
 
   @visibleForTesting

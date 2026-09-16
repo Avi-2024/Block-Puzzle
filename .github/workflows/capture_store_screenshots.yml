@@ -8,6 +8,8 @@ on:
       - '.github/workflows/capture_store_screenshots.yml'
       - 'lib/**'
       - 'tool/capture_android_ui.sh'
+      - 'tool/audio_smoke.dart'
+      - 'tool/check_android_audio.py'
 
 jobs:
   screenshots:
@@ -62,8 +64,22 @@ jobs:
           manifest.write_text(text)
           PY
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Build gameplay and audio verification APKs
+        run: |
+          mkdir -p build/qa
+          flutter build apk --debug
+          cp build/app/outputs/flutter-apk/app-debug.apk build/qa/gameplay.apk
+          flutter build apk --debug -t tool/audio_smoke.dart
+          cp build/app/outputs/flutter-apk/app-debug.apk build/qa/audio-smoke.apk
+
+      - name: Set up host audio capture
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pulseaudio ffmpeg
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=blockiva
+          pactl set-default-sink blockiva
+          echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
 
       - name: Release build daemon memory before emulator
         run: ./android/gradlew -p android --stop
@@ -82,9 +98,12 @@ jobs:
           profile: pixel_6
           ram-size: 2048M
           cores: 2
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim
           disable-animations: true
           script: bash tool/capture_android_ui.sh
+
+      - name: Verify captured Android audio
+        run: python3 tool/check_android_audio.py store/indus/screenshots
 
       - name: Verify screenshot dimensions
         shell: bash
