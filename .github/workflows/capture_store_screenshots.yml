@@ -79,7 +79,15 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=blockiva
           pactl set-default-sink blockiva
+          # QEMU may not inherit PulseAudio's per-user runtime socket. Give
+          # emulator and recorder the same explicit loopback-only endpoint.
+          pactl load-module module-native-protocol-tcp listen=127.0.0.1 auth-ip-acl=127.0.0.1
+          pactl -s tcp:127.0.0.1:4713 info
+          echo 'PULSE_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
+          echo 'QEMU_PA_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
+          echo 'QEMU_AUDIO_DRV=pa' >> "$GITHUB_ENV"
           echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
+          echo 'QEMU_PA_SINK=blockiva' >> "$GITHUB_ENV"
 
       - name: Release build daemon memory before emulator
         run: ./android/gradlew -p android --stop

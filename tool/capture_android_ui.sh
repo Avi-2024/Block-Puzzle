@@ -23,6 +23,8 @@ capture() {
 }
 
 adb shell cmd media_session volume --stream 3 --set 12
+pactl list short sinks > "$capture_dir/host-audio-sinks.txt"
+pactl list short sink-inputs > "$capture_dir/host-audio-streams.txt"
 capture 01-gameplay.png
 # Record the real gameplay with host audio, not a simulated UI video.
 ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 25 -ac 1 -ar 22050 "$capture_dir/gameplay.wav" &
