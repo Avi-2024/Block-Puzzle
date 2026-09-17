@@ -1,10 +1,9 @@
 // Run on a physical Android device:
 // flutter run --profile -t tool/performance_profile.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
-import '../lib/main.dart' as app;
+import 'package:blockiva/main.dart' as app;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
