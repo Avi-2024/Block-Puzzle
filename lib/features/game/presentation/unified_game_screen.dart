@@ -19,6 +19,7 @@ import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
 import 'board_drag_projector.dart';
 import 'board_clear_effect.dart';
+import 'clear_prediction.dart';
 import 'piece_tray.dart';
 import 'piece_view.dart';
 
@@ -389,12 +390,21 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                     ),
                     const SizedBox(height: 8),
                     Expanded(
-                      child: Center(
-                        child: AnimatedScale(
-                          scale: _boardPulse ? 1.012 : 1,
-                          duration: const Duration(milliseconds: 130),
-                          curve: Curves.easeOutBack,
-                          child: _Board(
+                      child: LayoutBuilder(
+                        builder: (BuildContext context, BoxConstraints constraints) {
+                          final double side = (constraints.maxHeight - 132)
+                              .clamp(0.0, constraints.maxWidth).toDouble();
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              SizedBox(
+                                width: side,
+                                height: side,
+                                child: AnimatedScale(
+                                  scale: _boardPulse ? 1.012 : 1,
+                                  duration: const Duration(milliseconds: 130),
+                                  curve: Curves.easeOutBack,
+                                  child: _Board(
                             gridKey: _boardGridKey,
                             engine: _controller.engine,
                             preview: _preview,
@@ -402,11 +412,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                             clearedCols: _clearedCols,
                             clearToken: _clearFlashToken,
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    PieceTray(
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              PieceTray(
                       pieces: _controller.tray,
                       enabled: !_terminal,
                       feedbackCellSize: () => _feedbackCellSize,
@@ -417,6 +426,11 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> {
                       onDragUpdate: _updateDragPreview,
                       onDragEnded: _finishDrag,
                       onDragCancelled: () => _setPreview(null),
+                    ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -710,13 +724,17 @@ class _Board extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final placement = preview;
+    final predicted = placement != null && placement.valid
+        ? predictClears(engine, placement.piece, placement.row, placement.col)
+        : (rows: <int>{}, cols: <int>{});
     return AspectRatio(
       aspectRatio: 1,
       child: Container(
-        padding: const EdgeInsets.all(7),
+        padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(9),
           border: Border.all(color: Colors.white.withValues(alpha: .10)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
@@ -747,6 +765,7 @@ class _Board extends StatelessWidget {
                 paletteIndex: paletteIndex,
                 previewPaletteIndex: valid ? preview!.piece.paletteIndex : null,
                 invalidPreview: invalid,
+                willClear: predicted.rows.contains(row) || predicted.cols.contains(col),
               );
             },
           ),
@@ -767,11 +786,13 @@ class _BoardCell extends StatelessWidget {
     required this.paletteIndex,
     required this.previewPaletteIndex,
     required this.invalidPreview,
+    required this.willClear,
   });
 
   final int? paletteIndex;
   final int? previewPaletteIndex;
   final bool invalidPreview;
+  final bool willClear;
 
   @override
   Widget build(BuildContext context) {
@@ -779,31 +800,20 @@ class _BoardCell extends StatelessWidget {
     final bool validPreview = previewPaletteIndex != null;
     final int? visualPalette = paletteIndex ?? previewPaletteIndex;
     return Opacity(
-      opacity: validPreview && !occupied ? .42 : 1,
-      child: AnimatedContainer(
-      duration: const Duration(milliseconds: 90),
-      margin: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: visualPalette == null
-            ? invalidPreview
-                  ? const Color(0xFF6B3854)
-                  : AppTheme.gameCell
-            : null,
-        gradient: visualPalette == null
-            ? null
-            : AppTheme.pieceGradient(visualPalette),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: invalidPreview
-              ? const Color(0xFFFF8B9B)
-              : occupied || validPreview
-              ? Colors.white.withValues(alpha: .20)
-              : AppTheme.gameCellEdge.withValues(alpha: .65),
-          width: invalidPreview ? 1.2 : .7,
-        ),
-      ),
-      child: visualPalette == null ? null : const TileGloss(),
-      ),
+      opacity: validPreview && !occupied ? .48 : 1,
+      child: visualPalette != null
+          ? PuzzleTile(paletteIndex: visualPalette, highlighted: willClear)
+          : AnimatedContainer(
+              duration: const Duration(milliseconds: 90),
+              margin: const EdgeInsets.all(1.5),
+              decoration: BoxDecoration(
+                color: invalidPreview ? const Color(0xFF6B3854) : AppTheme.gameCell,
+                borderRadius: BorderRadius.circular(3),
+                border: invalidPreview
+                    ? Border.all(color: const Color(0xFFFF8B9B), width: 1.2)
+                    : null,
+              ),
+            ),
     );
   }
 }

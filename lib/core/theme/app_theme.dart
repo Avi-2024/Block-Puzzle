@@ -18,13 +18,13 @@ abstract final class AppTheme {
   // Approved gameplay direction: Blockiva should feel board-first, glossy,
   // colorful and relaxed. These tokens deliberately keep the screen close to
   // the approved reference while staying original and readable on Android.
-  static const Color gameBackgroundTop = Color(0xFF142CC8);
+  static const Color gameBackgroundTop = Color(0xFF334D83);
   static const Color gameBackgroundMid = Color(0xFF35218A);
-  static const Color gameBackgroundBottom = Color(0xFF061032);
-  static const Color gameBoard = Color(0xFF071A54);
+  static const Color gameBackgroundBottom = Color(0xFF21355D);
+  static const Color gameBoard = Color(0xFF162747);
   static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF102761);
-  static const Color gameCellEdge = Color(0xFF3D82FF);
+  static const Color gameCell = Color(0xFF203657);
+  static const Color gameCellEdge = Color(0xFF49628A);
   static const Color gameText = Color(0xFFFFFFFF);
   static const Color gameTextMuted = Color(0xFFD9E7FF);
   static const Color gameOverlay = Color(0xDC071330);
@@ -44,16 +44,14 @@ abstract final class AppTheme {
   static LinearGradient pieceGradient(int index) {
     final Color base = piecePalette[index % piecePalette.length];
     return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .82)!,
-        Color.lerp(base, Colors.white, .38)!,
+        Color.lerp(base, Colors.white, .18)!,
         base,
-        Color.lerp(base, Colors.black, .18)!,
-        Color.lerp(base, Colors.black, .50)!,
+        Color.lerp(base, Colors.black, .12)!,
       ],
-      stops: const <double>[0, .16, .46, .76, 1],
+      stops: const <double>[0, .45, 1],
     );
   }
 

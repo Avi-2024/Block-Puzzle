@@ -17,8 +17,6 @@ class PieceView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = AppTheme
-        .piecePalette[piece.paletteIndex % AppTheme.piecePalette.length];
     return SizedBox(
       width: piece.width * cellSize,
       height: piece.height * cellSize,
@@ -30,24 +28,9 @@ class PieceView extends StatelessWidget {
                 top: cell.row * cellSize,
                 width: cellSize,
                 height: cellSize,
-                child: Container(
-                  margin: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.pieceGradient(piece.paletteIndex),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: .20),
-                      width: .8,
-                    ),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: color.withValues(alpha: elevated ? .42 : .20),
-                        blurRadius: elevated ? 12 : 5,
-                        offset: Offset(0, elevated ? 7 : 3),
-                      ),
-                    ],
-                  ),
-                  child: const TileGloss(),
+                child: PuzzleTile(
+                  paletteIndex: piece.paletteIndex,
+                  elevated: elevated,
                 ),
               );
             })
@@ -57,40 +40,50 @@ class PieceView extends StatelessWidget {
   }
 }
 
-class TileGloss extends StatelessWidget {
-  const TileGloss({super.key});
+/// Shared by settled cells, tray pieces and the lifted drag piece.
+class PuzzleTile extends StatelessWidget {
+  const PuzzleTile({required this.paletteIndex, this.elevated = false, this.highlighted = false, super.key});
+  final int paletteIndex;
+  final bool highlighted;
+  final bool elevated;
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        Align(
-          alignment: const Alignment(0, -.82),
-          child: FractionallySizedBox(
-            widthFactor: .70,
-            heightFactor: .12,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .34),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: FractionallySizedBox(
-            widthFactor: .82,
-            heightFactor: .11,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: .10),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.all(1.5),
+    decoration: BoxDecoration(
+      gradient: AppTheme.pieceGradient(paletteIndex),
+      border: highlighted ? Border.all(color: const Color(0xFFFFE8A3), width: 1.5) : null,
+      borderRadius: BorderRadius.circular(3),
+      boxShadow: elevated ? const <BoxShadow>[
+        BoxShadow(color: Color(0x55000000), blurRadius: 6, offset: Offset(0, 4)),
+      ] : null,
+    ),
+    child: const ClipRRect(
+      borderRadius: BorderRadius.all(Radius.circular(3)),
+      child: CustomPaint(painter: _TileBevel()),
+    ),
+  );
+}
+
+class _TileBevel extends CustomPainter {
+  const _TileBevel();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final double edge = size.shortestSide * .12;
+    canvas.drawPath(Path()
+      ..moveTo(0, 0)..lineTo(w, 0)..lineTo(w-edge, edge)
+      ..lineTo(edge, edge)..lineTo(edge, h-edge)..lineTo(0, h)..close(),
+      Paint()..color = const Color(0x55FFFFFF));
+    canvas.drawPath(Path()
+      ..moveTo(w, 0)..lineTo(w, h)..lineTo(0, h)
+      ..lineTo(edge, h-edge)..lineTo(w-edge, h-edge)
+      ..lineTo(w-edge, edge)..close(),
+      Paint()..color = const Color(0x33000000));
   }
+
+  @override
+  bool shouldRepaint(_TileBevel oldDelegate) => false;
 }

@@ -7,7 +7,7 @@ market ranking or revenue. No reference audio, artwork or branding is reused.
 
 | Area | Blockiva recording (318s) | Reference recording (362s) | Decision |
 | --- | --- | --- | --- |
-| Audio | Sound icon enabled, but gameplay essentially silent. The few loud samples at 84–85s coincide with the test ad. | Frequent recorded feedback during moves and rewards. | P0: repair native playback and capture actual Android audio output. |
+| Audio | Sound icon enabled, but gameplay essentially silent. Decoded PCM is exactly zero in 0–75s and 110–318s. The few loud samples at 84–85s coincide with the test ad. | Frequent recorded feedback during moves and rewards. | P0: repair native playback and capture actual Android audio output. |
 | Clear feedback | At 179–180s a yellow row briefly flashes, then disappears. Small reward text stays near score. | At 41–44s a multi-row clear uses a bright line outline, particles and prominent reward animation. | Add a short board-local clear burst and animated score feedback. Larger combo milestone choreography remains pending. |
 | Preview | Dragged shape and preview are both close to fully saturated placed blocks. | Ghost silhouette and solid pieces have clearer separation. | Apply preview opacity to the entire tile, not only its gloss. |
 | Pieces/grid | Rounded glossy cells and blue outlined empty cells; disconnected jelly-like faces. | Squarer bevels and quieter empty grid. | Pending component design pass; avoid repainting the whole screen with decorative overlays. |
@@ -44,3 +44,24 @@ CI analyze/tests/build, captured Android output, and real gameplay video must
 pass on the resulting commit. A passing WAV synthesis test is insufficient.
 No claim of final visual parity, market performance, real-device latency or
 60 FPS is made by this change.
+
+
+## Market-reference implementation, 2026-09-17
+
+Reviewed the supplied recordings plus official listings:
+- https://play.google.com/store/apps/details?id=com.block.juggle
+- https://play.google.com/store/apps/details?id=com.easybrain.block.puzzle.games
+
+This is video/listing research, not a hands-on competitor playtest. Keep Blockiva's
+8x8 rules and original assets; use the reference's readability and feedback hierarchy.
+
+Implemented shared square beveled tiles for the board, tray and lifted piece;
+quiet blue board cells without neon outlines; board and tray centered as a group
+with a 16px gap; read-only row/column prediction highlighted before release.
+Prediction tests compare a crossing clear against the engine and verify no score,
+combo, move count or board mutation during hover.
+
+Native sound code builds and its routing tests pass in the previous audio fix.
+Audible Android output remains unverified: hosted emulator PulseAudio initialization
+failed, and its first gameplay capture was obscured by a launcher ANR dialog.
+Do not market those captures as accepted gameplay or claim device audio verified.
