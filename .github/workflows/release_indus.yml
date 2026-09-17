@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
+      BLOCKIVA_KEYSTORE_BASE64: ${{ secrets.BLOCKIVA_KEYSTORE_BASE64 }}
       BLOCKIVA_KEYSTORE_PATH: ${{ github.workspace }}/android/app/blockiva-release.jks
       BLOCKIVA_KEYSTORE_PASSWORD: ${{ secrets.BLOCKIVA_KEYSTORE_PASSWORD }}
       BLOCKIVA_KEY_ALIAS: ${{ secrets.BLOCKIVA_KEY_ALIAS }}
@@ -41,10 +42,22 @@ jobs:
               exit 1
             fi
           done
-          if [ -z "${{ secrets.BLOCKIVA_KEYSTORE_BASE64 }}" ]; then
+          if [ -z "$BLOCKIVA_KEYSTORE_BASE64" ]; then
             echo "Missing required release secret: BLOCKIVA_KEYSTORE_BASE64"
             exit 1
           fi
+
+      - name: Reject sample or malformed production ad IDs
+        run: |
+          python3 - <<'PYCODE'
+          import os, re
+          for key, separator in [('ADMOB_ANDROID_APP_ID', '~'), ('ADMOB_ANDROID_REWARDED_ID', '/')]:
+              value = os.environ[key]
+              if not re.fullmatch(r'ca-app-pub-\d{16}' + re.escape(separator) + r'\d{10}', value):
+                  raise SystemExit(f'Invalid format: {key}')
+              if value.startswith('ca-app-pub-3940256099942544'):
+                  raise SystemExit(f'Google sample ID is forbidden in production: {key}')
+          PYCODE
 
       - name: Install dependencies
         run: flutter pub get
@@ -164,7 +177,7 @@ jobs:
       - name: Restore release keystore
         shell: bash
         run: |
-          echo '${{ secrets.BLOCKIVA_KEYSTORE_BASE64 }}' | base64 --decode > "$BLOCKIVA_KEYSTORE_PATH"
+          printf '%s' "$BLOCKIVA_KEYSTORE_BASE64" | base64 --decode > "$BLOCKIVA_KEYSTORE_PATH"
           test -s "$BLOCKIVA_KEYSTORE_PATH"
 
       - name: Configure release signing
@@ -224,6 +237,14 @@ jobs:
         run: >-
           flutter build appbundle --release
           --dart-define=ADMOB_ANDROID_REWARDED_ID="$ADMOB_ANDROID_REWARDED_ID"
+
+      - name: Verify signed release package
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$android_build_tools/apksigner" verify --verbose build/app/outputs/flutter-apk/app-release.apk
+          jarsigner -verify build/app/outputs/bundle/release/app-release.aab
 
       - name: Hash release artifacts
         shell: bash

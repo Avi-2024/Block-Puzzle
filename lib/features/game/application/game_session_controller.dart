@@ -53,14 +53,23 @@ class GameSessionController extends ChangeNotifier {
   var runCoinsAwarded = 0;
   var initialized = false;
 
+  bool _disposed = false;
+  bool _reviving = false;
+  int _runGeneration = 0;
+  Future<void>? _initialization;
+  Future<void> _writeTail = Future<void>.value();
+  Object? lastPersistenceError;
+
   bool get rewardedReviveReady =>
-      gameOver &&
+      !_disposed && !_reviving && gameOver &&
       revivesUsed < maxRevivesPerGame &&
       _adService.rewardedReady &&
       tray.whereType<BlockPiece>().isNotEmpty;
 
-  Future<void> initialize() async {
-    if (initialized) return;
+  Future<void> initialize() => _initialization ??= _initialize();
+
+  Future<void> _initialize() async {
+    if (_disposed || initialized) return;
 
     final Future<int> bestFuture = _statsRepository.loadBestScore();
     final Future<int> gamesFuture = _statsRepository.loadGamesPlayed();
@@ -69,6 +78,8 @@ class GameSessionController extends ChangeNotifier {
     bestScore = await bestFuture;
     gamesPlayed = await gamesFuture;
     final GameSessionState? savedSession = await sessionFuture;
+
+    if (_disposed) return;
 
     final bool restored = savedSession != null && _restoreSession(savedSession);
     if (!restored) {
@@ -84,13 +95,14 @@ class GameSessionController extends ChangeNotifier {
       }
     }
 
+    if (_disposed) return;
     initialized = true;
     await persistSession();
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   bool placePiece(BlockPiece piece, int row, int col) {
-    if (!initialized || gameOver) return false;
+    if (_disposed || !initialized || gameOver) return false;
     // A drag belongs to one live tray instance. Check before touching the
     // engine: stale callbacks (including callbacks from a previous run) must
     // never add blocks or score, even if their IDs happen to match.
@@ -111,7 +123,8 @@ class GameSessionController extends ChangeNotifier {
 
     if (engine.score > bestScore) {
       bestScore = engine.score;
-      unawaited(_statsRepository.saveBestScore(bestScore));
+      final int value = bestScore;
+      unawaited(_enqueueWrite(() => _statsRepository.saveBestScore(value)));
     }
 
     _progressionController.recordMove(
@@ -124,11 +137,13 @@ class GameSessionController extends ChangeNotifier {
 
     _recomputeGameOver();
     unawaited(persistSession());
-    notifyListeners();
+    if (!_disposed) notifyListeners();
     return true;
   }
 
   void restart() {
+    if (_disposed || !initialized) return;
+    _runGeneration++;
     engine.reset();
     tray = _newTray();
     lastMove = null;
@@ -138,43 +153,70 @@ class GameSessionController extends ChangeNotifier {
     runEndRecorded = false;
     runCoinsAwarded = 0;
     unawaited(persistSession());
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   Future<bool> rewardedRevive() async {
     if (!rewardedReviveReady) return false;
-    final bool rewardGranted = await _adService.showRewarded(
-      RewardPlacement.revive,
-    );
-    if (!rewardGranted) return false;
-
+    final int generation = _runGeneration;
     final GameSnapshot? snapshot = _gameOverSnapshot;
     if (snapshot == null) return false;
-    engine.restore(snapshot);
-
-    final bool recovered = engine.reviveFor(tray.whereType<BlockPiece>());
-    if (!recovered) return false;
-
-    revivesUsed += 1;
-    gameOver = false;
-    _gameOverSnapshot = null;
-    await persistSession();
+    _reviving = true;
     notifyListeners();
-    return true;
+    try {
+      final bool granted = await _adService.showRewarded(RewardPlacement.revive);
+      if (!granted || _disposed || generation != _runGeneration || !gameOver) {
+        return false;
+      }
+      engine.restore(snapshot);
+      if (!engine.reviveFor(tray.whereType<BlockPiece>())) return false;
+      revivesUsed++;
+      gameOver = false;
+      _gameOverSnapshot = null;
+      await persistSession();
+      return !_disposed && generation == _runGeneration;
+    } catch (error) {
+      debugPrint('Blockiva revive error: $error');
+      return false;
+    } finally {
+      _reviving = false;
+      if (!_disposed) notifyListeners();
+    }
   }
 
-  Future<void> persistSession() async {
-    if (!initialized) return;
-    await _sessionRepository.save(
-      GameSessionState(
-        snapshot: engine.snapshot(),
-        tray: List<BlockPiece?>.from(tray),
-        gameOver: gameOver,
-        revivesUsed: revivesUsed,
-        runEndRecorded: runEndRecorded,
-        runCoinsAwarded: runCoinsAwarded,
-      ),
+  /// Capture now, write in order. A slow old move cannot overwrite a new run.
+  Future<void> persistSession() {
+    if (!initialized || _disposed) return _writeTail;
+    final state = GameSessionState(
+      snapshot: engine.snapshot(),
+      tray: List<BlockPiece?>.from(tray),
+      gameOver: gameOver,
+      revivesUsed: revivesUsed,
+      runEndRecorded: runEndRecorded,
+      runCoinsAwarded: runCoinsAwarded,
     );
+    return _enqueueWrite(() => _sessionRepository.save(state));
+  }
+
+  Future<void> _enqueueWrite(Future<void> Function() write) {
+    _writeTail = _writeTail.then((_) async {
+      try {
+        await write();
+        lastPersistenceError = null;
+      } catch (error) {
+        lastPersistenceError = error;
+        debugPrint('Blockiva persistence error: $error');
+      }
+    });
+    return _writeTail;
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _runGeneration++;
+    // Already captured writes finish; no new callbacks can mutate this session.
+    super.dispose();
   }
 
   bool _restoreSession(GameSessionState state) {
@@ -222,7 +264,8 @@ class GameSessionController extends ChangeNotifier {
       if (!runEndRecorded) {
         runEndRecorded = true;
         gamesPlayed += 1;
-        unawaited(_statsRepository.saveGamesPlayed(gamesPlayed));
+        final int value = gamesPlayed;
+        unawaited(_enqueueWrite(() => _statsRepository.saveGamesPlayed(value)));
         runCoinsAwarded = _progressionController.recordRunCompleted(
           score: engine.score,
           linesCleared: engine.totalLinesCleared,

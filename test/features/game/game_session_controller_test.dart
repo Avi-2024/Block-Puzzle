@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:blockiva/core/ads/ad_service.dart';
 import 'package:blockiva/core/storage/game_session_repository.dart';
 import 'package:blockiva/core/storage/game_stats_repository.dart';
@@ -6,6 +7,7 @@ import 'package:blockiva/features/game/domain/block_piece.dart';
 import 'package:blockiva/features/game/domain/cell_offset.dart';
 import 'package:blockiva/features/game/domain/game_engine.dart';
 import 'package:blockiva/features/game/domain/game_session_state.dart';
+import 'package:blockiva/features/game/domain/game_snapshot.dart';
 import 'package:blockiva/features/game/domain/piece_generator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -67,6 +69,75 @@ class FixedSingleGenerator extends PieceGenerator {
 }
 
 void main() {
+  test('restart remains the final saved state after a delayed old move', () async {
+    final sessions = DelayedSessionRepository();
+    final controller = GameSessionController(
+      statsRepository: MemoryStatsRepository(), sessionRepository: sessions,
+      adService: const NoOpAdService(), pieceGenerator: FixedSingleGenerator(),
+    );
+    await controller.initialize();
+    sessions.gate = Completer<void>();
+    controller.placePiece(controller.tray.first!, 0, 0);
+    await Future<void>.delayed(Duration.zero);
+    controller.restart();
+    final flushed = controller.persistSession();
+    expect(sessions.active, 1);
+    sessions.gate!.complete();
+    await flushed;
+    expect(sessions.maxActive, 1);
+    expect(sessions.state!.snapshot.score, 0);
+    expect(sessions.state!.snapshot.board[0][0], isNull);
+    controller.dispose();
+  });
+
+  test('a failed save does not poison later session writes', () async {
+    final sessions = DelayedSessionRepository();
+    final controller = GameSessionController(
+      statsRepository: MemoryStatsRepository(), sessionRepository: sessions,
+      adService: const NoOpAdService(), pieceGenerator: FixedSingleGenerator(),
+    );
+    await controller.initialize();
+    sessions.failNext = true;
+    await controller.persistSession();
+    expect(controller.lastPersistenceError, isNotNull);
+    controller.placePiece(controller.tray.first!, 1, 1);
+    await controller.persistSession();
+    expect(controller.lastPersistenceError, isNull);
+    expect(sessions.state!.snapshot.score, 5);
+    controller.dispose();
+  });
+
+  for (final bool disposeDuringAd in <bool>[false, true]) {
+    test('late revive is rejected after ${disposeDuringAd ? 'dispose' : 'restart'}', () async {
+      final sessions = MemorySessionRepository();
+      final generator = FixedSingleGenerator();
+      sessions.state = GameSessionState(
+        snapshot: GameSnapshot(board: List.generate(8, (_) => List<int?>.filled(8, 0)),
+          score: 100, combo: 1, totalLinesCleared: 1, movesPlayed: 10),
+        tray: generator.nextTray(GameEngine()), gameOver: true, revivesUsed: 0,
+      );
+      final ads = DelayedAdService();
+      final controller = GameSessionController(
+        statsRepository: MemoryStatsRepository(), sessionRepository: sessions,
+        adService: ads, pieceGenerator: generator,
+      );
+      await controller.initialize();
+      final pending = controller.rewardedRevive();
+      expect(await controller.rewardedRevive(), isFalse);
+      expect(ads.calls, 1);
+      if (disposeDuringAd) { controller.dispose(); } else { controller.restart(); }
+      ads.result.complete(true);
+      expect(await pending, isFalse);
+      expect(controller.revivesUsed, 0);
+      if (!disposeDuringAd) {
+        await controller.persistSession();
+        expect(controller.engine.score, 0);
+        expect(sessions.state!.snapshot.score, 0);
+        controller.dispose();
+      }
+    });
+  }
+
   test('a consumed piece cannot add blocks or score a second time', () async {
     final MemorySessionRepository sessions = MemorySessionRepository();
     final GameSessionController controller = GameSessionController(
@@ -207,4 +278,31 @@ void main() {
       restored.dispose();
     },
   );
+}
+
+class DelayedSessionRepository extends MemorySessionRepository {
+  Completer<void>? gate;
+  int active = 0;
+  int maxActive = 0;
+  bool failNext = false;
+
+  @override
+  Future<void> save(GameSessionState value) async {
+    active++;
+    if (active > maxActive) maxActive = active;
+    try {
+      if (failNext) { failNext = false; throw StateError('disk unavailable'); }
+      await gate?.future;
+      state = value;
+    } finally { active--; }
+  }
+}
+
+class DelayedAdService implements AdService {
+  final result = Completer<bool>();
+  int calls = 0;
+  @override
+  bool get rewardedReady => true;
+  @override
+  Future<bool> showRewarded(RewardPlacement placement) { calls++; return result.future; }
 }

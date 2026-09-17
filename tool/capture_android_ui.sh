@@ -5,6 +5,9 @@ capture_dir=store/indus/screenshots
 mkdir -p "$capture_dir"
 adb shell wm size 1080x1920
 adb shell wm density 420
+# The API 35 Quickstep launcher previously blocked all game input with an ANR.
+# Stop that unrelated launcher after boot; never suppress a Blockiva ANR.
+adb shell am force-stop com.android.launcher3
 adb install -r build/qa/gameplay.apk
 adb logcat -c
 adb logcat -v epoch > "$capture_dir/android-logcat.txt" 2>&1 &
@@ -18,6 +21,18 @@ capture() {
   # A healthy screenshot requires a connected emulator and a live app process.
   # Keep logs/earlier PNGs even if a later capture fails.
   timeout 15 adb shell pidof com.blockiva.blockiva
+  timeout 20 adb shell uiautomator dump /sdcard/blockiva-window.xml
+  adb pull /sdcard/blockiva-window.xml "$capture_dir/$1.xml"
+  python3 - "$capture_dir/$1.xml" <<'PYCODE'
+import sys
+import xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+texts = ' '.join(n.attrib.get('text', '') for n in root.iter('node')).lower()
+if "isn't responding" in texts or 'keeps stopping' in texts:
+    raise SystemExit('Rejecting capture: Android crash/ANR dialog is visible')
+if not any(n.attrib.get('package') == 'com.blockiva.blockiva' for n in root.iter('node')):
+    raise SystemExit('Rejecting capture: Blockiva is not the foreground UI')
+PYCODE
   timeout 15 adb exec-out screencap -p > "$capture_dir/$1"
   test -s "$capture_dir/$1"
 }
