@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/feedback/game_haptics.dart';
 import '../../../core/widgets/blockiva_splash.dart';
 
@@ -580,7 +581,16 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
         );
       }
     }
-    return content;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppTheme.gameBackgroundBottom,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: content,
+    );
   }
 }
 

@@ -102,8 +102,11 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('KEEP PLAYING'));
       await tester.pumpAndSettle();
-      await tester.pumpWidget(const SizedBox.shrink());
+      // Start file cleanup in the real async zone, before widget disposal.
+      // Otherwise dispose's memoized future is created in fakeAsync and cannot
+      // finish while runAsync waits for its filesystem completion.
       await tester.runAsync(audio.dispose);
-    });
+      await tester.pumpWidget(const SizedBox.shrink());
+    }, timeout: const Timeout(Duration(seconds: 45)));
   }
 }
