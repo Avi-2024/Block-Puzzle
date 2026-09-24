@@ -28,7 +28,7 @@ class BlockivaSplash extends StatelessWidget {
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.view_module_rounded, color: AppTheme.accent, size: 64),
+                  Icon(Icons.grid_view_rounded, color: AppTheme.primary, size: 64),
                   SizedBox(height: 18),
                   Text('BLOCKIVA', style: TextStyle(
                     color: AppTheme.gameText, fontSize: 30,

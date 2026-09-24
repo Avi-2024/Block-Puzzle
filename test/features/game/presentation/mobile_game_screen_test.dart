@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:blockiva/core/audio/game_audio_service.dart';
 import 'package:blockiva/core/audio/game_sound_player.dart';
 import 'package:blockiva/features/game/presentation/unified_game_screen.dart';
+import 'package:blockiva/features/game/presentation/piece_tray.dart';
 import 'package:blockiva/features/progression/application/progression_runtime.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -28,6 +29,8 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      addTearDown(tester.view.resetPadding);
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final audio = GameAudioService(playerFactory: _SilentPlayer.new);
@@ -54,6 +57,12 @@ void main() {
           image.dispose();
         });
       }
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      expect(tester.widget<PieceTray>(find.byType(PieceTray)).enabled, isFalse);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(tester.widget<PieceTray>(find.byType(PieceTray)).enabled, isTrue);
       await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       expect(find.text('Haptics'), findsOneWidget);

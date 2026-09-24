@@ -90,7 +90,7 @@ class ProgressionActions extends StatelessWidget {
             iconColor: AppTheme.warning,
             label: '${runtime.controller.coins}',
           ))),
-          score,
+          Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: score)),
           Expanded(child: Align(alignment: Alignment.centerRight, child: _FloatingActionPill(
             onTap: () => _openDailyChallenge(context),
             icon: done ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
@@ -143,15 +143,17 @@ class _FloatingActionPill extends StatelessWidget {
             children: <Widget>[
               Icon(icon, color: iconColor, size: 17),
               const SizedBox(width: 5),
-              Text(
+              Flexible(child: Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: AppTheme.gameText,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: .15,
                 ),
-              ),
+              )),
             ],
           ),
         ),
