@@ -9,6 +9,8 @@ import 'package:blockiva/features/game/presentation/piece_tray.dart';
 import 'package:blockiva/features/progression/application/progression_runtime.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:blockiva/core/theme/app_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -42,6 +44,17 @@ final class _MemoryAsyncPreferences extends SharedPreferencesAsyncPlatform {
 }
 
 void main() {
+  setUpAll(() async {
+    if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
+      final artifacts = File(Platform.resolvedExecutable).parent.parent.parent;
+      final font = File('${artifacts.path}/material_fonts/Roboto-Regular.ttf');
+      if (await font.exists()) {
+        final loader = FontLoader('Roboto');
+        loader.addFont(font.readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
+        await loader.load();
+      }
+    }
+  });
   for (final size in [const Size(320, 568), const Size(360, 640), const Size(393, 852), const Size(412, 915)]) {
     testWidgets('mobile HUD, board, settings fit $size', (tester) async {
       SharedPreferences.setMockInitialValues({});
@@ -58,7 +71,7 @@ void main() {
         await audio.initialize();
       });
       final capture = GlobalKey();
-      await tester.pumpWidget(MaterialApp(home: RepaintBoundary(
+      await tester.pumpWidget(MaterialApp(theme: AppTheme.bright, home: RepaintBoundary(
         key: capture,
         child: UnifiedGameScreen.endless(audio: audio),
       )));
@@ -76,7 +89,7 @@ void main() {
           image.dispose();
         });
       }
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       await tester.pump();
       expect(tester.widget<PieceTray>(find.byType(PieceTray)).enabled, isFalse);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);

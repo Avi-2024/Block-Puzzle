@@ -39,10 +39,12 @@ jobs:
           BLOCKIVA_CAPTURE_UI=1 flutter test 2>&1 | tee test.log
 
       - name: Upload mobile widget review captures
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mobile-widget-review
           path: build/mobile-review/
+          if-no-files-found: ignore
 
       - name: Verify seeded board rules
         run: dart run tool/verify_game_rules.dart
