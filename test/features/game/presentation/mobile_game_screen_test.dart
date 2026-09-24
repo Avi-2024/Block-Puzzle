@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:shared_preferences_platform_interface/types.dart';
 
 class _SilentPlayer implements GameSoundPlayer {
   @override
@@ -23,10 +25,27 @@ class _SilentPlayer implements GameSoundPlayer {
   Future<void> dispose() async {}
 }
 
+final class _MemoryAsyncPreferences extends SharedPreferencesAsyncPlatform {
+  final values = <String, Object>{};
+  @override
+  Future<String?> getString(String key, SharedPreferencesOptions options) async => values[key] as String?;
+  @override
+  Future<int?> getInt(String key, SharedPreferencesOptions options) async => values[key] as int?;
+  @override
+  Future<void> setString(String key, String value, SharedPreferencesOptions options) async { values[key] = value; }
+  @override
+  Future<void> setInt(String key, int value, SharedPreferencesOptions options) async { values[key] = value; }
+  @override
+  Future<void> clear(ClearPreferencesParameters parameters, SharedPreferencesOptions options) async { values.clear(); }
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   for (final size in [const Size(320, 568), const Size(360, 640), const Size(393, 852), const Size(412, 915)]) {
     testWidgets('mobile HUD, board, settings fit $size', (tester) async {
       SharedPreferences.setMockInitialValues({});
+      SharedPreferencesAsyncPlatform.instance = _MemoryAsyncPreferences();
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
