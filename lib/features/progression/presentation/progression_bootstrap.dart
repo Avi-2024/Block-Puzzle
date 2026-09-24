@@ -109,20 +109,12 @@ class _FloatingActionPill extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.label,
-    this.labelColor = AppTheme.gameText,
-    this.backgroundColor,
-    this.trailingIcon,
-    this.trailingColor,
   });
 
   final VoidCallback onTap;
   final IconData icon;
   final Color iconColor;
   final String label;
-  final Color labelColor;
-  final Color? backgroundColor;
-  final IconData? trailingIcon;
-  final Color? trailingColor;
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +127,7 @@ class _FloatingActionPill extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           decoration: BoxDecoration(
-            color: backgroundColor ?? AppTheme.gameBoard.withValues(alpha: .74),
+            color: AppTheme.gameBoard.withValues(alpha: .74),
             borderRadius: BorderRadius.circular(99),
             border: Border.all(color: Colors.white.withValues(alpha: .16)),
             boxShadow: const <BoxShadow>[
@@ -153,21 +145,13 @@ class _FloatingActionPill extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 label,
-                style: TextStyle(
-                  color: labelColor,
+                style: const TextStyle(
+                  color: AppTheme.gameText,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: .15,
                 ),
               ),
-              if (trailingIcon != null) ...<Widget>[
-                const SizedBox(width: 6),
-                Icon(
-                  trailingIcon,
-                  color: trailingColor ?? AppTheme.success,
-                  size: 16,
-                ),
-              ],
             ],
           ),
         ),

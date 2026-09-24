@@ -138,13 +138,11 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     _active = state == AppLifecycleState.resumed;
     _haptics.active = _active;
     unawaited(_audio.setActive(_active));
-    if (!_active) {
-      unawaited(_controller.persistSession());
-      setState(() {
-        _preview = null;
-        _trayGeneration++;
-      });
-    }
+    if (!_active) unawaited(_controller.persistSession());
+    setState(() {
+      _preview = null;
+      _trayGeneration++;
+    });
   }
 
   Future<void> _showOutcome() async {
@@ -153,7 +151,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (!mounted || token != _outcomeToken || !_terminal) return;
     setState(() => _outcomeVisible = true);
     unawaited(_haptics.impact());
-    unawaited(_newBest ? _audio.playHighScore() : _audio.playGameOver());
+    unawaited(_dailySuccess ? _audio.playCombo()
+        : _newBest ? _audio.playHighScore() : _audio.playGameOver());
   }
 
   void _refresh() {
