@@ -51,7 +51,7 @@ void main() {
 
   test('preloads file sources supported by Android SoundPool only once', () async {
     await Future.wait(<Future<void>>[audio.initialize(), audio.initialize()]);
-    expect(players, hasLength(5));
+    expect(players, hasLength(8));
     for (final _Player player in players) {
       // Regression: BytesSource + lowLatency silently failed on Android.
       expect(player.source, isA<DeviceFileSource>());
@@ -71,8 +71,8 @@ void main() {
     await audio.playClear();
     await audio.playCombo();
     await audio.playPlacement();
-    expect(players.map((p) => p.plays), <int>[1, 2, 1, 1, 1]);
-    expect(players, hasLength(5));
+    expect(players.map((p) => p.plays), <int>[1, 2, 1, 1, 1, 0, 0, 0]);
+    expect(players, hasLength(8));
     expect(audio.lastError, isNull);
   });
 
@@ -104,6 +104,33 @@ void main() {
     expect(players[4].plays, 0);
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('settings.sound_enabled'), isFalse);
+  });
+
+  test('background stops sound without persisting mute; resume accepts new events', () async {
+    await audio.initialize();
+    await audio.playButton();
+    await audio.setActive(false);
+    await audio.playPlacement();
+    expect(players[1].plays, 0);
+    expect(players.every((p) => p.stops == 1), isTrue);
+    expect(audio.enabled, isTrue);
+    await audio.setActive(true);
+    await audio.playGameOver();
+    await audio.playHighScore();
+    expect(players[6].plays, 1);
+    expect(players[7].plays, 1);
+  });
+
+  test('rapid repeated requests coalesce rather than queue stale sounds', () async {
+    await audio.initialize();
+    players[1].gate = Completer<void>();
+    final requests = List.generate(20, (_) => audio.playPlacement());
+    await Future<void>.delayed(Duration.zero);
+    expect(players[1].plays, 1);
+    players[1].gate!.complete();
+    await Future.wait(requests);
+    await audio.playPlacement();
+    expect(players[1].plays, 2);
   });
 
   test('dispose cancels queued playback and removes generated WAVs', () async {

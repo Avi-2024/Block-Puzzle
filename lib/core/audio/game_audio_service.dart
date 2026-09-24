@@ -42,6 +42,7 @@ class GameAudioService {
   Future<void>? _disposal;
   bool _disposed = false;
   bool _enabled = true;
+  bool _active = true;
   int _generation = 0;
   String? lastError;
 
@@ -55,13 +56,19 @@ class GameAudioService {
       if (_disposed) return;
       _enabled = preferences.getBool(_soundEnabledKey) ?? true;
       for (final String name in <String>[
-        'pickup', 'placement', 'invalid', 'clear', 'combo',
+        'pickup', 'placement', 'invalid', 'clear', 'combo', 'button', 'game_over', 'high_score',
       ]) {
         if (_disposed) return;
         final GameSoundPlayer player = _playerFactory();
         _players[name] = player;
-        final Source source = await _sources.source(name, _soundBytes(name));
-        await player.prepare(source, name == 'pickup' ? .55 : .85);
+        try {
+          final Source source = await _sources.source(name, _soundBytes(name));
+          await player.prepare(source, name == 'pickup' ? .55 : .85);
+        } catch (error) {
+          _players.remove(name);
+          await player.dispose();
+          _report('prepare $name', error);
+        }
       }
     } catch (error) {
       _report('initialize', error);
@@ -93,6 +100,25 @@ class GameAudioService {
     }
   }
 
+  /// Cancel pending sounds on interruption without changing the saved preference.
+  Future<void> setActive(bool value) async {
+    _active = value;
+    _generation++;
+    if (value || _disposed) return;
+    await Future.wait(_pending.values.toList());
+    for (final player in _players.values) {
+      try {
+        await player.stop();
+      } catch (error) {
+        _report('suspend', error);
+      }
+    }
+  }
+
+  Future<void> playButton() => _play('button');
+  Future<void> playGameOver() => _play('game_over');
+  Future<void> playHighScore() => _play('high_score');
+
   Future<void> toggle() => setEnabled(!enabled);
   Future<void> playPickup() => _play('pickup');
   Future<void> playPlacement() => _play('placement');
@@ -101,20 +127,24 @@ class GameAudioService {
   Future<void> playCombo() => _play('combo');
 
   Future<void> _play(String name) {
-    if (_disposed || !_enabled) return Future<void>.value();
+    if (_disposed || !_enabled || !_active) return Future<void>.value();
+    // Coalesce repeated requests while native playback is being started.
+    // A rapid gesture must not create a backlog of stale sounds.
+    final existing = _pending[name];
+    if (existing != null) return existing;
     final int generation = _generation;
-    final Future<void> command = (_pending[name] ?? Future<void>.value())
-        .then((_) async {
+    final Future<void> command = Future<void>.value().then((_) async {
       await initialize();
-      if (_disposed || !_enabled || generation != _generation) return;
+      if (_disposed || !_enabled || !_active || generation != _generation) return;
       try {
         await _players[name]?.restart();
       } catch (error) {
         _report(name, error);
       }
     });
-    _pending[name] = command;
-    return command;
+    final tracked = command.whenComplete(() { _pending.remove(name); });
+    _pending[name] = tracked;
+    return tracked;
   }
 
   void _report(String action, Object error) {
@@ -141,6 +171,15 @@ class GameAudioService {
 
   static Uint8List _soundBytes(String name) {
     switch (name) {
+      case 'button':
+        return _synthesizeTone(durationMs: 36,
+          frequencies: const <double>[520, 780], volume: .30);
+      case 'game_over':
+        return _synthesizeTone(durationMs: 260,
+          frequencies: const <double>[330, 440], volume: .35, sweepHz: -120);
+      case 'high_score':
+        return _synthesizeTone(durationMs: 280,
+          frequencies: const <double>[660, 880, 1320], volume: .48, sweepHz: 220);
       case 'pickup':
         return _synthesizeTone(durationMs: 48,
           frequencies: const <double>[440, 660], volume: .42, sweepHz: 40);

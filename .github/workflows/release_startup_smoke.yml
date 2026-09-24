@@ -30,6 +30,9 @@ jobs:
       - name: Generate Android scaffold
         run: flutter create --platforms=android --org com.blockiva --project-name blockiva .
 
+      - name: Brand native Android splash
+        run: python3 tool/configure_android_splash.py
+
       - name: Configure release smoke manifest
         shell: bash
         run: |
