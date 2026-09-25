@@ -91,6 +91,7 @@ class ClearRewardEffect extends StatelessWidget {
                           ],
                         ),
                       ),
+                    ),
                     if (combo > 1)
                       Opacity(
                         opacity: comboIn,
