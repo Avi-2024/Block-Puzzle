@@ -74,6 +74,45 @@ done
 ffmpeg -y -loglevel error -i "$capture_dir/gameplay-silent.mp4" -i "$capture_dir/gameplay.wav" -c:v copy -c:a aac -shortest "$capture_dir/gameplay.mp4"
 rm "$capture_dir/gameplay-silent.mp4"
 
+# Follow the real drag/placement path on a seeded board. This creates two
+# actual clears in succession, exercising center points and COMBO +2 on device.
+adb shell wm size 1080x1920
+adb shell wm density 420
+adb shell am force-stop com.blockiva.blockiva
+adb install -r build/qa/clear-review.apk
+adb shell am start -W -n com.blockiva.blockiva/.MainActivity
+sleep 5
+capture clear-seeded.png
+ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 14 -ac 1 -ar 22050 "$capture_dir/clear-gameplay.wav" &
+clear_audio_pid=$!
+adb shell screenrecord --size 540x960 --bit-rate 2000000 --time-limit 14 /sdcard/blockiva-clear.mp4 &
+clear_video_pid=$!
+timeout 15 adb shell input swipe 180 1650 540 1220 750
+sleep 2
+timeout 15 adb shell input swipe 540 1650 540 1100 750
+sleep 2
+capture clear-after.png
+python3 - "$capture_dir/clear-after.png.xml" <<'PYCODE'
+import sys
+import xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+if not any(node.attrib.get('content-desc') == 'Score 320'
+           for node in root.iter('node')):
+    raise SystemExit('Seeded Android gestures did not clear two rows in succession')
+PYCODE
+wait "$clear_video_pid"
+wait "$clear_audio_pid"
+adb pull /sdcard/blockiva-clear.mp4 "$capture_dir/clear-gameplay-silent.mp4"
+clear_times=(0.35 0.70 1.00 2.80 3.25 3.60)
+for index in "${!clear_times[@]}"; do
+  printf -v number '%02d' "$((index + 1))"
+  ffmpeg -y -loglevel error -ss "${clear_times[$index]}" \
+    -i "$capture_dir/clear-gameplay-silent.mp4" -frames:v 1 \
+    "$capture_dir/clear-review-$number.png"
+done
+ffmpeg -y -loglevel error -i "$capture_dir/clear-gameplay-silent.mp4" -i "$capture_dir/clear-gameplay.wav" -c:v copy -c:a aac -shortest "$capture_dir/clear-gameplay.mp4"
+rm "$capture_dir/clear-gameplay-silent.mp4"
+
 # Exercise all production SFX plus mute/unmute with the native Android plugin.
 adb shell am force-stop com.blockiva.blockiva
 adb install -r build/qa/audio-smoke.apk
@@ -83,5 +122,6 @@ ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 40 -ac 1 -ar 22050 "$c
 smoke_audio_pid=$!
 adb shell am start -W -n com.blockiva.blockiva/.MainActivity
 wait "$smoke_audio_pid"
+pactl list short sink-inputs > "$capture_dir/host-audio-streams-after.txt"
 adb logcat -d -v epoch > "$capture_dir/audio-smoke-logcat.txt"
 grep -q 'BLOCKIVA_AUDIO_DONE' "$capture_dir/audio-smoke-logcat.txt"

@@ -78,6 +78,7 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pumpAndSettle();
       expect(find.text('BLOCKIVA'), findsOneWidget);
+      expect(find.text('DRAG A BLOCK ONTO THE BOARD'), findsOneWidget);
       final initialScore = tester.widget<Text>(find.byWidgetPredicate(
         (widget) => widget is Text && widget.semanticsLabel == 'Score 0',
       ));

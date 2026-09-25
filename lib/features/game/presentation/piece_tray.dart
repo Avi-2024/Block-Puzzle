@@ -84,13 +84,13 @@ class _PieceTrayState extends State<PieceTray> {
           );
           final double cellSize = math
               .min(
-                25,
+                30,
                 math.min(
                   (constraints.maxWidth / 3 - 12) / widthCells,
                   (constraints.maxHeight - 12) / heightCells,
                 ),
               )
-              .clamp(1.0, 25.0).toDouble();
+              .clamp(1.0, 30.0).toDouble();
           return Row(
             children: List<Widget>.generate(3, (int index) {
               final BlockPiece? piece = index < widget.pieces.length
@@ -155,7 +155,7 @@ class _PieceTrayState extends State<PieceTray> {
                             child: PieceView(piece: piece, cellSize: cellSize),
                           ),
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                            constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
                             child: Center(child: AnimatedOpacity(
                               duration: const Duration(milliseconds: 100),
                               opacity: widget.enabled ? 1 : .28,

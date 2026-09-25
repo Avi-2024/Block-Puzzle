@@ -58,6 +58,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   bool _newBest = false;
   bool _recordSoundPlayed = false;
   bool _recordFlash = false;
+  bool _draggingPiece = false;
   int _startingBest = 0;
   int _outcomeToken = 0;
   int _trayGeneration = 0;
@@ -153,6 +154,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (!_active) unawaited(_controller.persistSession());
     setState(() {
       _preview = null;
+      _draggingPiece = false;
       if (!_active) {
         _milestoneScore = null;
         _milestoneToken++;
@@ -437,6 +439,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
     setState(() {
       _preview = null;
+      _draggingPiece = false;
       _moveFeedback = null;
       _clearReward = null;
       _rewardOrigin = null;
@@ -571,19 +574,40 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                           ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 16,
+                                child: _controller.engine.movesPlayed == 0 &&
+                                        !_draggingPiece && !_terminal
+                                    ? const Center(child: Text(
+                                        'DRAG A BLOCK ONTO THE BOARD',
+                                        style: TextStyle(
+                                          color: AppTheme.gameTextMuted,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1.1,
+                                        ),
+                                      ))
+                                    : null,
+                              ),
                               PieceTray(
                       key: ValueKey(_trayGeneration),
                       pieces: _controller.tray,
                       enabled: !_terminal && _active,
                       feedbackCellSize: () => _feedbackCellSize,
                       onDragStarted: () {
+                        setState(() => _draggingPiece = true);
                         unawaited(_haptics.selection());
                         unawaited(_audio.playPickup());
                       },
                       onDragUpdate: _updateDragPreview,
-                      onDragEnded: _finishDrag,
-                      onDragCancelled: () => _setPreview(null),
+                      onDragEnded: (piece) {
+                        setState(() => _draggingPiece = false);
+                        _finishDrag(piece);
+                      },
+                      onDragCancelled: () {
+                        setState(() => _draggingPiece = false);
+                        _setPreview(null);
+                      },
                     ),
                             ],
                           );
