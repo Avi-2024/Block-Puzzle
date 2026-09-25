@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/blockiva_splash.dart';
 import '../../daily_challenge/domain/daily_challenge_definition.dart';
 import '../../game/presentation/unified_game_screen.dart';
 import '../application/progression_runtime.dart';
@@ -38,7 +39,32 @@ class _ProgressionBootstrapState extends State<ProgressionBootstrap> {
     if (mounted) setState(() {});
   }
 
-  void _openDailyChallenge() {
+  @override
+  Widget build(BuildContext context) {
+    if (!_runtime.initialized) {
+      return const BlockivaSplash();
+    }
+
+    final GameThemeDefinition theme = _runtime.controller.selectedTheme;
+    final Widget themedGame = theme.id == 'classic'
+        ? widget.child
+        : ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              Color(theme.backgroundTop),
+              BlendMode.hue,
+            ),
+            child: widget.child,
+          );
+    return themedGame;
+  }
+}
+
+/// Lives inside the game HUD, so loading and outcome screens cover it normally.
+class ProgressionActions extends StatelessWidget {
+  const ProgressionActions({required this.score, super.key});
+  final Widget score;
+
+  void _openDailyChallenge(BuildContext context) {
     final DailyChallengeDefinition challenge = DailyChallengeDefinition.forDate(
       DateTime.now(),
     );
@@ -51,78 +77,28 @@ class _ProgressionBootstrapState extends State<ProgressionBootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_runtime.initialized) {
-      return const ColoredBox(
-        color: AppTheme.gameBackgroundBottom,
-        child: Center(
-          child: SizedBox(
-            width: 26,
-            height: 26,
-            child: CircularProgressIndicator(
-              color: AppTheme.gameText,
-              strokeWidth: 2.6,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final GameThemeDefinition theme = _runtime.controller.selectedTheme;
-    final DailyChallengeDefinition challenge = DailyChallengeDefinition.forDate(
-      DateTime.now(),
-    );
-    final bool challengeDone = _runtime.controller.isDailyChallengeCompleted(
-      challenge.dayKey,
-    );
-    final Widget themedGame = theme.id == 'classic'
-        ? widget.child
-        : ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Color(theme.backgroundTop),
-              BlendMode.hue,
-            ),
-            child: widget.child,
-          );
-    final double top = MediaQuery.paddingOf(context).top + 58;
-
-    return Stack(
-      children: <Widget>[
-        themedGame,
-        Positioned(
-          left: 14,
-          top: top,
-          child: _FloatingActionPill(
-            onTap: () => showProgressionSheet(context, _runtime.controller),
+    final runtime = ProgressionRuntime.instance;
+    return AnimatedBuilder(
+      animation: runtime,
+      builder: (context, _) {
+        final challenge = DailyChallengeDefinition.forDate(DateTime.now());
+        final done = runtime.controller.isDailyChallengeCompleted(challenge.dayKey);
+        return Row(children: [
+          Expanded(child: Align(alignment: Alignment.centerLeft, child: _FloatingActionPill(
+            onTap: () => showProgressionSheet(context, runtime.controller),
             icon: Icons.monetization_on_rounded,
             iconColor: AppTheme.warning,
-            label: '${_runtime.controller.coins}',
-            trailingIcon: _runtime.controller.dailyRewardAvailable
-                ? Icons.card_giftcard_rounded
-                : null,
-            trailingColor: AppTheme.success,
-          ),
-        ),
-        Positioned(
-          right: 14,
-          top: top,
-          child: _FloatingActionPill(
-            onTap: _openDailyChallenge,
-            icon: challengeDone
-                ? Icons.check_circle_rounded
-                : Icons.calendar_today_rounded,
-            iconColor: challengeDone
-                ? const Color(0xFF062419)
-                : AppTheme.warning,
-            label: challengeDone ? 'DAILY ✓' : 'DAILY',
-            labelColor: challengeDone
-                ? const Color(0xFF062419)
-                : AppTheme.gameText,
-            backgroundColor: challengeDone
-                ? AppTheme.success.withValues(alpha: .90)
-                : AppTheme.gameBoard.withValues(alpha: .74),
-          ),
-        ),
-      ],
+            label: '${runtime.controller.coins}',
+          ))),
+          Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: score)),
+          Expanded(child: Align(alignment: Alignment.centerRight, child: _FloatingActionPill(
+            onTap: () => _openDailyChallenge(context),
+            icon: done ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
+            iconColor: done ? AppTheme.success : AppTheme.warning,
+            label: 'DAILY',
+          ))),
+        ]);
+      },
     );
   }
 }
@@ -133,20 +109,12 @@ class _FloatingActionPill extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.label,
-    this.labelColor = AppTheme.gameText,
-    this.backgroundColor,
-    this.trailingIcon,
-    this.trailingColor,
   });
 
   final VoidCallback onTap;
   final IconData icon;
   final Color iconColor;
   final String label;
-  final Color labelColor;
-  final Color? backgroundColor;
-  final IconData? trailingIcon;
-  final Color? trailingColor;
 
   @override
   Widget build(BuildContext context) {
@@ -156,9 +124,10 @@ class _FloatingActionPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(99),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           decoration: BoxDecoration(
-            color: backgroundColor ?? AppTheme.gameBoard.withValues(alpha: .74),
+            color: AppTheme.gameBoard.withValues(alpha: .74),
             borderRadius: BorderRadius.circular(99),
             border: Border.all(color: Colors.white.withValues(alpha: .16)),
             boxShadow: const <BoxShadow>[
@@ -174,23 +143,17 @@ class _FloatingActionPill extends StatelessWidget {
             children: <Widget>[
               Icon(icon, color: iconColor, size: 17),
               const SizedBox(width: 5),
-              Text(
+              Flexible(child: Text(
                 label,
-                style: TextStyle(
-                  color: labelColor,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.gameText,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                   letterSpacing: .15,
                 ),
-              ),
-              if (trailingIcon != null) ...<Widget>[
-                const SizedBox(width: 6),
-                Icon(
-                  trailingIcon,
-                  color: trailingColor ?? AppTheme.success,
-                  size: 16,
-                ),
-              ],
+              )),
             ],
           ),
         ),

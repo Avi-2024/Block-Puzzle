@@ -154,10 +154,13 @@ class _PieceTrayState extends State<PieceTray> {
                             opacity: .10,
                             child: PieceView(piece: piece, cellSize: cellSize),
                           ),
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 100),
-                            opacity: widget.enabled ? 1 : .28,
-                            child: PieceView(piece: piece, cellSize: cellSize),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                            child: Center(child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 100),
+                              opacity: widget.enabled ? 1 : .28,
+                              child: PieceView(piece: piece, cellSize: cellSize),
+                            )),
                           ),
                         ),
                       ),

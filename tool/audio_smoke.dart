@@ -21,6 +21,9 @@ Future<void> main() async {
     ('invalid', audio.playInvalid),
     ('clear', audio.playClear),
     ('combo', audio.playCombo),
+    ('button', audio.playButton),
+    ('game_over', audio.playGameOver),
+    ('high_score', audio.playHighScore),
   ]) {
     debugPrint('BLOCKIVA_AUDIO_EVENT ${event.$1}');
     await event.$2();

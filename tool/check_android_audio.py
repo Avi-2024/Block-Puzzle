@@ -38,7 +38,7 @@ for line in log.splitlines():
     # first 0.4s of mute so the preceding effect's native buffer can drain.
     stats = level(t + .4, t + 1.6) if name == 'muted' else level(t - .35, t + 1.6)
     results[name] = stats
-for name in ['pickup', 'placement', 'invalid', 'clear', 'combo', 'unmuted']:
+for name in ['pickup', 'placement', 'invalid', 'clear', 'combo', 'button', 'game_over', 'high_score', 'unmuted']:
     if name not in results or results[name]['peak'] < .01:
         raise SystemExit(f'Missing/silent native sound {name}: {results}')
 if results.get('muted', {}).get('peak', 1) > .003:
