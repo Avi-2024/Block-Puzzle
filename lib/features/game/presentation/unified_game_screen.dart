@@ -793,6 +793,13 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
   void didUpdateWidget(covariant _AnimatedScore oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.score == widget.score) return;
+    if (widget.score < oldWidget.score) {
+      // Restart resets immediately instead of counting backward across an
+      // empty board. Normal gains always continue from the visible number.
+      _from = _to = widget.score.toDouble();
+      _animation.value = 1;
+      return;
+    }
     _from = _currentValue;
     _to = widget.score.toDouble();
     _animation.forward(from: 0);
