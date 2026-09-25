@@ -333,14 +333,6 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     }
   }
 
-  Future<void> _showMoveFeedback(String label) async {
-    final int token = ++_feedbackToken;
-    setState(() => _moveFeedback = label);
-    await Future<void>.delayed(const Duration(milliseconds: 760));
-    if (!mounted || token != _feedbackToken) return;
-    setState(() => _moveFeedback = null);
-  }
-
   Future<void> _openSettings() async {
     unawaited(_audio.playButton());
     await showModalBottomSheet<void>(
