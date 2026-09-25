@@ -512,19 +512,14 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       return const BlockivaSplash();
     }
 
+    final LinearGradient gameGradient =
+        AppTheme.gameplayGradientForScore(_controller.engine.score);
     Widget content = Scaffold(
-      backgroundColor: AppTheme.gameBackgroundBottom,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              AppTheme.gameBackgroundTop,
-              AppTheme.gameBackgroundBottom,
-            ],
-          ),
-        ),
+      backgroundColor: gameGradient.colors.last,
+      body: AnimatedContainer(
+        duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 700),
+        curve: Curves.easeInOutCubic,
+        decoration: BoxDecoration(gradient: gameGradient),
         child: SafeArea(
           child: Stack(
             children: <Widget>[
@@ -664,10 +659,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       }
     }
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.gameBackgroundBottom,
+        systemNavigationBarColor: gameGradient.colors.last,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarContrastEnforced: false,
       ),

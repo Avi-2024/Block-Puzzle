@@ -68,6 +68,28 @@ abstract final class AppTheme {
         stops: <double>[0, .50, 1],
       );
 
+  /// A small Blockiva-owned set of moods. The score selects the stage, so a
+  /// resumed run always returns to the same colors without stored UI state.
+  static LinearGradient gameplayGradientForScore(int score) {
+    final List<Color> colors = switch ((score ~/ 1000) % 3) {
+      1 => const <Color>[
+        Color(0xFF454273), Color(0xFF35315F), Color(0xFF211F46),
+      ],
+      2 => const <Color>[
+        Color(0xFF296177), Color(0xFF24506A), Color(0xFF1A324D),
+      ],
+      _ => const <Color>[
+        gameBackgroundTop, gameBackgroundMid, gameBackgroundBottom,
+      ],
+    };
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: colors,
+      stops: const <double>[0, .50, 1],
+    );
+  }
+
   static LinearGradient get boardGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
