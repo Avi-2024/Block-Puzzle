@@ -20,9 +20,11 @@ import '../../progression/presentation/progression_bootstrap.dart';
 import '../application/game_session_controller.dart';
 import '../domain/block_piece.dart';
 import '../domain/game_engine.dart';
+import '../domain/move_result.dart';
 import 'board_drag_projector.dart';
 import 'board_clear_effect.dart';
 import 'clear_prediction.dart';
+import 'clear_reward_effect.dart';
 import 'piece_tray.dart';
 import 'piece_view.dart';
 
@@ -60,6 +62,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
   _PlacementPreview? _preview;
   String? _moveFeedback;
+  MoveResult? _clearReward;
   Set<int> _clearedRows = <int>{};
   Set<int> _clearedCols = <int>{};
   var _feedbackToken = 0;
@@ -228,14 +231,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     final move = _controller.lastMove;
     if (move != null && move.linesCleared > 0) {
       unawaited(_haptics.reward());
+      setState(() => _clearReward = move);
       unawaited(_flashClearedLines(move.clearedRows, move.clearedCols));
       unawaited(move.combo > 1 ? _audio.playCombo() : _audio.playClear());
-      final String label = move.combo > 1
-          ? 'COMBO x${move.combo}  +${move.scoreGained}'
-          : move.linesCleared > 1
-          ? '${move.linesCleared} LINES  +${move.scoreGained}'
-          : '+${move.scoreGained}';
-      unawaited(_showMoveFeedback(label));
     } else {
       unawaited(_haptics.selection());
       unawaited(_audio.playPlacement());
@@ -294,11 +292,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
         _clearedCols = cols.toSet();
       });
     }
-    await Future<void>.delayed(const Duration(milliseconds: 420));
+    await Future<void>.delayed(const Duration(milliseconds: 680));
     if (!mounted || token != _clearFlashToken) return;
     setState(() {
       _clearedRows = <int>{};
       _clearedCols = <int>{};
+      _clearReward = null;
     });
   }
 
@@ -369,6 +368,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     setState(() {
       _preview = null;
       _moveFeedback = null;
+      _clearReward = null;
       _clearedRows = <int>{};
       _clearedCols = <int>{};
       _outcomeVisible = false;
@@ -492,6 +492,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                             clearedRows: _clearedRows,
                             clearedCols: _clearedCols,
                             clearToken: _clearFlashToken,
+                            reward: _clearReward,
                           ),
                                 ),
                               ),
@@ -746,28 +747,7 @@ class _ScoreDisplay extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 1),
-        TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: score.toDouble(), end: score.toDouble()),
-          duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 160),
-          builder: (context, value, child) => Text(
-            '${value.round()}',
-            semanticsLabel: 'Score $score',
-            style: const TextStyle(
-              color: AppTheme.gameText,
-              fontSize: 42,
-              height: .95,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1.5,
-              shadows: <Shadow>[
-                Shadow(
-                  color: Color(0x55000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-          ),
-        ),
+        _AnimatedScore(score: score),
         if (challenge != null) ...<Widget>[
           const SizedBox(height: 6),
           Container(
@@ -792,6 +772,68 @@ class _ScoreDisplay extends StatelessWidget {
   }
 }
 
+/// Retargets from the current displayed value when moves arrive quickly.
+class _AnimatedScore extends StatefulWidget {
+  const _AnimatedScore({required this.score});
+
+  final int score;
+
+  @override
+  State<_AnimatedScore> createState() => _AnimatedScoreState();
+}
+
+class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProviderStateMixin {
+  late final AnimationController _animation = AnimationController(
+    vsync: this, duration: const Duration(milliseconds: 420),
+  );
+  late double _from = widget.score.toDouble();
+  late double _to = widget.score.toDouble();
+
+  @override
+  void didUpdateWidget(covariant _AnimatedScore oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.score == widget.score) return;
+    _from = _currentValue;
+    _to = widget.score.toDouble();
+    _animation.forward(from: 0);
+  }
+
+  double get _currentValue => _from + (_to - _from) * Curves.easeOutCubic.transform(_animation.value);
+
+  @override
+  void dispose() {
+    _animation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _animation,
+    builder: (context, child) {
+      final bool reducedMotion = MediaQuery.disableAnimationsOf(context);
+      final double progress = reducedMotion ? 1 : _animation.value;
+      final double value = reducedMotion ? _to : _currentValue;
+      return Transform.scale(
+        scale: 1 + (reducedMotion ? 0 : .065 * math.sin(math.pi * progress)),
+        child: Text(
+          '${value.round()}',
+          semanticsLabel: 'Score ${widget.score}',
+          style: const TextStyle(
+            color: AppTheme.gameText,
+            fontSize: 42,
+            height: .95,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.5,
+            shadows: <Shadow>[
+              Shadow(color: Color(0x55000000), blurRadius: 10, offset: Offset(0, 4)),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 class _Board extends StatelessWidget {
   const _Board({
     required this.gridKey,
@@ -800,6 +842,7 @@ class _Board extends StatelessWidget {
     required this.clearedRows,
     required this.clearedCols,
     required this.clearToken,
+    required this.reward,
   });
 
   final GlobalKey gridKey;
@@ -808,6 +851,7 @@ class _Board extends StatelessWidget {
   final Set<int> clearedRows;
   final Set<int> clearedCols;
   final int clearToken;
+  final MoveResult? reward;
 
   @override
   Widget build(BuildContext context) {
@@ -859,6 +903,15 @@ class _Board extends StatelessWidget {
           if (clearedRows.isNotEmpty || clearedCols.isNotEmpty)
             Positioned.fill(child: BoardClearEffect(
               key: ValueKey<int>(clearToken), rows: clearedRows, cols: clearedCols,
+            )),
+          if (reward != null)
+            Positioned.fill(child: ClearRewardEffect(
+              key: ValueKey<int>(clearToken),
+              points: reward!.scoreGained,
+              lines: reward!.linesCleared,
+              combo: reward!.combo,
+              rows: clearedRows,
+              cols: clearedCols,
             )),
           ],
           ),

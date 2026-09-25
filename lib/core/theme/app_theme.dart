@@ -15,30 +15,29 @@ abstract final class AppTheme {
   static const Color warning = Color(0xFFFFDA64);
   static const Color danger = Color(0xFFFF5573);
 
-  // Approved gameplay direction: Blockiva should feel board-first, glossy,
-  // colorful and relaxed. These tokens deliberately keep the screen close to
-  // the approved reference while staying original and readable on Android.
-  static const Color gameBackgroundTop = Color(0xFF334D83);
-  static const Color gameBackgroundMid = Color(0xFF35218A);
-  static const Color gameBackgroundBottom = Color(0xFF21355D);
-  static const Color gameBoard = Color(0xFF162747);
+  // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
+  static const Color gameBackgroundTop = Color(0xFF304773);
+  static const Color gameBackgroundMid = Color(0xFF283B65);
+  static const Color gameBackgroundBottom = Color(0xFF1B2B4D);
+  static const Color gameBoard = Color(0xFF132442);
   static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF203657);
-  static const Color gameCellEdge = Color(0xFF49628A);
+  static const Color gameCell = Color(0xFF253957);
+  static const Color gameCellEdge = Color(0xFF536D96);
   static const Color gameText = Color(0xFFFFFFFF);
   static const Color gameTextMuted = Color(0xFFD9E7FF);
   static const Color gameOverlay = Color(0xDC071330);
+  static const Color rewardGold = Color(0xFFFFDC77);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF17A8FF), // blue
-    Color(0xFF19DFFF), // cyan
-    Color(0xFF31E85F), // green
-    Color(0xFFFFD735), // yellow
-    Color(0xFFFF861E), // orange
-    Color(0xFFFF334A), // red
-    Color(0xFF9E45FF), // purple
+    Color(0xFF399FEF), // blue
+    Color(0xFF26C7DC), // cyan
+    Color(0xFF39CC77), // green
+    Color(0xFFF6CC4F), // yellow
+    Color(0xFFF59348), // orange
+    Color(0xFFEE5D71), // coral
+    Color(0xFFA871EC), // violet
   ];
 
   static LinearGradient pieceGradient(int index) {
@@ -47,9 +46,9 @@ abstract final class AppTheme {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .18)!,
+        Color.lerp(base, Colors.white, .13)!,
         base,
-        Color.lerp(base, Colors.black, .12)!,
+        Color.lerp(base, Colors.black, .16)!,
       ],
       stops: const <double>[0, .45, 1],
     );
