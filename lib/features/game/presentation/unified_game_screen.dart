@@ -582,9 +582,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                                         'DRAG A BLOCK ONTO THE BOARD',
                                         style: TextStyle(
                                           color: AppTheme.gameTextMuted,
-                                          fontSize: 10,
+                                          fontSize: 11.5,
                                           fontWeight: FontWeight.w800,
-                                          letterSpacing: 1.1,
+                                          letterSpacing: .8,
                                         ),
                                       ))
                                     : null,

@@ -103,7 +103,7 @@ PYCODE
 wait "$clear_video_pid"
 wait "$clear_audio_pid"
 adb pull /sdcard/blockiva-clear.mp4 "$capture_dir/clear-gameplay-silent.mp4"
-clear_times=(0.35 0.70 1.00 2.80 3.25 3.60)
+clear_times=(0.15 1.10 3.60 4.20 4.40 5.40)
 for index in "${!clear_times[@]}"; do
   printf -v number '%02d' "$((index + 1))"
   ffmpeg -y -loglevel error -ss "${clear_times[$index]}" \
