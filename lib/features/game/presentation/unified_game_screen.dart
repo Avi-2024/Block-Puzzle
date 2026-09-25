@@ -25,6 +25,7 @@ import 'board_drag_projector.dart';
 import 'board_clear_effect.dart';
 import 'clear_prediction.dart';
 import 'clear_reward_effect.dart';
+import 'milestone_celebration.dart';
 import 'piece_tray.dart';
 import 'piece_view.dart';
 
@@ -65,12 +66,15 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   String? _moveFeedback;
   MoveResult? _clearReward;
   Offset? _rewardOrigin;
+  Map<int, int> _clearedTiles = const <int, int>{};
+  int? _milestoneScore;
   Set<int> _clearedRows = <int>{};
   Set<int> _clearedCols = <int>{};
   var _feedbackToken = 0;
   var _rewardToken = 0;
   var _recordFlashToken = 0;
   var _clearFlashToken = 0;
+  var _milestoneToken = 0;
   var _dailyFinished = false;
   var _dailySuccess = false;
   var _dailyRewardGranted = 0;
@@ -149,6 +153,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (!_active) unawaited(_controller.persistSession());
     setState(() {
       _preview = null;
+      if (!_active) {
+        _milestoneScore = null;
+        _milestoneToken++;
+      }
       _trayGeneration++;
     });
   }
@@ -225,6 +233,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
   void _place(BlockPiece piece, int row, int col) {
     if (_terminal || !_active) return;
+    final int oldScore = _controller.engine.score;
+    final List<int?> before = _controller.engine.canPlace(piece, row, col)
+        ? List<int?>.generate(GameEngine.size * GameEngine.size,
+            (index) => _controller.engine.cellAt(index ~/ GameEngine.size,
+                index % GameEngine.size))
+        : const <int?>[];
     final bool placed = _controller.placePiece(piece, row, col);
     if (!placed) {
       unawaited(_haptics.impact());
@@ -242,7 +256,18 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     }
     if (move != null && move.linesCleared > 0) {
       unawaited(_haptics.reward());
-      unawaited(_flashClearedLines(move.clearedRows, move.clearedCols));
+      final Map<int, int> tiles = <int, int>{};
+      for (int r = 0; r < GameEngine.size; r++) {
+        for (int c = 0; c < GameEngine.size; c++) {
+          if (!move.clearedRows.contains(r) && !move.clearedCols.contains(c)) continue;
+          final int index = r * GameEngine.size + c;
+          final bool newlyPlaced = piece.cells.any(
+              (cell) => row + cell.row == r && col + cell.col == c);
+          final int? color = newlyPlaced ? piece.paletteIndex : before[index];
+          if (color != null) tiles[index] = color;
+        }
+      }
+      unawaited(_flashClearedLines(move.clearedRows, move.clearedCols, tiles));
       unawaited(move.combo > 1 ? _audio.playCombo() : _audio.playClear());
     } else {
       unawaited(_haptics.selection());
@@ -251,6 +276,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
     _setPreview(null);
     _evaluateDailyOutcome();
+    final int milestoneToken = ++_milestoneToken;
+    if (_milestoneScore != null) setState(() => _milestoneScore = null);
+    if (!_terminal && oldScore ~/ 500 < _controller.engine.score ~/ 500) {
+      unawaited(_showMilestone((_controller.engine.score ~/ 500) * 500,
+          milestoneToken));
+    }
     _newBest = !widget.isDaily && _controller.engine.score > _startingBest;
     if (_terminal) {
       unawaited(_showOutcome());
@@ -294,12 +325,14 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     }
   }
 
-  Future<void> _flashClearedLines(List<int> rows, List<int> cols) async {
+  Future<void> _flashClearedLines(
+      List<int> rows, List<int> cols, Map<int, int> tiles) async {
     final int token = ++_clearFlashToken;
     if (mounted) {
       setState(() {
         _clearedRows = rows.toSet();
         _clearedCols = cols.toSet();
+        _clearedTiles = Map<int, int>.unmodifiable(tiles);
       });
     }
     await Future<void>.delayed(const Duration(milliseconds: 420));
@@ -307,7 +340,18 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     setState(() {
       _clearedRows = <int>{};
       _clearedCols = <int>{};
+      _clearedTiles = const <int, int>{};
     });
+  }
+
+  Future<void> _showMilestone(int score, int token) async {
+    await Future<void>.delayed(const Duration(milliseconds: 560));
+    if (!mounted || token != _milestoneToken || _terminal) return;
+    setState(() => _milestoneScore = score);
+    await Future<void>.delayed(const Duration(milliseconds: 820));
+    if (mounted && token == _milestoneToken) {
+      setState(() => _milestoneScore = null);
+    }
   }
 
   Future<void> _showMoveReward(MoveResult move, Offset origin) async {
@@ -397,6 +441,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       _recordFlash = false;
       _clearedRows = <int>{};
       _clearedCols = <int>{};
+      _clearedTiles = const <int, int>{};
+      _milestoneScore = null;
       _outcomeVisible = false;
       _outcomeToken++;
       _trayGeneration++;
@@ -410,6 +456,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       _clearFlashToken += 1;
       _rewardToken += 1;
       _recordFlashToken += 1;
+      _milestoneToken += 1;
     });
     _controller.restart();
     unawaited(_haptics.selection());
@@ -521,10 +568,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                             preview: _preview,
                             clearedRows: _clearedRows,
                             clearedCols: _clearedCols,
+                            clearedTiles: _clearedTiles,
                             clearToken: _clearFlashToken,
                             reward: _clearReward,
                             rewardOrigin: _rewardOrigin,
                             rewardToken: _rewardToken,
+                            milestoneScore: _milestoneScore,
                           ),
                                 ),
                               ),
@@ -912,10 +961,12 @@ class _Board extends StatelessWidget {
     required this.preview,
     required this.clearedRows,
     required this.clearedCols,
+    required this.clearedTiles,
     required this.clearToken,
     required this.reward,
     required this.rewardOrigin,
     required this.rewardToken,
+    required this.milestoneScore,
   });
 
   final GlobalKey gridKey;
@@ -923,10 +974,12 @@ class _Board extends StatelessWidget {
   final _PlacementPreview? preview;
   final Set<int> clearedRows;
   final Set<int> clearedCols;
+  final Map<int, int> clearedTiles;
   final int clearToken;
   final MoveResult? reward;
   final Offset? rewardOrigin;
   final int rewardToken;
+  final int? milestoneScore;
 
   @override
   Widget build(BuildContext context) {
@@ -978,6 +1031,7 @@ class _Board extends StatelessWidget {
           if (clearedRows.isNotEmpty || clearedCols.isNotEmpty)
             Positioned.fill(child: BoardClearEffect(
               key: ValueKey<int>(clearToken), rows: clearedRows, cols: clearedCols,
+              tileColors: clearedTiles,
             )),
           if (reward != null)
             Positioned.fill(child: ClearRewardEffect(
@@ -988,6 +1042,10 @@ class _Board extends StatelessWidget {
               rows: reward!.clearedRows.toSet(),
               cols: reward!.clearedCols.toSet(),
               placementCenter: rewardOrigin,
+            )),
+          if (milestoneScore != null)
+            Positioned.fill(child: MilestoneCelebration(
+              key: ValueKey<int>(milestoneScore!), score: milestoneScore!,
             )),
           ],
           ),
