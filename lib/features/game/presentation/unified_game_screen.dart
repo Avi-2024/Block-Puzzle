@@ -988,7 +988,7 @@ class _Board extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: Colors.white.withValues(alpha: .10)),
+          border: Border.all(color: AppTheme.gameCellEdge.withValues(alpha: .34)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
               color: Color(0x55030D22),

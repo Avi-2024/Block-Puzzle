@@ -15,32 +15,33 @@ abstract final class AppTheme {
   static const Color warning = Color(0xFFFFDA64);
   static const Color danger = Color(0xFFFF5573);
 
-  // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
-  static const Color gameBackgroundTop = Color(0xFF243F7A);
-  static const Color gameBackgroundMid = Color(0xFF21396F);
-  static const Color gameBackgroundBottom = Color(0xFF182B59);
-  static const Color gameBoard = Color(0xFF102244);
-  static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF223B63);
-  static const Color gameCellEdge = Color(0xFF536D96);
+  // A still indigo-to-violet stage, with a darker board so saturated pieces
+  // read clearly on a small phone without needing a moving background.
+  static const Color gameBackgroundTop = Color(0xFF443795);
+  static const Color gameBackgroundMid = Color(0xFF344184);
+  static const Color gameBackgroundBottom = Color(0xFF202B58);
+  static const Color gameBoard = Color(0xFF122043);
+  static const Color gameBoardDeep = Color(0xFF080F29);
+  static const Color gameCell = Color(0xFF2B426C);
+  static const Color gameCellEdge = Color(0xFF7892BF);
   static const Color gameText = Color(0xFFFFFFFF);
-  static const Color gameTextMuted = Color(0xFFD9E7FF);
+  static const Color gameTextMuted = Color(0xFFE2E8FF);
   static const Color gameOverlay = Color(0xDC071330);
-  static const Color rewardGold = Color(0xFFFFDC77);
-  static const Color rewardCyan = Color(0xFF6BE5F2);
-  static const Color rewardCoral = Color(0xFFFF8395);
-  static const Color rewardViolet = Color(0xFFC69AFF);
+  static const Color rewardGold = Color(0xFFFFDB70);
+  static const Color rewardCyan = Color(0xFF75ECF1);
+  static const Color rewardCoral = Color(0xFFFF8CA0);
+  static const Color rewardViolet = Color(0xFFD7B0FF);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF399FEF), // blue
-    Color(0xFF26C7DC), // cyan
-    Color(0xFF39CC77), // green
-    Color(0xFFF6CC4F), // yellow
-    Color(0xFFF59348), // orange
-    Color(0xFFEE5D71), // coral
-    Color(0xFFA871EC), // violet
+    Color(0xFF59AEFF), // sky blue
+    Color(0xFF28D7DE), // aqua
+    Color(0xFF42D98E), // mint
+    Color(0xFFFFD45A), // golden yellow
+    Color(0xFFFF9D58), // tangerine
+    Color(0xFFF76B92), // rose
+    Color(0xFFB78BFA), // lavender
   ];
 
   static LinearGradient pieceGradient(int index) {
@@ -78,9 +79,9 @@ abstract final class AppTheme {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          Color(0xFF123B93),
+          Color(0xFF3F3A8D),
           gameBoard,
-          Color(0xFF061944),
+          Color(0xFF172C61),
           gameBoardDeep,
         ],
         stops: <double>[0, .34, .74, 1],
