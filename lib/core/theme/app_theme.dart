@@ -27,6 +27,9 @@ abstract final class AppTheme {
   static const Color gameTextMuted = Color(0xFFD9E7FF);
   static const Color gameOverlay = Color(0xDC071330);
   static const Color rewardGold = Color(0xFFFFDC77);
+  static const Color rewardCyan = Color(0xFF6BE5F2);
+  static const Color rewardCoral = Color(0xFFFF8395);
+  static const Color rewardViolet = Color(0xFFC69AFF);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
