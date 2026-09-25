@@ -78,6 +78,10 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pumpAndSettle();
       expect(find.text('BLOCKIVA'), findsOneWidget);
+      final initialScore = tester.widget<Text>(find.byWidgetPredicate(
+        (widget) => widget is Text && widget.semanticsLabel == 'Score 0',
+      ));
+      expect(initialScore.style!.color, AppTheme.gameText);
       expect(tester.takeException(), isNull);
       if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
         await tester.runAsync(() async {

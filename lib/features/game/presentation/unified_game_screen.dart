@@ -843,7 +843,7 @@ class _AnimatedScore extends StatefulWidget {
 class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProviderStateMixin {
   late final AnimationController _animation = AnimationController(
     vsync: this, duration: const Duration(milliseconds: 420),
-  );
+  )..value = 1;
   late double _from = widget.score.toDouble();
   late double _to = widget.score.toDouble();
   Color _activeAccent = AppTheme.rewardCyan;
