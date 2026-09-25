@@ -40,25 +40,23 @@ class ClearRewardEffect extends StatelessWidget {
           duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 860 : 460),
           builder: (BuildContext context, double value, Widget? child) {
             final double phase = reducedMotion ? .56 : value;
-            final double enter = (phase * (cleared ? 5 : 7)).clamp(0.0, 1.0);
             final double fade = reducedMotion ? 1 :
                 (math.min(1.0, phase * 11) *
                 ((1 - phase) / .17).clamp(0.0, 1.0));
             final double comboIn = ((phase - .22) * 7).clamp(0.0, 1.0);
             final double praiseIn = ((phase - .38) * 7).clamp(0.0, 1.0);
+            final double rise = ((phase - .44) / .56).clamp(0.0, 1.0);
 
             return Opacity(
               opacity: fade,
-              child: Transform.translate(
-                offset: Offset(0, reducedMotion ? 0 : 10 - 17 * phase),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
                     if (celebration)
                       Opacity(
                         opacity: praiseIn,
                         child: Transform.scale(
-                          scale: .82 + .18 * Curves.easeOutBack.transform(praiseIn),
+                          scale: .68 + .32 * Curves.easeOutBack.transform(praiseIn),
                           child: const Text(
                             'AWESOME!',
                             style: TextStyle(
@@ -67,28 +65,42 @@ class ClearRewardEffect extends StatelessWidget {
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1,
                               shadows: <Shadow>[
-                                Shadow(color: Color(0xEE09152F), blurRadius: 4,
-                                    offset: Offset(0, 3)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(-2, -2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(2, 2)),
                               ],
                             ),
                           ),
                         ),
                       ),
-                    Transform.scale(
-                      scale: .72 + .28 * Curves.easeOutBack.transform(enter),
-                      child: Text(
-                        '+$points',
-                        style: TextStyle(
-                          color: cleared ? Colors.white : AppTheme.rewardCyan,
-                          fontSize: cleared ? 51 : 28,
-                          fontWeight: FontWeight.w900,
-                          height: 1.05,
-                          letterSpacing: -1.6,
-                          shadows: <Shadow>[
-                            Shadow(color: accent, blurRadius: cleared ? 7 : 4),
-                            const Shadow(color: Color(0xFF07142D), blurRadius: 4,
-                                offset: Offset(0, 4)),
-                          ],
+                    Transform.translate(
+                      offset: Offset(0, reducedMotion ? 0 :
+                          18 * (1 - (phase * 7).clamp(0.0, 1.0)) -
+                          26 * Curves.easeIn.transform(rise)),
+                      child: Transform.scale(
+                        scale: reducedMotion ? 1 : _numberScale(phase),
+                        child: CustomPaint(
+                          foregroundPainter: _RewardTicks(
+                            phase: phase, color: accent,
+                          ),
+                          child: Text(
+                            '+$points',
+                            style: TextStyle(
+                              color: cleared ? Colors.white : AppTheme.rewardCyan,
+                              fontSize: cleared ? 54 : 32,
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                              letterSpacing: -1.6,
+                              // Crisp ink edges stay legible even over yellow
+                              // blocks. Movement and scale provide the reward;
+                              // the number does not rely on a blurry halo.
+                              shadows: const <Shadow>[
+                                Shadow(color: Color(0xFF07142D), offset: Offset(-2, -2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(2, -2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(-2, 2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(2, 2)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -96,7 +108,7 @@ class ClearRewardEffect extends StatelessWidget {
                       Opacity(
                         opacity: comboIn,
                         child: Transform.scale(
-                          scale: .82 + .18 * Curves.easeOutBack.transform(comboIn),
+                          scale: .66 + .34 * Curves.easeOutBack.transform(comboIn),
                           child: Container(
                             margin: const EdgeInsets.only(top: 3),
                             padding: const EdgeInsets.symmetric(
@@ -117,8 +129,7 @@ class ClearRewardEffect extends StatelessWidget {
                           ),
                         ),
                       ),
-                  ],
-                ),
+                ],
               ),
             );
           },
@@ -126,4 +137,47 @@ class ClearRewardEffect extends StatelessWidget {
       ),
     );
   }
+}
+
+double _numberScale(double phase) {
+  if (phase < .15) {
+    return .58 + .64 * Curves.easeOutCubic.transform(phase / .15);
+  }
+  if (phase < .27) {
+    return 1.22 - .29 * Curves.easeInOut.transform((phase - .15) / .12);
+  }
+  if (phase < .41) {
+    return .93 + .07 * Curves.easeOutCubic.transform((phase - .27) / .14);
+  }
+  return 1 - .10 * ((phase - .80) / .20).clamp(0.0, 1.0);
+}
+
+/// Short sharp ticks accompany the number's arrival, with no full-screen glow.
+class _RewardTicks extends CustomPainter {
+  const _RewardTicks({required this.phase, required this.color});
+
+  final double phase;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double intensity = ((phase - .10) / .08).clamp(0.0, 1.0) *
+        ((.42 - phase) / .18).clamp(0.0, 1.0);
+    if (intensity <= 0) return;
+    final Paint paint = Paint()
+      ..color = color.withValues(alpha: intensity * .85)
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round;
+    for (final int side in <int>[-1, 1]) {
+      final double x = side < 0 ? -6 : size.width + 6;
+      canvas.drawLine(Offset(x, size.height * .22),
+          Offset(x + side * 8, size.height * .13), paint);
+      canvas.drawLine(Offset(x, size.height * .75),
+          Offset(x + side * 9, size.height * .84), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RewardTicks oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.color != color;
 }

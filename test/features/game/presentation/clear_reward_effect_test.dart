@@ -57,7 +57,10 @@ void main() {
     )));
     await tester.pump(const Duration(milliseconds: 140));
     expect(find.text('+15'), findsOneWidget);
-    expect(tester.widget<Text>(find.text('+15')).style!.color, AppTheme.rewardCyan);
+    final Text number = tester.widget<Text>(find.text('+15'));
+    expect(number.style!.color, AppTheme.rewardCyan);
+    expect(number.style!.shadows, isNotEmpty);
+    expect(number.style!.shadows!.every((shadow) => shadow.blurRadius == 0), isTrue);
     expect(find.text('LINE CLEARED'), findsNothing);
     await tester.pump(const Duration(milliseconds: 600));
     expect(tester.takeException(), isNull);
