@@ -33,13 +33,15 @@ void main() {
       )),
     ))));
     await tester.pump(const Duration(milliseconds: 60));
-    final boundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-    final image = await boundary.toImage();
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    final rgba = await tester.runAsync<List<int>>(() async {
+      final boundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final image = await boundary.toImage();
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      image.dispose();
+      return bytes!.buffer.asUint8List();
+    });
     final offset = ((2 * 40 + 20) * 320 + (3 * 40 + 20)) * 4;
-    final rgba = bytes!.buffer.asUint8List();
-    expect(rgba[offset], greaterThan(rgba[offset + 2]));
-    image.dispose();
+    expect(rgba![offset], greaterThan(rgba[offset + 2]));
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.takeException(), isNull);
   });
