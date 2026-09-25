@@ -62,6 +62,15 @@ capture 03-small-screen.png
 wait "$game_video_pid"
 wait "$game_audio_pid"
 adb pull /sdcard/blockiva-gameplay.mp4 "$capture_dir/gameplay-silent.mp4"
+# Preserve ten real Android frames spanning pickup, board preview, points,
+# subsequent placements and the refreshed piece tray for visual review.
+review_times=(0.05 0.35 0.70 1.20 2.95 3.50 3.90 6.00 6.55 7.10)
+for index in "${!review_times[@]}"; do
+  printf -v number '%02d' "$((index + 1))"
+  ffmpeg -y -loglevel error -ss "${review_times[$index]}" \
+    -i "$capture_dir/gameplay-silent.mp4" -frames:v 1 \
+    "$capture_dir/review-$number.png"
+done
 ffmpeg -y -loglevel error -i "$capture_dir/gameplay-silent.mp4" -i "$capture_dir/gameplay.wav" -c:v copy -c:a aac -shortest "$capture_dir/gameplay.mp4"
 rm "$capture_dir/gameplay-silent.mp4"
 

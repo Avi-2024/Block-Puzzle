@@ -129,8 +129,10 @@ jobs:
               '02-mid-game.png': (1080, 1920),
               '03-small-screen.png': (720, 1280),
           }
+          review = {f'review-{i:02}.png': (540, 960) for i in range(1, 11)}
+          expected.update(review)
           if {path.name for path in paths} != set(expected):
-              raise SystemExit('Expected startup, mid-game and small-screen captures')
+              raise SystemExit('Expected three device captures and ten gameplay frames')
           for path in paths:
               with path.open('rb') as f:
                   f.read(16)

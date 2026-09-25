@@ -163,7 +163,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
   Future<void> _showOutcome() async {
     final token = ++_outcomeToken;
-    await Future<void>.delayed(const Duration(milliseconds: 460));
+    await Future<void>.delayed(Duration(
+      milliseconds: (_clearReward?.linesCleared ?? 0) > 0 ? 900 : 460,
+    ));
     if (!mounted || token != _outcomeToken || !_terminal) return;
     setState(() => _outcomeVisible = true);
     unawaited(_haptics.impact());
@@ -360,7 +362,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       _clearReward = move;
       _rewardOrigin = origin;
     });
-    await Future<void>.delayed(Duration(milliseconds: move.linesCleared > 0 ? 680 : 540));
+    await Future<void>.delayed(Duration(milliseconds: move.linesCleared > 0 ? 880 : 480));
     if (!mounted || token != _rewardToken) return;
     setState(() {
       _clearReward = null;
@@ -512,13 +514,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       return const BlockivaSplash();
     }
 
-    final LinearGradient gameGradient =
-        AppTheme.gameplayGradientForScore(_controller.engine.score);
+    final LinearGradient gameGradient = AppTheme.gameBackgroundGradient;
     Widget content = Scaffold(
       backgroundColor: gameGradient.colors.last,
-      body: AnimatedContainer(
-        duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 700),
-        curve: Curves.easeInOutCubic,
+      body: Container(
         decoration: BoxDecoration(gradient: gameGradient),
         child: SafeArea(
           child: Stack(

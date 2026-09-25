@@ -16,12 +16,12 @@ abstract final class AppTheme {
   static const Color danger = Color(0xFFFF5573);
 
   // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
-  static const Color gameBackgroundTop = Color(0xFF304773);
-  static const Color gameBackgroundMid = Color(0xFF283B65);
-  static const Color gameBackgroundBottom = Color(0xFF1B2B4D);
-  static const Color gameBoard = Color(0xFF132442);
+  static const Color gameBackgroundTop = Color(0xFF243F7A);
+  static const Color gameBackgroundMid = Color(0xFF21396F);
+  static const Color gameBackgroundBottom = Color(0xFF182B59);
+  static const Color gameBoard = Color(0xFF102244);
   static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF253957);
+  static const Color gameCell = Color(0xFF223B63);
   static const Color gameCellEdge = Color(0xFF536D96);
   static const Color gameText = Color(0xFFFFFFFF);
   static const Color gameTextMuted = Color(0xFFD9E7FF);
@@ -68,26 +68,10 @@ abstract final class AppTheme {
         stops: <double>[0, .50, 1],
       );
 
-  /// A small Blockiva-owned set of moods. The score selects the stage, so a
-  /// resumed run always returns to the same colors without stored UI state.
+  /// Keep the playfield's color stable throughout a run. Rewards animate only
+  /// their numbers; a changing background competes with the next move.
   static LinearGradient gameplayGradientForScore(int score) {
-    final List<Color> colors = switch ((score ~/ 1000) % 3) {
-      1 => const <Color>[
-        Color(0xFF454273), Color(0xFF35315F), Color(0xFF211F46),
-      ],
-      2 => const <Color>[
-        Color(0xFF296177), Color(0xFF24506A), Color(0xFF1A324D),
-      ],
-      _ => const <Color>[
-        gameBackgroundTop, gameBackgroundMid, gameBackgroundBottom,
-      ],
-    };
-    return LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: colors,
-      stops: const <double>[0, .50, 1],
-    );
+    return gameBackgroundGradient;
   }
 
   static LinearGradient get boardGradient => const LinearGradient(

@@ -18,7 +18,8 @@ void main() {
     ))));
     await tester.pump(const Duration(milliseconds: 170));
     expect(find.text('+115'), findsOneWidget);
-    expect(find.text('LINE CLEARED'), findsOneWidget);
+    expect(find.text('AWESOME!'), findsNothing);
+    expect(find.byType(Center), findsWidgets);
     await tester.tapAt(const Offset(160, 160));
     expect(taps, 1);
 
@@ -30,7 +31,16 @@ void main() {
     )));
     await tester.pump(const Duration(milliseconds: 170));
     expect(find.text('+420'), findsOneWidget);
-    expect(find.text('COMBO ×3'), findsOneWidget);
+    expect(find.text('COMBO +3'), findsOneWidget);
+    expect(tester.getCenter(find.text('+420')).dx, closeTo(160, 1));
+    expect(tester.widget<Opacity>(find.ancestor(
+      of: find.text('COMBO +3'), matching: find.byType(Opacity),
+    ).first).opacity, 0);
+    await tester.pump(const Duration(milliseconds: 240));
+    expect(find.text('AWESOME!'), findsOneWidget);
+    expect(tester.widget<Opacity>(find.ancestor(
+      of: find.text('AWESOME!'), matching: find.byType(Opacity),
+    ).first).opacity, greaterThan(0));
     await tester.pump(const Duration(milliseconds: 700));
     expect(tester.takeException(), isNull);
     expect(tester.binding.hasScheduledFrame, isFalse);

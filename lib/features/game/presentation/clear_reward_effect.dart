@@ -3,10 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../domain/game_engine.dart';
 
-/// Short, non-interactive payoff anchored near the lines that earned the points.
-/// Recreating this widget for a new clear starts a fresh animation immediately.
+/// A brief, non-interactive reward at the board center. Score, combo, and
+/// praise arrive in sequence; no part of the background animates.
 class ClearRewardEffect extends StatelessWidget {
   const ClearRewardEffect({
     required this.points,
@@ -21,120 +20,109 @@ class ClearRewardEffect extends StatelessWidget {
   final int points;
   final int lines;
   final int combo;
+  // Kept for callers that also draw the line-clear effect. The reward itself
+  // always appears in one predictable position, including edge placements.
   final Set<int> rows;
   final Set<int> cols;
-  /// Normalized board position used for moves that do not clear a line.
   final Offset? placementCenter;
 
   @override
   Widget build(BuildContext context) {
-    final double x = cols.isEmpty ? (placementCenter?.dx ?? .5) :
-        (cols.reduce((a, b) => a + b) / cols.length + .5) / GameEngine.size;
-    final double y = rows.isEmpty ? (placementCenter?.dy ?? .5) :
-        (rows.reduce((a, b) => a + b) / rows.length + .5) / GameEngine.size;
-    // Keep the badge inside the board even for clears along its outer edges.
-    final Alignment anchor = Alignment(
-      (x.clamp(.25, .75) - .5) * 2,
-      (y.clamp(.25, .75) - .5) * 2,
-    );
     final bool reducedMotion = MediaQuery.disableAnimationsOf(context);
     final bool cleared = lines > 0;
-    final Color accent = !cleared ? AppTheme.rewardCyan :
-        combo > 1 ? AppTheme.rewardViolet :
-        lines > 1 ? AppTheme.rewardCoral : AppTheme.rewardGold;
-    final String caption = combo > 1 ? 'COMBO ×$combo' :
-        lines > 1 ? '$lines LINES CLEARED' : cleared ? 'LINE CLEARED' : '';
+    final bool celebration = combo > 1 || lines > 1;
+    final Color accent = cleared ? AppTheme.rewardGold : AppTheme.rewardCyan;
 
     return IgnorePointer(
-      child: Align(
-        alignment: anchor,
+      child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 650 : 510),
-          builder: (context, value, child) {
-            final double opacity = reducedMotion ? 1 :
-                math.min(1, value * 9) * ((1 - value) / .23).clamp(0.0, 1.0);
+          duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 860 : 460),
+          builder: (BuildContext context, double value, Widget? child) {
+            final double phase = reducedMotion ? .56 : value;
+            final double enter = (phase * (cleared ? 5 : 7)).clamp(0.0, 1.0);
+            final double fade = reducedMotion ? 1 :
+                (math.min(1.0, phase * 11) *
+                ((1 - phase) / .17).clamp(0.0, 1.0));
+            final double comboIn = ((phase - .22) * 7).clamp(0.0, 1.0);
+            final double praiseIn = ((phase - .38) * 7).clamp(0.0, 1.0);
+
             return Opacity(
-              opacity: opacity,
+              opacity: fade,
               child: Transform.translate(
-                offset: Offset(0, reducedMotion ? 0 : 12 - (cleared ? 32 : 24) * value),
-                child: Transform.scale(
-                  scale: reducedMotion ? 1 : .76 + .24 * Curves.easeOutBack.transform(
-                    (value * 3).clamp(0.0, 1.0),
-                  ),
-                  child: cleared && !reducedMotion
-                      ? CustomPaint(
-                          foregroundPainter: _RewardSparks(value, accent),
-                          child: child,
-                        ) : child,
+                offset: Offset(0, reducedMotion ? 0 : 10 - 17 * phase),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (celebration)
+                      Opacity(
+                        opacity: praiseIn,
+                        child: Transform.scale(
+                          scale: .82 + .18 * Curves.easeOutBack.transform(praiseIn),
+                          child: const Text(
+                            'AWESOME!',
+                            style: TextStyle(
+                              color: AppTheme.rewardCoral,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                              shadows: <Shadow>[
+                                Shadow(color: Color(0xEE09152F), blurRadius: 4,
+                                    offset: Offset(0, 3)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    Transform.scale(
+                      scale: .72 + .28 * Curves.easeOutBack.transform(enter),
+                      child: Text(
+                        '+$points',
+                        style: TextStyle(
+                          color: cleared ? Colors.white : AppTheme.rewardCyan,
+                          fontSize: cleared ? 51 : 28,
+                          fontWeight: FontWeight.w900,
+                          height: 1.05,
+                          letterSpacing: -1.6,
+                          shadows: <Shadow>[
+                            Shadow(color: accent, blurRadius: cleared ? 7 : 4),
+                            const Shadow(color: Color(0xFF07142D), blurRadius: 4,
+                                offset: Offset(0, 4)),
+                          ],
+                        ),
+                      ),
+                    if (combo > 1)
+                      Opacity(
+                        opacity: comboIn,
+                        child: Transform.scale(
+                          scale: .82 + .18 * Curves.easeOutBack.transform(comboIn),
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 13, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.gameBoard.withValues(alpha: .94),
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(color: AppTheme.rewardGold),
+                            ),
+                            child: Text('COMBO +$combo',
+                              style: const TextStyle(
+                                color: AppTheme.rewardGold,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .6,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             );
           },
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: cleared ? 17 : 12, vertical: cleared ? 9 : 5,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: <Color>[
-                Color.lerp(AppTheme.gameBoard, accent, .33)!,
-                AppTheme.gameBoard.withValues(alpha: .96),
-              ]),
-              borderRadius: BorderRadius.circular(cleared ? 15 : 12),
-              border: Border.all(color: accent.withValues(alpha: .85)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(color: Color(0x59030A20), blurRadius: 14, offset: Offset(0, 5)),
-              ],
-            ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-              Text('+$points', style: TextStyle(
-                color: accent, fontSize: cleared ? 31 : 21,
-                fontWeight: FontWeight.w900, height: 1, letterSpacing: -.8,
-                shadows: <Shadow>[
-                  Shadow(color: accent.withValues(alpha: .55), blurRadius: 12),
-                ],
-              )),
-              if (cleared) ...<Widget>[
-                const SizedBox(height: 4),
-                Text(caption, style: const TextStyle(
-                  color: AppTheme.gameText, fontSize: 10,
-                  fontWeight: FontWeight.w900, letterSpacing: 1.1,
-                )),
-              ],
-            ]),
-          ),
         ),
       ),
     );
   }
-}
-
-/// Six small, deterministic rays for clears; no assets or per-frame timers.
-class _RewardSparks extends CustomPainter {
-  const _RewardSparks(this.progress, this.color);
-
-  final double progress;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double intensity = ((1 - progress) / .7).clamp(0.0, 1.0);
-    if (intensity == 0) return;
-    final Offset center = size.center(Offset.zero);
-    final Paint spark = Paint()
-      ..color = color.withValues(alpha: intensity * .85)
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-    for (int i = 0; i < 6; i++) {
-      final double angle = i * math.pi / 3;
-      final Offset direction = Offset(math.cos(angle), math.sin(angle));
-      final double distance = size.width * (.53 + progress * .17);
-      canvas.drawLine(center + direction * distance,
-          center + direction * (distance + 6 * intensity), spark);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _RewardSparks oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
 }
