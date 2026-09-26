@@ -40,18 +40,20 @@ class ClearRewardEffect extends StatelessWidget {
       child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: reducedMotion ? 0 : spectacle ? 860 : 460),
+          duration: Duration(milliseconds: reducedMotion ? 0 : spectacle ? 1040 : 460),
           builder: (BuildContext context, double value, Widget? child) {
-            final double phase = reducedMotion ? .56 : value;
+            final double phase = reducedMotion ? .60 : value;
             final double fade = reducedMotion ? 1 :
-                (math.min(1.0, phase * 11) *
-                ((1 - phase) / .17).clamp(0.0, 1.0));
-            // Reveal the headline while the clear is still visible. Waiting
-            // until the end of this short effect lets Android drop nearly all
-            // of its visible frames on slower devices.
-            final double comboIn = ((phase - .12) * 12).clamp(0.0, 1.0);
-            final double praiseIn = ((phase - .09) * 12).clamp(0.0, 1.0);
-            final double rise = ((phase - .44) / .56).clamp(0.0, 1.0);
+                (math.min(1.0, phase * 12) *
+                ((1 - phase) / .19).clamp(0.0, 1.0));
+            // The cleared tiles resolve first, then the praise and combo land
+            // while the number is still at full size. Keep each reveal early
+            // enough to survive dropped frames on slower Android phones.
+            final double praiseIn = reducedMotion ? 1 :
+                ((phase - .16) / .13).clamp(0.0, 1.0);
+            final double comboIn = reducedMotion ? 1 :
+                ((phase - .32) / .13).clamp(0.0, 1.0);
+            final double rise = ((phase - .61) / .39).clamp(0.0, 1.0);
 
             return Opacity(
               opacity: fade,
@@ -91,7 +93,7 @@ class ClearRewardEffect extends StatelessWidget {
                     Transform.translate(
                       offset: Offset(0, reducedMotion ? 0 :
                           18 * (1 - (phase * 7).clamp(0.0, 1.0)) -
-                          26 * Curves.easeIn.transform(rise)),
+                          20 * Curves.easeIn.transform(rise)),
                       child: Transform.scale(
                         scale: reducedMotion ? 1 : _numberScale(phase),
                         child: CustomPaint(
@@ -185,8 +187,8 @@ class _RewardBackdrop extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double enter = ((phase - .07) * 9).clamp(0.0, 1.0);
-    final double leave = ((1 - phase) * 5).clamp(0.0, 1.0);
+    final double enter = ((phase - .12) / .14).clamp(0.0, 1.0);
+    final double leave = ((1 - phase) / .21).clamp(0.0, 1.0);
     final double strength = enter * leave;
     if (strength <= 0) return;
     final List<Color> colours = <Color>[

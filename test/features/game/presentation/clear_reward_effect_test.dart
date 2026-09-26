@@ -83,4 +83,28 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('praise and combo enter after the clear starts', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox.square(
+      dimension: 320,
+      child: ClearRewardEffect(
+        points: 210, lines: 2, combo: 2,
+        rows: <int>{4}, cols: <int>{},
+      ),
+    )));
+    await tester.pump(const Duration(milliseconds: 100));
+    double opacityOf(String label) => tester.widget<Opacity>(find.ancestor(
+      of: find.text(label), matching: find.byType(Opacity),
+    ).first).opacity;
+    expect(opacityOf('AWESOME!'), 0);
+    expect(opacityOf('COMBO +2'), 0);
+
+    await tester.pump(const Duration(milliseconds: 220));
+    expect(opacityOf('AWESOME!'), greaterThan(.8));
+    expect(opacityOf('COMBO +2'), 0);
+    await tester.pump(const Duration(milliseconds: 230));
+    expect(opacityOf('COMBO +2'), greaterThan(.8));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(tester.takeException(), isNull);
+  });
 }

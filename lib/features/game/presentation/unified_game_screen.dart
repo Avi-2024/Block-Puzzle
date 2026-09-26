@@ -167,7 +167,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   Future<void> _showOutcome() async {
     final token = ++_outcomeToken;
     await Future<void>.delayed(Duration(
-      milliseconds: (_clearReward?.linesCleared ?? 0) > 0 ? 900 : 460,
+      milliseconds: (_clearReward?.linesCleared ?? 0) > 0 ? 1080 : 460,
     ));
     if (!mounted || token != _outcomeToken || !_terminal) return;
     setState(() => _outcomeVisible = true);
@@ -352,7 +352,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   }
 
   Future<void> _showMilestone(int score, int token) async {
-    await Future<void>.delayed(const Duration(milliseconds: 560));
+    // Avoid stacking the milestone over a clear, combo, or new-best headline.
+    await Future<void>.delayed(Duration(milliseconds:
+        (_clearReward?.linesCleared ?? 0) > 0 || _rewardNewBest ? 1100 : 560));
     if (!mounted || token != _milestoneToken || _terminal) return;
     setState(() => _milestoneScore = score);
     await Future<void>.delayed(const Duration(milliseconds: 820));
@@ -370,7 +372,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       _rewardNewBest = newBest;
     });
     await Future<void>.delayed(Duration(milliseconds:
-        move.linesCleared > 0 || newBest ? 880 : 480));
+        move.linesCleared > 0 || newBest ? 1060 : 480));
     if (!mounted || token != _rewardToken) return;
     setState(() {
       _clearReward = null;
