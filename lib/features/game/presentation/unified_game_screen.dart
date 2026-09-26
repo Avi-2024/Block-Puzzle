@@ -558,11 +558,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                     Expanded(
                       child: LayoutBuilder(
                         builder: (BuildContext context, BoxConstraints constraints) {
-                          final double side = (constraints.maxHeight - 132)
+                          final double side = (constraints.maxHeight - 146)
                               .clamp(0.0, constraints.maxWidth).toDouble();
                           return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: <Widget>[
+                              const SizedBox(height: 14),
                               SizedBox(
                                 width: side,
                                 height: side,
