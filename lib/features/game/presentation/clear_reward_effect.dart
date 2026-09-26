@@ -13,6 +13,7 @@ class ClearRewardEffect extends StatelessWidget {
     required this.combo,
     required this.rows,
     required this.cols,
+    this.newBest = false,
     this.placementCenter,
     super.key,
   });
@@ -20,6 +21,7 @@ class ClearRewardEffect extends StatelessWidget {
   final int points;
   final int lines;
   final int combo;
+  final bool newBest;
   // Kept for callers that also draw the line-clear effect. The reward itself
   // always appears in one predictable position, including edge placements.
   final Set<int> rows;
@@ -31,13 +33,14 @@ class ClearRewardEffect extends StatelessWidget {
     final bool reducedMotion = MediaQuery.disableAnimationsOf(context);
     final bool cleared = lines > 0;
     final bool celebration = combo > 1 || lines > 1;
+    final bool spectacle = cleared || newBest;
     final Color accent = cleared ? AppTheme.rewardGold : AppTheme.rewardCyan;
 
     return IgnorePointer(
       child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 860 : 460),
+          duration: Duration(milliseconds: reducedMotion ? 0 : spectacle ? 860 : 460),
           builder: (BuildContext context, double value, Widget? child) {
             final double phase = reducedMotion ? .56 : value;
             final double fade = reducedMotion ? 1 :
@@ -49,18 +52,26 @@ class ClearRewardEffect extends StatelessWidget {
 
             return Opacity(
               opacity: fade,
-              child: Column(
+              child: CustomPaint(
+                painter: spectacle && !reducedMotion ? _RewardBackdrop(
+                  phase: phase,
+                  primary: newBest ? AppTheme.rewardCoral :
+                      combo > 1 ? AppTheme.rewardCyan : const Color(0xFF71DF82),
+                  secondary: AppTheme.rewardGold,
+                ) : null,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                    if (celebration)
+                    if (celebration || newBest)
                       Opacity(
                         opacity: praiseIn,
                         child: Transform.scale(
                           scale: .68 + .32 * Curves.easeOutBack.transform(praiseIn),
-                          child: const Text(
-                            'AWESOME!',
+                          child: Text(
+                            newBest ? 'NEW BEST!' : 'AWESOME!',
                             style: TextStyle(
-                              color: AppTheme.rewardCoral,
+                              color: newBest ? AppTheme.rewardGold :
+                                  AppTheme.rewardCoral,
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1,
@@ -130,6 +141,7 @@ class ClearRewardEffect extends StatelessWidget {
                         ),
                       ),
                 ],
+                ),
               ),
             );
           },
@@ -150,6 +162,69 @@ double _numberScale(double phase) {
     return .93 + .07 * Curves.easeOutCubic.transform((phase - .27) / .14);
   }
   return 1 - .10 * ((phase - .80) / .20).clamp(0.0, 1.0);
+}
+
+/// A small moving colour field behind the reward only. It paints no blur and
+/// leaves the surrounding board and the screen background unchanged.
+class _RewardBackdrop extends CustomPainter {
+  const _RewardBackdrop({
+    required this.phase,
+    required this.primary,
+    required this.secondary,
+  });
+
+  final double phase;
+  final Color primary;
+  final Color secondary;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double enter = ((phase - .07) * 9).clamp(0.0, 1.0);
+    final double leave = ((1 - phase) * 5).clamp(0.0, 1.0);
+    final double strength = enter * leave;
+    if (strength <= 0) return;
+    final Rect band = Rect.fromLTWH(-18, size.height * .30,
+        size.width + 36, size.height * .46);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(band, const Radius.circular(18)),
+      Paint()..shader = LinearGradient(
+        colors: <Color>[
+          primary.withValues(alpha: 0),
+          primary.withValues(alpha: .18 * strength),
+          secondary.withValues(alpha: .16 * strength),
+          secondary.withValues(alpha: 0),
+        ],
+      ).createShader(band),
+    );
+
+    // Deterministic positions keep repainting cheap and prevent visual noise.
+    for (int index = 0; index < 6; index++) {
+      final double travel = (phase * 68 + index * 35) % (size.width + 50);
+      final double x = travel - 25;
+      final double y = size.height * (.35 + index * .055);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, y, 38 + (index % 2) * 16, 4),
+          const Radius.circular(2),
+        ),
+        Paint()..color = (index.isEven ? primary : secondary)
+            .withValues(alpha: .35 * strength),
+      );
+    }
+    for (int index = 0; index < 12; index++) {
+      final double x = (index * 47 + phase * (index.isEven ? 42 : -34)) %
+          (size.width + 20) - 10;
+      final double y = size.height * (.25 + ((index * 7) % 11) * .05);
+      canvas.drawCircle(Offset(x, y), index % 3 == 0 ? 2.2 : 1.3,
+          Paint()..color = (index.isEven ? secondary : primary)
+              .withValues(alpha: .65 * strength));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RewardBackdrop oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.primary != primary ||
+      oldDelegate.secondary != secondary;
 }
 
 /// Short sharp ticks accompany the number's arrival, with no full-screen glow.

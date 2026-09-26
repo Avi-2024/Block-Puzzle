@@ -17,13 +17,13 @@ abstract final class AppTheme {
 
   // A still indigo-to-violet stage, with a darker board so saturated pieces
   // read clearly on a small phone without needing a moving background.
-  static const Color gameBackgroundTop = Color(0xFF443795);
-  static const Color gameBackgroundMid = Color(0xFF344184);
-  static const Color gameBackgroundBottom = Color(0xFF202B58);
-  static const Color gameBoard = Color(0xFF122043);
-  static const Color gameBoardDeep = Color(0xFF080F29);
-  static const Color gameCell = Color(0xFF2B426C);
-  static const Color gameCellEdge = Color(0xFF7892BF);
+  static const Color gameBackgroundTop = Color(0xFF526BC2);
+  static const Color gameBackgroundMid = Color(0xFF415CA9);
+  static const Color gameBackgroundBottom = Color(0xFF364D98);
+  static const Color gameBoard = Color(0xFF20294F);
+  static const Color gameBoardDeep = Color(0xFF182146);
+  static const Color gameCell = Color(0xFF344575);
+  static const Color gameCellEdge = Color(0xFF9DACDD);
   static const Color gameText = Color(0xFFFFFFFF);
   static const Color gameTextMuted = Color(0xFFE2E8FF);
   static const Color gameOverlay = Color(0xDC071330);
@@ -35,13 +35,13 @@ abstract final class AppTheme {
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF59AEFF), // sky blue
-    Color(0xFF28D7DE), // aqua
-    Color(0xFF42D98E), // mint
-    Color(0xFFFFD45A), // golden yellow
-    Color(0xFFFF9D58), // tangerine
-    Color(0xFFF76B92), // rose
-    Color(0xFFB78BFA), // lavender
+    Color(0xFF35A9ED), // blue
+    Color(0xFF29C9F4), // cyan
+    Color(0xFF38DB5B), // green
+    Color(0xFFFFD83C), // yellow
+    Color(0xFFFF843D), // orange
+    Color(0xFFF35D9E), // pink
+    Color(0xFFB676F3), // purple
   ];
 
   static LinearGradient pieceGradient(int index) {
@@ -50,9 +50,9 @@ abstract final class AppTheme {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .13)!,
+        Color.lerp(base, Colors.white, .10)!,
         base,
-        Color.lerp(base, Colors.black, .16)!,
+        Color.lerp(base, Colors.black, .17)!,
       ],
       stops: const <double>[0, .45, 1],
     );
@@ -79,9 +79,9 @@ abstract final class AppTheme {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          Color(0xFF3F3A8D),
+          Color(0xFF293764),
           gameBoard,
-          Color(0xFF172C61),
+          Color(0xFF24325D),
           gameBoardDeep,
         ],
         stops: <double>[0, .34, .74, 1],

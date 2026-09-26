@@ -66,4 +66,21 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
+
+  testWidgets('first new best takes priority over clear praise', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox.square(
+      dimension: 320,
+      child: ClearRewardEffect(
+        points: 210, lines: 2, combo: 2, newBest: true,
+        rows: <int>{0}, cols: <int>{1},
+      ),
+    )));
+    await tester.pump(const Duration(milliseconds: 480));
+    expect(find.text('NEW BEST!'), findsOneWidget);
+    expect(find.text('AWESOME!'), findsNothing);
+    expect(find.text('+210'), findsOneWidget);
+    expect(find.text('COMBO +2'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+  });
 }

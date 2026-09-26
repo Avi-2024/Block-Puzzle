@@ -67,6 +67,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   String? _moveFeedback;
   MoveResult? _clearReward;
   Offset? _rewardOrigin;
+  bool _rewardNewBest = false;
   Map<int, int> _clearedTiles = const <int, int>{};
   int? _milestoneScore;
   Set<int> _clearedRows = <int>{};
@@ -256,6 +257,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
         move,
         Offset((col + piece.width / 2) / GameEngine.size,
             (row + piece.height / 2) / GameEngine.size),
+        newBest: !widget.isDaily && oldScore <= _startingBest &&
+            _controller.engine.score > _startingBest,
       ));
     }
     if (move != null && move.linesCleared > 0) {
@@ -358,17 +361,21 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     }
   }
 
-  Future<void> _showMoveReward(MoveResult move, Offset origin) async {
+  Future<void> _showMoveReward(MoveResult move, Offset origin,
+      {bool newBest = false}) async {
     final int token = ++_rewardToken;
     setState(() {
       _clearReward = move;
       _rewardOrigin = origin;
+      _rewardNewBest = newBest;
     });
-    await Future<void>.delayed(Duration(milliseconds: move.linesCleared > 0 ? 880 : 480));
+    await Future<void>.delayed(Duration(milliseconds:
+        move.linesCleared > 0 || newBest ? 880 : 480));
     if (!mounted || token != _rewardToken) return;
     setState(() {
       _clearReward = null;
       _rewardOrigin = null;
+      _rewardNewBest = false;
     });
   }
 
@@ -443,6 +450,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       _moveFeedback = null;
       _clearReward = null;
       _rewardOrigin = null;
+      _rewardNewBest = false;
       _recordFlash = false;
       _clearedRows = <int>{};
       _clearedCols = <int>{};
@@ -569,6 +577,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                             clearToken: _clearFlashToken,
                             reward: _clearReward,
                             rewardOrigin: _rewardOrigin,
+                            rewardNewBest: _rewardNewBest,
                             rewardToken: _rewardToken,
                             milestoneScore: _milestoneScore,
                           ),
@@ -983,6 +992,7 @@ class _Board extends StatelessWidget {
     required this.clearToken,
     required this.reward,
     required this.rewardOrigin,
+    required this.rewardNewBest,
     required this.rewardToken,
     required this.milestoneScore,
   });
@@ -996,6 +1006,7 @@ class _Board extends StatelessWidget {
   final int clearToken;
   final MoveResult? reward;
   final Offset? rewardOrigin;
+  final bool rewardNewBest;
   final int rewardToken;
   final int? milestoneScore;
 
@@ -1011,8 +1022,8 @@ class _Board extends StatelessWidget {
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: AppTheme.gameCellEdge.withValues(alpha: .34)),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: AppTheme.gameCellEdge.withValues(alpha: .42)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
               color: Color(0x55030D22),
@@ -1057,6 +1068,7 @@ class _Board extends StatelessWidget {
               points: reward!.scoreGained,
               lines: reward!.linesCleared,
               combo: reward!.combo,
+              newBest: rewardNewBest,
               rows: reward!.clearedRows.toSet(),
               cols: reward!.clearedCols.toSet(),
               placementCenter: rewardOrigin,

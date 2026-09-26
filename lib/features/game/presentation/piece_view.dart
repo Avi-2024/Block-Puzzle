@@ -52,14 +52,17 @@ class PuzzleTile extends StatelessWidget {
     margin: const EdgeInsets.all(1.5),
     decoration: BoxDecoration(
       gradient: AppTheme.pieceGradient(paletteIndex),
-      border: highlighted ? Border.all(color: const Color(0xFFFFE8A3), width: 1.5) : null,
-      borderRadius: BorderRadius.circular(3),
+      border: Border.all(
+        color: highlighted ? const Color(0xFFFFE8A3) : const Color(0x38FFFFFF),
+        width: highlighted ? 1.5 : .7,
+      ),
+      borderRadius: BorderRadius.circular(4),
       boxShadow: elevated ? const <BoxShadow>[
         BoxShadow(color: Color(0x55000000), blurRadius: 6, offset: Offset(0, 4)),
       ] : null,
     ),
     child: const ClipRRect(
-      borderRadius: BorderRadius.all(Radius.circular(3)),
+      borderRadius: BorderRadius.all(Radius.circular(4)),
       child: CustomPaint(painter: _TileBevel()),
     ),
   );
@@ -72,16 +75,16 @@ class _TileBevel extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
-    final double edge = size.shortestSide * .12;
+    final double edge = size.shortestSide * .06;
     canvas.drawPath(Path()
       ..moveTo(0, 0)..lineTo(w, 0)..lineTo(w-edge, edge)
       ..lineTo(edge, edge)..lineTo(edge, h-edge)..lineTo(0, h)..close(),
-      Paint()..color = const Color(0x55FFFFFF));
+      Paint()..color = const Color(0x48FFFFFF));
     canvas.drawPath(Path()
       ..moveTo(w, 0)..lineTo(w, h)..lineTo(0, h)
       ..lineTo(edge, h-edge)..lineTo(w-edge, h-edge)
       ..lineTo(w-edge, edge)..close(),
-      Paint()..color = const Color(0x33000000));
+      Paint()..color = const Color(0x28000000));
   }
 
   @override
