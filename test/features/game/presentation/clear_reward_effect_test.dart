@@ -29,7 +29,7 @@ void main() {
         points: 420, lines: 2, combo: 3, rows: <int>{}, cols: <int>{1, 2},
       ),
     )));
-    await tester.pump(const Duration(milliseconds: 170));
+    await tester.pump(const Duration(milliseconds: 550));
     expect(find.text('+420'), findsOneWidget);
     expect(find.text('COMBO +3'), findsOneWidget);
     expect(tester.getCenter(find.text('+420')).dx,
@@ -37,7 +37,7 @@ void main() {
     expect(tester.widget<Opacity>(find.ancestor(
       of: find.text('COMBO +3'), matching: find.byType(Opacity),
     ).first).opacity, greaterThan(0));
-    await tester.pump(const Duration(milliseconds: 240));
+    await tester.pump(const Duration(milliseconds: 120));
     expect(find.text('AWESOME!'), findsOneWidget);
     expect(tester.widget<Opacity>(find.ancestor(
       of: find.text('AWESOME!'), matching: find.byType(Opacity),
