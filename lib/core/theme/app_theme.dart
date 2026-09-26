@@ -17,12 +17,12 @@ abstract final class AppTheme {
 
   // A still indigo-to-violet stage, with a darker board so saturated pieces
   // read clearly on a small phone without needing a moving background.
-  static const Color gameBackgroundTop = Color(0xFF526BC2);
-  static const Color gameBackgroundMid = Color(0xFF415CA9);
-  static const Color gameBackgroundBottom = Color(0xFF364D98);
-  static const Color gameBoard = Color(0xFF20294F);
+  static const Color gameBackgroundTop = Color(0xFF4B61B9);
+  static const Color gameBackgroundMid = Color(0xFF4358AD);
+  static const Color gameBackgroundBottom = Color(0xFF384D9C);
+  static const Color gameBoard = Color(0xFF252C54);
   static const Color gameBoardDeep = Color(0xFF182146);
-  static const Color gameCell = Color(0xFF344575);
+  static const Color gameCell = Color(0xFF303D6A);
   static const Color gameCellEdge = Color(0xFF9DACDD);
   static const Color gameText = Color(0xFFFFFFFF);
   static const Color gameTextMuted = Color(0xFFE2E8FF);
@@ -50,11 +50,11 @@ abstract final class AppTheme {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .10)!,
+        Color.lerp(base, Colors.white, .23)!,
         base,
-        Color.lerp(base, Colors.black, .17)!,
+        Color.lerp(base, Colors.black, .29)!,
       ],
-      stops: const <double>[0, .45, 1],
+      stops: const <double>[0, .47, 1],
     );
   }
 

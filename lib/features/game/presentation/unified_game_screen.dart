@@ -1115,7 +1115,7 @@ class _BoardCell extends StatelessWidget {
               margin: const EdgeInsets.all(1.5),
               decoration: BoxDecoration(
                 color: invalidPreview ? const Color(0xFF6B3854) : AppTheme.gameCell,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(2.5),
                 border: invalidPreview
                     ? Border.all(color: const Color(0xFFFF8B9B), width: 1.2)
                     : null,
