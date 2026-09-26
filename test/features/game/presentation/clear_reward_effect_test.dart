@@ -36,7 +36,7 @@ void main() {
         closeTo(tester.getCenter(find.byType(ClearRewardEffect)).dx, 1));
     expect(tester.widget<Opacity>(find.ancestor(
       of: find.text('COMBO +3'), matching: find.byType(Opacity),
-    ).first).opacity, 0);
+    ).first).opacity, greaterThan(0));
     await tester.pump(const Duration(milliseconds: 240));
     expect(find.text('AWESOME!'), findsOneWidget);
     expect(tester.widget<Opacity>(find.ancestor(

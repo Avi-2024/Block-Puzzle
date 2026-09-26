@@ -46,8 +46,11 @@ class ClearRewardEffect extends StatelessWidget {
             final double fade = reducedMotion ? 1 :
                 (math.min(1.0, phase * 11) *
                 ((1 - phase) / .17).clamp(0.0, 1.0));
-            final double comboIn = ((phase - .22) * 7).clamp(0.0, 1.0);
-            final double praiseIn = ((phase - .38) * 7).clamp(0.0, 1.0);
+            // Reveal the headline while the clear is still visible. Waiting
+            // until the end of this short effect lets Android drop nearly all
+            // of its visible frames on slower devices.
+            final double comboIn = ((phase - .12) * 12).clamp(0.0, 1.0);
+            final double praiseIn = ((phase - .09) * 12).clamp(0.0, 1.0);
             final double rise = ((phase - .44) / .56).clamp(0.0, 1.0);
 
             return Opacity(
