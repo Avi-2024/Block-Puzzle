@@ -170,8 +170,8 @@ double _numberScale(double phase) {
   return 1 - .10 * ((phase - .80) / .20).clamp(0.0, 1.0);
 }
 
-/// A small moving colour field behind the reward only. It paints no blur and
-/// leaves the surrounding board and the screen background unchanged.
+/// A short burst of saturated colour behind the reward only. The board and
+/// screen stay still, and all geometry is deterministic across repaint frames.
 class _RewardBackdrop extends CustomPainter {
   const _RewardBackdrop({
     required this.phase,
@@ -189,42 +189,63 @@ class _RewardBackdrop extends CustomPainter {
     final double leave = ((1 - phase) * 5).clamp(0.0, 1.0);
     final double strength = enter * leave;
     if (strength <= 0) return;
-    final Rect band = Rect.fromLTWH(0, size.height * .22,
-        size.width, size.height * .60);
+    final List<Color> colours = <Color>[
+      primary,
+      AppTheme.rewardViolet,
+      AppTheme.rewardCyan,
+      secondary,
+      AppTheme.rewardCoral,
+    ];
+    final Rect band = Rect.fromLTWH(0, size.height * .17,
+        size.width, size.height * .70);
+    canvas.save();
+    canvas.clipRRect(RRect.fromRectAndRadius(
+        band, const Radius.circular(12)));
+
+    // Dark, saturated core protects the white score against bright bricks.
     canvas.drawRRect(
-      RRect.fromRectAndRadius(band, const Radius.circular(18)),
+      RRect.fromRectAndRadius(band, const Radius.circular(12)),
       Paint()..shader = LinearGradient(
         colors: <Color>[
           primary.withValues(alpha: 0),
-          primary.withValues(alpha: .38 * strength),
-          secondary.withValues(alpha: .31 * strength),
+          primary.withValues(alpha: .55 * strength),
+          const Color(0xFF172958).withValues(alpha: .88 * strength),
+          AppTheme.rewardViolet.withValues(alpha: .53 * strength),
           secondary.withValues(alpha: 0),
         ],
       ).createShader(band),
     );
 
-    // Deterministic positions keep repainting cheap and prevent visual noise.
-    for (int index = 0; index < 9; index++) {
-      final double travel = (phase * 92 + index * 35) % (size.width + 50);
-      final double x = travel - 25;
-      final double y = size.height * (.27 + index * .055);
+    // Thick, staggered streaks read as a colour rush even on small phones.
+    // Alternating directions keep the reward energetic without moving the UI.
+    for (int index = 0; index < 13; index++) {
+      final double direction = index.isEven ? 1 : -1;
+      final double travel = (index * 71 + phase * 215 * direction) %
+          (size.width + 125);
+      final double x = travel - 90;
+      final double y = size.height * (.20 + index * .049);
+      final Color colour = colours[index % colours.length];
+      final Rect streak = Rect.fromLTWH(x, y,
+          66 + (index % 3) * 22, index % 3 == 0 ? 7 : 5);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x, y, 38 + (index % 2) * 16, 4),
-          const Radius.circular(2),
-        ),
-        Paint()..color = (index.isEven ? primary : secondary)
-            .withValues(alpha: .58 * strength),
+        RRect.fromRectAndRadius(streak, const Radius.circular(4)),
+        Paint()..shader = LinearGradient(colors: <Color>[
+          colour.withValues(alpha: 0),
+          colour.withValues(alpha: .86 * strength),
+          colour.withValues(alpha: .53 * strength),
+          colour.withValues(alpha: 0),
+        ]).createShader(streak),
       );
     }
-    for (int index = 0; index < 18; index++) {
-      final double x = (index * 47 + phase * (index.isEven ? 42 : -34)) %
+    for (int index = 0; index < 24; index++) {
+      final double x = (index * 47 + phase * (index.isEven ? 78 : -62)) %
           (size.width + 20) - 10;
-      final double y = size.height * (.25 + ((index * 7) % 11) * .05);
-      canvas.drawCircle(Offset(x, y), index % 3 == 0 ? 2.2 : 1.3,
-          Paint()..color = (index.isEven ? secondary : primary)
-              .withValues(alpha: .83 * strength));
+      final double y = size.height * (.22 + ((index * 7) % 12) * .05);
+      canvas.drawCircle(Offset(x, y), index % 3 == 0 ? 2.6 : 1.6,
+          Paint()..color = colours[(index + 2) % colours.length]
+              .withValues(alpha: .95 * strength));
     }
+    canvas.restore();
   }
 
   @override
