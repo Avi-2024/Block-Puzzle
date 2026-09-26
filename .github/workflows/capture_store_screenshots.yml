@@ -120,7 +120,7 @@ jobs:
           ram-size: 2048M
           cores: 2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim
-          disable-animations: true
+          disable-animations: false
           script: bash tool/capture_android_ui.sh
 
       - name: Verify captured Android audio
