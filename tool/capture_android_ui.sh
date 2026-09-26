@@ -33,7 +33,7 @@ if "isn't responding" in texts or 'keeps stopping' in texts:
 if not any(n.attrib.get('package') == 'com.blockiva.blockiva' for n in root.iter('node')):
     raise SystemExit('Rejecting capture: Blockiva is not the foreground UI')
 PYCODE
-  timeout 15 adb exec-out screencap -p > "$capture_dir/$1"
+  timeout 30 adb exec-out screencap -p > "$capture_dir/$1"
   test -s "$capture_dir/$1"
 }
 
@@ -46,11 +46,11 @@ ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 25 -ac 1 -ar 22050 "$c
 game_audio_pid=$!
 adb shell screenrecord --size 540x960 --bit-rate 2000000 --time-limit 25 /sdcard/blockiva-gameplay.mp4 &
 game_video_pid=$!
-timeout 15 adb shell input swipe 200 1660 220 1230 850
+timeout 40 adb shell input swipe 200 1660 220 1230 850
 sleep 2
-timeout 15 adb shell input swipe 540 1660 520 1120 850
+timeout 40 adb shell input swipe 540 1660 520 1120 850
 sleep 2
-timeout 15 adb shell input swipe 870 1660 800 1260 850
+timeout 40 adb shell input swipe 870 1660 800 1260 850
 sleep 3
 capture 02-mid-game.png
 
@@ -87,9 +87,9 @@ ffmpeg -y -loglevel error -f pulse -i blockiva.monitor -t 14 -ac 1 -ar 22050 "$c
 clear_audio_pid=$!
 adb shell screenrecord --size 540x960 --bit-rate 2000000 --time-limit 14 /sdcard/blockiva-clear.mp4 &
 clear_video_pid=$!
-timeout 15 adb shell input swipe 180 1650 540 1220 750
+timeout 40 adb shell input swipe 180 1650 540 1220 750
 sleep 2
-timeout 15 adb shell input swipe 540 1650 540 1100 750
+timeout 40 adb shell input swipe 540 1650 540 1100 750
 sleep 2
 capture clear-after.png
 python3 - "$capture_dir/clear-after.png.xml" <<'PYCODE'
