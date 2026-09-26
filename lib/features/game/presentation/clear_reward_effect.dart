@@ -52,7 +52,9 @@ class ClearRewardEffect extends StatelessWidget {
 
             return Opacity(
               opacity: fade,
-              child: CustomPaint(
+              child: SizedBox(
+                width: math.min(MediaQuery.sizeOf(context).width * .66, 260),
+                child: CustomPaint(
                 painter: spectacle && !reducedMotion ? _RewardBackdrop(
                   phase: phase,
                   primary: newBest ? AppTheme.rewardCoral :
@@ -142,6 +144,7 @@ class ClearRewardEffect extends StatelessWidget {
                       ),
                 ],
                 ),
+                ),
               ),
             );
           },
@@ -183,41 +186,41 @@ class _RewardBackdrop extends CustomPainter {
     final double leave = ((1 - phase) * 5).clamp(0.0, 1.0);
     final double strength = enter * leave;
     if (strength <= 0) return;
-    final Rect band = Rect.fromLTWH(-18, size.height * .30,
-        size.width + 36, size.height * .46);
+    final Rect band = Rect.fromLTWH(0, size.height * .22,
+        size.width, size.height * .60);
     canvas.drawRRect(
       RRect.fromRectAndRadius(band, const Radius.circular(18)),
       Paint()..shader = LinearGradient(
         colors: <Color>[
           primary.withValues(alpha: 0),
-          primary.withValues(alpha: .18 * strength),
-          secondary.withValues(alpha: .16 * strength),
+          primary.withValues(alpha: .38 * strength),
+          secondary.withValues(alpha: .31 * strength),
           secondary.withValues(alpha: 0),
         ],
       ).createShader(band),
     );
 
     // Deterministic positions keep repainting cheap and prevent visual noise.
-    for (int index = 0; index < 6; index++) {
-      final double travel = (phase * 68 + index * 35) % (size.width + 50);
+    for (int index = 0; index < 9; index++) {
+      final double travel = (phase * 92 + index * 35) % (size.width + 50);
       final double x = travel - 25;
-      final double y = size.height * (.35 + index * .055);
+      final double y = size.height * (.27 + index * .055);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTWH(x, y, 38 + (index % 2) * 16, 4),
           const Radius.circular(2),
         ),
         Paint()..color = (index.isEven ? primary : secondary)
-            .withValues(alpha: .35 * strength),
+            .withValues(alpha: .58 * strength),
       );
     }
-    for (int index = 0; index < 12; index++) {
+    for (int index = 0; index < 18; index++) {
       final double x = (index * 47 + phase * (index.isEven ? 42 : -34)) %
           (size.width + 20) - 10;
       final double y = size.height * (.25 + ((index * 7) % 11) * .05);
       canvas.drawCircle(Offset(x, y), index % 3 == 0 ? 2.2 : 1.3,
           Paint()..color = (index.isEven ? secondary : primary)
-              .withValues(alpha: .65 * strength));
+              .withValues(alpha: .83 * strength));
     }
   }
 
