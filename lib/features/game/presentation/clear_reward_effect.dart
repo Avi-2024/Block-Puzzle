@@ -75,7 +75,7 @@ class ClearRewardEffect extends StatelessWidget {
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1,
-                              shadows: <Shadow>[
+                              shadows: const <Shadow>[
                                 Shadow(color: Color(0xFF07142D), offset: Offset(-2, -2)),
                                 Shadow(color: Color(0xFF07142D), offset: Offset(2, 2)),
                               ],
