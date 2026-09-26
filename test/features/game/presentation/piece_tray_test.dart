@@ -157,7 +157,9 @@ void main() {
     ));
     // Small pieces retain their normal size rather than reserving room for a
     // five-cell shape that is not in this tray.
-    expect(tester.getSize(find.byType(PieceView).first), const Size(50, 50));
+    expect(tester.getSize(find.byType(PieceView).first), const Size(60, 60));
+    expect(tester.getSize(find.byType(Draggable<BlockPiece>).first).shortestSide,
+        greaterThanOrEqualTo(64));
     final piece = find.byType(Draggable<BlockPiece>).first;
     final gesture = await tester.startGesture(tester.getCenter(piece));
     await gesture.moveBy(const Offset(0, -50));

@@ -15,32 +15,33 @@ abstract final class AppTheme {
   static const Color warning = Color(0xFFFFDA64);
   static const Color danger = Color(0xFFFF5573);
 
-  // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
-  static const Color gameBackgroundTop = Color(0xFF304773);
-  static const Color gameBackgroundMid = Color(0xFF283B65);
-  static const Color gameBackgroundBottom = Color(0xFF1B2B4D);
-  static const Color gameBoard = Color(0xFF132442);
-  static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF253957);
-  static const Color gameCellEdge = Color(0xFF536D96);
+  // A still indigo-to-violet stage, with a darker board so saturated pieces
+  // read clearly on a small phone without needing a moving background.
+  static const Color gameBackgroundTop = Color(0xFF526BC2);
+  static const Color gameBackgroundMid = Color(0xFF415CA9);
+  static const Color gameBackgroundBottom = Color(0xFF364D98);
+  static const Color gameBoard = Color(0xFF20294F);
+  static const Color gameBoardDeep = Color(0xFF182146);
+  static const Color gameCell = Color(0xFF344575);
+  static const Color gameCellEdge = Color(0xFF9DACDD);
   static const Color gameText = Color(0xFFFFFFFF);
-  static const Color gameTextMuted = Color(0xFFD9E7FF);
+  static const Color gameTextMuted = Color(0xFFE2E8FF);
   static const Color gameOverlay = Color(0xDC071330);
-  static const Color rewardGold = Color(0xFFFFDC77);
-  static const Color rewardCyan = Color(0xFF6BE5F2);
-  static const Color rewardCoral = Color(0xFFFF8395);
-  static const Color rewardViolet = Color(0xFFC69AFF);
+  static const Color rewardGold = Color(0xFFFFDB70);
+  static const Color rewardCyan = Color(0xFF75ECF1);
+  static const Color rewardCoral = Color(0xFFFF8CA0);
+  static const Color rewardViolet = Color(0xFFD7B0FF);
 
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF399FEF), // blue
-    Color(0xFF26C7DC), // cyan
-    Color(0xFF39CC77), // green
-    Color(0xFFF6CC4F), // yellow
-    Color(0xFFF59348), // orange
-    Color(0xFFEE5D71), // coral
-    Color(0xFFA871EC), // violet
+    Color(0xFF35A9ED), // blue
+    Color(0xFF29C9F4), // cyan
+    Color(0xFF38DB5B), // green
+    Color(0xFFFFD83C), // yellow
+    Color(0xFFFF843D), // orange
+    Color(0xFFF35D9E), // pink
+    Color(0xFFB676F3), // purple
   ];
 
   static LinearGradient pieceGradient(int index) {
@@ -49,9 +50,9 @@ abstract final class AppTheme {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .13)!,
+        Color.lerp(base, Colors.white, .10)!,
         base,
-        Color.lerp(base, Colors.black, .16)!,
+        Color.lerp(base, Colors.black, .17)!,
       ],
       stops: const <double>[0, .45, 1],
     );
@@ -68,35 +69,19 @@ abstract final class AppTheme {
         stops: <double>[0, .50, 1],
       );
 
-  /// A small Blockiva-owned set of moods. The score selects the stage, so a
-  /// resumed run always returns to the same colors without stored UI state.
+  /// Keep the playfield's color stable throughout a run. Rewards animate only
+  /// their numbers; a changing background competes with the next move.
   static LinearGradient gameplayGradientForScore(int score) {
-    final List<Color> colors = switch ((score ~/ 1000) % 3) {
-      1 => const <Color>[
-        Color(0xFF454273), Color(0xFF35315F), Color(0xFF211F46),
-      ],
-      2 => const <Color>[
-        Color(0xFF296177), Color(0xFF24506A), Color(0xFF1A324D),
-      ],
-      _ => const <Color>[
-        gameBackgroundTop, gameBackgroundMid, gameBackgroundBottom,
-      ],
-    };
-    return LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: colors,
-      stops: const <double>[0, .50, 1],
-    );
+    return gameBackgroundGradient;
   }
 
   static LinearGradient get boardGradient => const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          Color(0xFF123B93),
+          Color(0xFF293764),
           gameBoard,
-          Color(0xFF061944),
+          Color(0xFF24325D),
           gameBoardDeep,
         ],
         stops: <double>[0, .34, .74, 1],

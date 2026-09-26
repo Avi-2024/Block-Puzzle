@@ -58,6 +58,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   bool _newBest = false;
   bool _recordSoundPlayed = false;
   bool _recordFlash = false;
+  bool _draggingPiece = false;
   int _startingBest = 0;
   int _outcomeToken = 0;
   int _trayGeneration = 0;
@@ -66,6 +67,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   String? _moveFeedback;
   MoveResult? _clearReward;
   Offset? _rewardOrigin;
+  bool _rewardNewBest = false;
   Map<int, int> _clearedTiles = const <int, int>{};
   int? _milestoneScore;
   Set<int> _clearedRows = <int>{};
@@ -153,6 +155,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (!_active) unawaited(_controller.persistSession());
     setState(() {
       _preview = null;
+      _draggingPiece = false;
       if (!_active) {
         _milestoneScore = null;
         _milestoneToken++;
@@ -163,7 +166,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
   Future<void> _showOutcome() async {
     final token = ++_outcomeToken;
-    await Future<void>.delayed(const Duration(milliseconds: 460));
+    await Future<void>.delayed(Duration(
+      milliseconds: (_clearReward?.linesCleared ?? 0) > 0 ? 900 : 460,
+    ));
     if (!mounted || token != _outcomeToken || !_terminal) return;
     setState(() => _outcomeVisible = true);
     unawaited(_haptics.impact());
@@ -252,6 +257,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
         move,
         Offset((col + piece.width / 2) / GameEngine.size,
             (row + piece.height / 2) / GameEngine.size),
+        newBest: !widget.isDaily && oldScore <= _startingBest &&
+            _controller.engine.score > _startingBest,
       ));
     }
     if (move != null && move.linesCleared > 0) {
@@ -354,17 +361,21 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     }
   }
 
-  Future<void> _showMoveReward(MoveResult move, Offset origin) async {
+  Future<void> _showMoveReward(MoveResult move, Offset origin,
+      {bool newBest = false}) async {
     final int token = ++_rewardToken;
     setState(() {
       _clearReward = move;
       _rewardOrigin = origin;
+      _rewardNewBest = newBest;
     });
-    await Future<void>.delayed(Duration(milliseconds: move.linesCleared > 0 ? 680 : 540));
+    await Future<void>.delayed(Duration(milliseconds:
+        move.linesCleared > 0 || newBest ? 880 : 480));
     if (!mounted || token != _rewardToken) return;
     setState(() {
       _clearReward = null;
       _rewardOrigin = null;
+      _rewardNewBest = false;
     });
   }
 
@@ -435,9 +446,11 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
     setState(() {
       _preview = null;
+      _draggingPiece = false;
       _moveFeedback = null;
       _clearReward = null;
       _rewardOrigin = null;
+      _rewardNewBest = false;
       _recordFlash = false;
       _clearedRows = <int>{};
       _clearedCols = <int>{};
@@ -512,13 +525,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       return const BlockivaSplash();
     }
 
-    final LinearGradient gameGradient =
-        AppTheme.gameplayGradientForScore(_controller.engine.score);
+    final LinearGradient gameGradient = AppTheme.gameBackgroundGradient;
     Widget content = Scaffold(
       backgroundColor: gameGradient.colors.last,
-      body: AnimatedContainer(
-        duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 700),
-        curve: Curves.easeInOutCubic,
+      body: Container(
         decoration: BoxDecoration(gradient: gameGradient),
         child: SafeArea(
           child: Stack(
@@ -548,11 +558,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                     Expanded(
                       child: LayoutBuilder(
                         builder: (BuildContext context, BoxConstraints constraints) {
-                          final double side = (constraints.maxHeight - 132)
+                          final double side = (constraints.maxHeight - 146)
                               .clamp(0.0, constraints.maxWidth).toDouble();
                           return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: <Widget>[
+                              const SizedBox(height: 14),
                               SizedBox(
                                 width: side,
                                 height: side,
@@ -567,24 +578,46 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                             clearToken: _clearFlashToken,
                             reward: _clearReward,
                             rewardOrigin: _rewardOrigin,
+                            rewardNewBest: _rewardNewBest,
                             rewardToken: _rewardToken,
                             milestoneScore: _milestoneScore,
                           ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 16,
+                                child: _controller.engine.movesPlayed == 0 &&
+                                        !_draggingPiece && !_terminal
+                                    ? const Center(child: Text(
+                                        'DRAG A BLOCK ONTO THE BOARD',
+                                        style: TextStyle(
+                                          color: AppTheme.gameTextMuted,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: .8,
+                                        ),
+                                      ))
+                                    : null,
+                              ),
                               PieceTray(
                       key: ValueKey(_trayGeneration),
                       pieces: _controller.tray,
                       enabled: !_terminal && _active,
                       feedbackCellSize: () => _feedbackCellSize,
                       onDragStarted: () {
+                        setState(() => _draggingPiece = true);
                         unawaited(_haptics.selection());
                         unawaited(_audio.playPickup());
                       },
                       onDragUpdate: _updateDragPreview,
-                      onDragEnded: _finishDrag,
-                      onDragCancelled: () => _setPreview(null),
+                      onDragEnded: (piece) {
+                        setState(() => _draggingPiece = false);
+                        _finishDrag(piece);
+                      },
+                      onDragCancelled: () {
+                        setState(() => _draggingPiece = false);
+                        _setPreview(null);
+                      },
                     ),
                             ],
                           );
@@ -960,6 +993,7 @@ class _Board extends StatelessWidget {
     required this.clearToken,
     required this.reward,
     required this.rewardOrigin,
+    required this.rewardNewBest,
     required this.rewardToken,
     required this.milestoneScore,
   });
@@ -973,6 +1007,7 @@ class _Board extends StatelessWidget {
   final int clearToken;
   final MoveResult? reward;
   final Offset? rewardOrigin;
+  final bool rewardNewBest;
   final int rewardToken;
   final int? milestoneScore;
 
@@ -988,8 +1023,8 @@ class _Board extends StatelessWidget {
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: Colors.white.withValues(alpha: .10)),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: AppTheme.gameCellEdge.withValues(alpha: .42)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
               color: Color(0x55030D22),
@@ -1034,6 +1069,7 @@ class _Board extends StatelessWidget {
               points: reward!.scoreGained,
               lines: reward!.linesCleared,
               combo: reward!.combo,
+              newBest: rewardNewBest,
               rows: reward!.clearedRows.toSet(),
               cols: reward!.clearedCols.toSet(),
               placementCenter: rewardOrigin,

@@ -18,7 +18,8 @@ void main() {
     ))));
     await tester.pump(const Duration(milliseconds: 170));
     expect(find.text('+115'), findsOneWidget);
-    expect(find.text('LINE CLEARED'), findsOneWidget);
+    expect(find.text('AWESOME!'), findsNothing);
+    expect(find.byType(Center), findsWidgets);
     await tester.tapAt(const Offset(160, 160));
     expect(taps, 1);
 
@@ -30,7 +31,17 @@ void main() {
     )));
     await tester.pump(const Duration(milliseconds: 170));
     expect(find.text('+420'), findsOneWidget);
-    expect(find.text('COMBO ×3'), findsOneWidget);
+    expect(find.text('COMBO +3'), findsOneWidget);
+    expect(tester.getCenter(find.text('+420')).dx,
+        closeTo(tester.getCenter(find.byType(ClearRewardEffect)).dx, 1));
+    expect(tester.widget<Opacity>(find.ancestor(
+      of: find.text('COMBO +3'), matching: find.byType(Opacity),
+    ).first).opacity, greaterThan(0));
+    await tester.pump(const Duration(milliseconds: 240));
+    expect(find.text('AWESOME!'), findsOneWidget);
+    expect(tester.widget<Opacity>(find.ancestor(
+      of: find.text('AWESOME!'), matching: find.byType(Opacity),
+    ).first).opacity, greaterThan(0));
     await tester.pump(const Duration(milliseconds: 700));
     expect(tester.takeException(), isNull);
     expect(tester.binding.hasScheduledFrame, isFalse);
@@ -46,10 +57,30 @@ void main() {
     )));
     await tester.pump(const Duration(milliseconds: 140));
     expect(find.text('+15'), findsOneWidget);
-    expect(tester.widget<Text>(find.text('+15')).style!.color, AppTheme.rewardCyan);
+    final Text number = tester.widget<Text>(find.text('+15'));
+    expect(number.style!.color, AppTheme.rewardCyan);
+    expect(number.style!.shadows, isNotEmpty);
+    expect(number.style!.shadows!.every((shadow) => shadow.blurRadius == 0), isTrue);
     expect(find.text('LINE CLEARED'), findsNothing);
     await tester.pump(const Duration(milliseconds: 600));
     expect(tester.takeException(), isNull);
     expect(tester.binding.hasScheduledFrame, isFalse);
+  });
+
+  testWidgets('first new best takes priority over clear praise', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SizedBox.square(
+      dimension: 320,
+      child: ClearRewardEffect(
+        points: 210, lines: 2, combo: 2, newBest: true,
+        rows: <int>{0}, cols: <int>{1},
+      ),
+    )));
+    await tester.pump(const Duration(milliseconds: 480));
+    expect(find.text('NEW BEST!'), findsOneWidget);
+    expect(find.text('AWESOME!'), findsNothing);
+    expect(find.text('+210'), findsOneWidget);
+    expect(find.text('COMBO +2'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
   });
 }

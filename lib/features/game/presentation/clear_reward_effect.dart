@@ -3,10 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../domain/game_engine.dart';
 
-/// Short, non-interactive payoff anchored near the lines that earned the points.
-/// Recreating this widget for a new clear starts a fresh animation immediately.
+/// A brief, non-interactive reward at the board center. Score, combo, and
+/// praise arrive in sequence; no part of the background animates.
 class ClearRewardEffect extends StatelessWidget {
   const ClearRewardEffect({
     required this.points,
@@ -14,6 +13,7 @@ class ClearRewardEffect extends StatelessWidget {
     required this.combo,
     required this.rows,
     required this.cols,
+    this.newBest = false,
     this.placementCenter,
     super.key,
   });
@@ -21,120 +21,244 @@ class ClearRewardEffect extends StatelessWidget {
   final int points;
   final int lines;
   final int combo;
+  final bool newBest;
+  // Kept for callers that also draw the line-clear effect. The reward itself
+  // always appears in one predictable position, including edge placements.
   final Set<int> rows;
   final Set<int> cols;
-  /// Normalized board position used for moves that do not clear a line.
   final Offset? placementCenter;
 
   @override
   Widget build(BuildContext context) {
-    final double x = cols.isEmpty ? (placementCenter?.dx ?? .5) :
-        (cols.reduce((a, b) => a + b) / cols.length + .5) / GameEngine.size;
-    final double y = rows.isEmpty ? (placementCenter?.dy ?? .5) :
-        (rows.reduce((a, b) => a + b) / rows.length + .5) / GameEngine.size;
-    // Keep the badge inside the board even for clears along its outer edges.
-    final Alignment anchor = Alignment(
-      (x.clamp(.25, .75) - .5) * 2,
-      (y.clamp(.25, .75) - .5) * 2,
-    );
     final bool reducedMotion = MediaQuery.disableAnimationsOf(context);
     final bool cleared = lines > 0;
-    final Color accent = !cleared ? AppTheme.rewardCyan :
-        combo > 1 ? AppTheme.rewardViolet :
-        lines > 1 ? AppTheme.rewardCoral : AppTheme.rewardGold;
-    final String caption = combo > 1 ? 'COMBO ×$combo' :
-        lines > 1 ? '$lines LINES CLEARED' : cleared ? 'LINE CLEARED' : '';
+    final bool celebration = combo > 1 || lines > 1;
+    final bool spectacle = cleared || newBest;
+    final Color accent = cleared ? AppTheme.rewardGold : AppTheme.rewardCyan;
 
     return IgnorePointer(
-      child: Align(
-        alignment: anchor,
+      child: Center(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 650 : 510),
-          builder: (context, value, child) {
-            final double opacity = reducedMotion ? 1 :
-                math.min(1, value * 9) * ((1 - value) / .23).clamp(0.0, 1.0);
+          duration: Duration(milliseconds: reducedMotion ? 0 : spectacle ? 860 : 460),
+          builder: (BuildContext context, double value, Widget? child) {
+            final double phase = reducedMotion ? .56 : value;
+            final double fade = reducedMotion ? 1 :
+                (math.min(1.0, phase * 11) *
+                ((1 - phase) / .17).clamp(0.0, 1.0));
+            // Reveal the headline while the clear is still visible. Waiting
+            // until the end of this short effect lets Android drop nearly all
+            // of its visible frames on slower devices.
+            final double comboIn = ((phase - .12) * 12).clamp(0.0, 1.0);
+            final double praiseIn = ((phase - .09) * 12).clamp(0.0, 1.0);
+            final double rise = ((phase - .44) / .56).clamp(0.0, 1.0);
+
             return Opacity(
-              opacity: opacity,
-              child: Transform.translate(
-                offset: Offset(0, reducedMotion ? 0 : 12 - (cleared ? 32 : 24) * value),
-                child: Transform.scale(
-                  scale: reducedMotion ? 1 : .76 + .24 * Curves.easeOutBack.transform(
-                    (value * 3).clamp(0.0, 1.0),
-                  ),
-                  child: cleared && !reducedMotion
-                      ? CustomPaint(
-                          foregroundPainter: _RewardSparks(value, accent),
-                          child: child,
-                        ) : child,
+              opacity: fade,
+              child: SizedBox(
+                width: math.min(MediaQuery.sizeOf(context).width * .66, 260),
+                child: CustomPaint(
+                painter: spectacle && !reducedMotion ? _RewardBackdrop(
+                  phase: phase,
+                  primary: newBest ? AppTheme.rewardCoral :
+                      combo > 1 ? AppTheme.rewardCyan : const Color(0xFF71DF82),
+                  secondary: AppTheme.rewardGold,
+                ) : null,
+                child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                    if (celebration || newBest)
+                      Opacity(
+                        opacity: praiseIn,
+                        child: Transform.scale(
+                          scale: .68 + .32 * Curves.easeOutBack.transform(praiseIn),
+                          child: Text(
+                            newBest ? 'NEW BEST!' : 'AWESOME!',
+                            style: TextStyle(
+                              color: newBest ? AppTheme.rewardGold :
+                                  AppTheme.rewardCoral,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                              shadows: const <Shadow>[
+                                Shadow(color: Color(0xFF07142D), offset: Offset(-2, -2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(2, 2)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    Transform.translate(
+                      offset: Offset(0, reducedMotion ? 0 :
+                          18 * (1 - (phase * 7).clamp(0.0, 1.0)) -
+                          26 * Curves.easeIn.transform(rise)),
+                      child: Transform.scale(
+                        scale: reducedMotion ? 1 : _numberScale(phase),
+                        child: CustomPaint(
+                          foregroundPainter: _RewardTicks(
+                            phase: phase, color: accent,
+                          ),
+                          child: Text(
+                            '+$points',
+                            style: TextStyle(
+                              color: cleared ? Colors.white : AppTheme.rewardCyan,
+                              fontSize: cleared ? 54 : 32,
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                              letterSpacing: -1.6,
+                              // Crisp ink edges stay legible even over yellow
+                              // blocks. Movement and scale provide the reward;
+                              // the number does not rely on a blurry halo.
+                              shadows: const <Shadow>[
+                                Shadow(color: Color(0xFF07142D), offset: Offset(-2, -2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(2, -2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(-2, 2)),
+                                Shadow(color: Color(0xFF07142D), offset: Offset(2, 2)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (combo > 1)
+                      Opacity(
+                        opacity: comboIn,
+                        child: Transform.scale(
+                          scale: .66 + .34 * Curves.easeOutBack.transform(comboIn),
+                          child: Container(
+                            margin: const EdgeInsets.only(top: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 13, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.gameBoard.withValues(alpha: .94),
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(color: AppTheme.rewardGold),
+                            ),
+                            child: Text('COMBO +$combo',
+                              style: const TextStyle(
+                                color: AppTheme.rewardGold,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .6,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                ],
+                ),
                 ),
               ),
             );
           },
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: cleared ? 17 : 12, vertical: cleared ? 9 : 5,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: <Color>[
-                Color.lerp(AppTheme.gameBoard, accent, .33)!,
-                AppTheme.gameBoard.withValues(alpha: .96),
-              ]),
-              borderRadius: BorderRadius.circular(cleared ? 15 : 12),
-              border: Border.all(color: accent.withValues(alpha: .85)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(color: Color(0x59030A20), blurRadius: 14, offset: Offset(0, 5)),
-              ],
-            ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-              Text('+$points', style: TextStyle(
-                color: accent, fontSize: cleared ? 31 : 21,
-                fontWeight: FontWeight.w900, height: 1, letterSpacing: -.8,
-                shadows: <Shadow>[
-                  Shadow(color: accent.withValues(alpha: .55), blurRadius: 12),
-                ],
-              )),
-              if (cleared) ...<Widget>[
-                const SizedBox(height: 4),
-                Text(caption, style: const TextStyle(
-                  color: AppTheme.gameText, fontSize: 10,
-                  fontWeight: FontWeight.w900, letterSpacing: 1.1,
-                )),
-              ],
-            ]),
-          ),
         ),
       ),
     );
   }
 }
 
-/// Six small, deterministic rays for clears; no assets or per-frame timers.
-class _RewardSparks extends CustomPainter {
-  const _RewardSparks(this.progress, this.color);
+double _numberScale(double phase) {
+  if (phase < .15) {
+    return .58 + .64 * Curves.easeOutCubic.transform(phase / .15);
+  }
+  if (phase < .27) {
+    return 1.22 - .29 * Curves.easeInOut.transform((phase - .15) / .12);
+  }
+  if (phase < .41) {
+    return .93 + .07 * Curves.easeOutCubic.transform((phase - .27) / .14);
+  }
+  return 1 - .10 * ((phase - .80) / .20).clamp(0.0, 1.0);
+}
 
-  final double progress;
-  final Color color;
+/// A small moving colour field behind the reward only. It paints no blur and
+/// leaves the surrounding board and the screen background unchanged.
+class _RewardBackdrop extends CustomPainter {
+  const _RewardBackdrop({
+    required this.phase,
+    required this.primary,
+    required this.secondary,
+  });
+
+  final double phase;
+  final Color primary;
+  final Color secondary;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double intensity = ((1 - progress) / .7).clamp(0.0, 1.0);
-    if (intensity == 0) return;
-    final Offset center = size.center(Offset.zero);
-    final Paint spark = Paint()
-      ..color = color.withValues(alpha: intensity * .85)
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-    for (int i = 0; i < 6; i++) {
-      final double angle = i * math.pi / 3;
-      final Offset direction = Offset(math.cos(angle), math.sin(angle));
-      final double distance = size.width * (.53 + progress * .17);
-      canvas.drawLine(center + direction * distance,
-          center + direction * (distance + 6 * intensity), spark);
+    final double enter = ((phase - .07) * 9).clamp(0.0, 1.0);
+    final double leave = ((1 - phase) * 5).clamp(0.0, 1.0);
+    final double strength = enter * leave;
+    if (strength <= 0) return;
+    final Rect band = Rect.fromLTWH(0, size.height * .22,
+        size.width, size.height * .60);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(band, const Radius.circular(18)),
+      Paint()..shader = LinearGradient(
+        colors: <Color>[
+          primary.withValues(alpha: 0),
+          primary.withValues(alpha: .38 * strength),
+          secondary.withValues(alpha: .31 * strength),
+          secondary.withValues(alpha: 0),
+        ],
+      ).createShader(band),
+    );
+
+    // Deterministic positions keep repainting cheap and prevent visual noise.
+    for (int index = 0; index < 9; index++) {
+      final double travel = (phase * 92 + index * 35) % (size.width + 50);
+      final double x = travel - 25;
+      final double y = size.height * (.27 + index * .055);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, y, 38 + (index % 2) * 16, 4),
+          const Radius.circular(2),
+        ),
+        Paint()..color = (index.isEven ? primary : secondary)
+            .withValues(alpha: .58 * strength),
+      );
+    }
+    for (int index = 0; index < 18; index++) {
+      final double x = (index * 47 + phase * (index.isEven ? 42 : -34)) %
+          (size.width + 20) - 10;
+      final double y = size.height * (.25 + ((index * 7) % 11) * .05);
+      canvas.drawCircle(Offset(x, y), index % 3 == 0 ? 2.2 : 1.3,
+          Paint()..color = (index.isEven ? secondary : primary)
+              .withValues(alpha: .83 * strength));
     }
   }
 
   @override
-  bool shouldRepaint(covariant _RewardSparks oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
+  bool shouldRepaint(covariant _RewardBackdrop oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.primary != primary ||
+      oldDelegate.secondary != secondary;
+}
+
+/// Short sharp ticks accompany the number's arrival, with no full-screen glow.
+class _RewardTicks extends CustomPainter {
+  const _RewardTicks({required this.phase, required this.color});
+
+  final double phase;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double intensity = ((phase - .10) / .08).clamp(0.0, 1.0) *
+        ((.42 - phase) / .18).clamp(0.0, 1.0);
+    if (intensity <= 0) return;
+    final Paint paint = Paint()
+      ..color = color.withValues(alpha: intensity * .85)
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round;
+    for (final int side in <int>[-1, 1]) {
+      final double x = side < 0 ? -6 : size.width + 6;
+      canvas.drawLine(Offset(x, size.height * .22),
+          Offset(x + side * 8, size.height * .13), paint);
+      canvas.drawLine(Offset(x, size.height * .75),
+          Offset(x + side * 9, size.height * .84), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RewardTicks oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.color != color;
 }
