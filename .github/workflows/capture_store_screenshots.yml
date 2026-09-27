@@ -78,29 +78,13 @@ jobs:
           flutter build apk --debug -t tool/clear_capture.dart
           cp build/app/outputs/flutter-apk/app-debug.apk build/qa/clear-review.apk
 
-      - name: Set up host audio capture
+      - name: Configure emulator WAV capture
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq pulseaudio ffmpeg
-          # Emulator and recorder run as the same user. A private PulseAudio
-          # runtime keeps their monitor capture isolated from other jobs.
-          mkdir -p "$RUNNER_TEMP/blockiva-pulse"
-          chmod 700 "$RUNNER_TEMP/blockiva-pulse"
-          export XDG_RUNTIME_DIR="$RUNNER_TEMP/blockiva-pulse"
-          echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >> "$GITHUB_ENV"
-          pulseaudio --start --exit-idle-time=-1
-          pactl load-module module-null-sink sink_name=blockiva
-          pactl set-default-sink blockiva
-          # QEMU cannot initialize PulseAudio through the runner's Unix
-          # socket. Keep an anonymous audio endpoint on loopback only so the
-          # headless emulator and the recorder reach the same null sink.
-          pactl load-module module-native-protocol-tcp listen=127.0.0.1 port=4713 auth-anonymous=1
-          pactl -s tcp:127.0.0.1:4713 info
-          echo 'PULSE_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
-          echo 'QEMU_PA_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
-          echo 'QEMU_AUDIO_DRV=pa' >> "$GITHUB_ENV"
-          echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
-          echo 'QEMU_PA_SINK=blockiva' >> "$GITHUB_ENV"
+          sudo apt-get install -y -qq ffmpeg
+          mkdir -p "$GITHUB_WORKSPACE/store/indus/screenshots"
+          echo 'QEMU_AUDIO_DRV=wav' >> "$GITHUB_ENV"
+          echo "QEMU_WAV_PATH=$GITHUB_WORKSPACE/store/indus/screenshots/emulator-output.wav" >> "$GITHUB_ENV"
 
       - name: Release build daemon memory before emulator
         run: ./android/gradlew -p android --stop
@@ -124,7 +108,9 @@ jobs:
           script: bash tool/capture_android_ui.sh
 
       - name: Verify captured Android audio
-        run: python3 tool/check_android_audio.py store/indus/screenshots
+        run: |
+          bash tool/mux_android_audio.sh store/indus/screenshots
+          python3 tool/check_android_audio.py store/indus/screenshots
 
       - name: Verify screenshot dimensions
         shell: bash
