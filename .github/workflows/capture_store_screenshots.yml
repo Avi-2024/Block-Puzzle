@@ -97,7 +97,9 @@ jobs:
           pactl load-module module-native-protocol-unix socket=/tmp/blockiva-pulse.sock auth-anonymous=1
           pactl -s unix:/tmp/blockiva-pulse.sock info
           echo 'PULSE_SERVER=unix:/tmp/blockiva-pulse.sock' >> "$GITHUB_ENV"
-          echo 'QEMU_PA_SERVER=unix:/tmp/blockiva-pulse.sock' >> "$GITHUB_ENV"
+          # QEMU's PA backend takes the socket pathname here. PULSE_SERVER
+          # retains the PulseAudio URI form for pactl and ffmpeg.
+          echo 'QEMU_PA_SERVER=/tmp/blockiva-pulse.sock' >> "$GITHUB_ENV"
           echo 'QEMU_AUDIO_DRV=pa' >> "$GITHUB_ENV"
           echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
           echo 'QEMU_PA_SINK=blockiva' >> "$GITHUB_ENV"
