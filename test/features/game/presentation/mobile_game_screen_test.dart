@@ -87,7 +87,7 @@ void main() {
       if (size.height >= 852) {
         final boardBottom = tester.getBottomLeft(find.byType(GridView)).dy;
         final trayTop = tester.getTopLeft(find.byType(PieceTray)).dy;
-        expect(trayTop - boardBottom, greaterThan(40));
+        expect(trayTop - boardBottom, inInclusiveRange(40, 100));
       }
       if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
         await tester.runAsync(() async {
