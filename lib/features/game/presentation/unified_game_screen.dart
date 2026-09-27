@@ -601,7 +601,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                                       ))
                                     : null,
                               ),
-                              PieceTray(
+                              Expanded(child: Center(child: PieceTray(
                       key: ValueKey(_trayGeneration),
                       pieces: _controller.tray,
                       enabled: !_terminal && _active,
@@ -620,7 +620,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                         setState(() => _draggingPiece = false);
                         _setPreview(null);
                       },
-                    ),
+                    ))),
                             ],
                           );
                         },

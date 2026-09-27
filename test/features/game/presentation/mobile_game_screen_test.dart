@@ -84,6 +84,11 @@ void main() {
       ));
       expect(initialScore.style!.color, AppTheme.gameText);
       expect(tester.takeException(), isNull);
+      if (size.height >= 852) {
+        final boardBottom = tester.getBottomLeft(find.byType(GridView)).dy;
+        final trayTop = tester.getTopLeft(find.byType(PieceTray)).dy;
+        expect(trayTop - boardBottom, greaterThan(40));
+      }
       if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
         await tester.runAsync(() async {
           final boundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
