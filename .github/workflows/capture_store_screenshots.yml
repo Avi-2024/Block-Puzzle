@@ -91,15 +91,13 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=blockiva
           pactl set-default-sink blockiva
-          # Android Emulator's QEMU process failed to connect to the runner-
-          # temp PA socket. Publish a local-only socket
-          # in /tmp, the location used by Google's emulator container setup.
-          pactl load-module module-native-protocol-unix socket=/tmp/blockiva-pulse.sock auth-anonymous=1
-          pactl -s unix:/tmp/blockiva-pulse.sock info
-          echo 'PULSE_SERVER=unix:/tmp/blockiva-pulse.sock' >> "$GITHUB_ENV"
-          # QEMU's PA backend takes the socket pathname here. PULSE_SERVER
-          # retains the PulseAudio URI form for pactl and ffmpeg.
-          echo 'QEMU_PA_SERVER=/tmp/blockiva-pulse.sock' >> "$GITHUB_ENV"
+          # QEMU cannot initialize PulseAudio through the runner's Unix
+          # socket. Keep an anonymous audio endpoint on loopback only so the
+          # headless emulator and the recorder reach the same null sink.
+          pactl load-module module-native-protocol-tcp listen=127.0.0.1 port=4713 auth-anonymous=1
+          pactl -s tcp:127.0.0.1:4713 info
+          echo 'PULSE_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
+          echo 'QEMU_PA_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
           echo 'QEMU_AUDIO_DRV=pa' >> "$GITHUB_ENV"
           echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
           echo 'QEMU_PA_SINK=blockiva' >> "$GITHUB_ENV"
