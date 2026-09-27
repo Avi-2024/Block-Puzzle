@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -97,6 +99,34 @@ class _TileBevel extends CustomPainter {
           end: Alignment.bottomCenter,
           colors: <Color>[Color(0x32FFFFFF), Color(0x00FFFFFF)],
         ).createShader(face),
+      );
+    }
+
+    // A recessed lens catches light at both tray and settled-board sizes.
+    // These highlights are painted from the tile color, with no borrowed art.
+    final double radius = size.shortestSide * .115;
+    if (radius >= 2) {
+      final Offset lens = Offset(w * .73, h * .34);
+      canvas.drawCircle(
+        lens.translate(-.55, -.75), radius + 1,
+        Paint()..color = Colors.white.withValues(alpha: .48),
+      );
+      canvas.drawCircle(
+        lens, radius,
+        Paint()..shader = RadialGradient(
+          center: const Alignment(.32, .38),
+          radius: .92,
+          colors: <Color>[
+            Colors.black.withValues(alpha: .22),
+            Colors.black.withValues(alpha: .12),
+            Colors.white.withValues(alpha: .34),
+          ],
+          stops: const <double>[0, .62, 1],
+        ).createShader(Rect.fromCircle(center: lens, radius: radius)),
+      );
+      canvas.drawCircle(
+        Offset(w * .80, h * .71), math.max(1, radius * .27),
+        Paint()..color = Colors.white.withValues(alpha: .38),
       );
     }
   }

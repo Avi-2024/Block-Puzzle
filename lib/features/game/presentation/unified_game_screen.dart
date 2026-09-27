@@ -533,7 +533,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       backgroundColor: gameGradient.colors.last,
       body: Container(
         decoration: BoxDecoration(gradient: gameGradient),
-        child: SafeArea(
+        child: CustomPaint(
+          painter: const _GameplayBackdropPainter(),
+          child: SafeArea(
           child: Stack(
             children: <Widget>[
               Padding(
@@ -679,6 +681,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                 ),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -706,6 +709,39 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       child: content,
     );
   }
+}
+
+/// Low-contrast relief gives the blue stage depth without competing with the
+/// board or introducing animated decoration behind a player's next move.
+class _GameplayBackdropPainter extends CustomPainter {
+  const _GameplayBackdropPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double tile = size.width / 8;
+    final Paint face = Paint();
+    final Paint rim = Paint()
+      ..color = Colors.white.withValues(alpha: .027)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .55;
+    for (int row = 0; row * tile < size.height; row++) {
+      for (int col = 0; col < 8; col++) {
+        final Rect rect = Rect.fromLTWH(
+          col * tile + 2, row * tile + 2, tile - 4, tile - 4,
+        );
+        face.color = (row + col).isEven
+            ? Colors.white.withValues(alpha: .019)
+            : Colors.black.withValues(alpha: .018);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(3)), face,
+        );
+        canvas.drawLine(rect.topLeft, rect.topRight, rim);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GameplayBackdropPainter oldDelegate) => false;
 }
 
 class _PlacementPreview {
@@ -972,7 +1008,7 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
           semanticsLabel: 'Score ${widget.score}',
           style: TextStyle(
             color: color,
-            fontSize: 46,
+            fontSize: 54,
             height: .95,
             fontWeight: FontWeight.w800,
             letterSpacing: -2,
