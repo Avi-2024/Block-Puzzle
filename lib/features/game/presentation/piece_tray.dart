@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../domain/block_piece.dart';
 import 'board_drag_projector.dart';
 import 'piece_view.dart';
@@ -72,7 +73,13 @@ class _PieceTrayState extends State<PieceTray> {
       onPointerCancel: _cancel,
       child: SizedBox(
       height: 116,
-      child: LayoutBuilder(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.gameBoard.withValues(alpha: .18),
+          borderRadius: BorderRadius.circular(19),
+          border: Border.all(color: Colors.white.withValues(alpha: .10)),
+        ),
+        child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           // Keep normal pieces large, shrinking a batch only when one of its
           // actual shapes needs more room. Use one cell size across the tray.
@@ -169,6 +176,7 @@ class _PieceTrayState extends State<PieceTray> {
             }),
           );
         },
+      ),
       ),
       ),
     );
