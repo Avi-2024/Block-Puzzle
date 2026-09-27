@@ -68,30 +68,23 @@ jobs:
           manifest.write_text(text)
           PY
 
-      - name: Build gameplay and audio verification APKs
+      - name: Build gameplay, clear review, and audio verification APKs
         run: |
           mkdir -p build/qa
           flutter build apk --debug
           cp build/app/outputs/flutter-apk/app-debug.apk build/qa/gameplay.apk
           flutter build apk --debug -t tool/audio_smoke.dart
           cp build/app/outputs/flutter-apk/app-debug.apk build/qa/audio-smoke.apk
+          flutter build apk --debug -t tool/clear_capture.dart
+          cp build/app/outputs/flutter-apk/app-debug.apk build/qa/clear-review.apk
 
-      - name: Set up host audio capture
+      - name: Configure native emulator WAV capture
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq pulseaudio ffmpeg
-          pulseaudio --start --exit-idle-time=-1
-          pactl load-module module-null-sink sink_name=blockiva
-          pactl set-default-sink blockiva
-          # QEMU may not inherit PulseAudio's per-user runtime socket. Give
-          # emulator and recorder the same explicit loopback-only endpoint.
-          pactl load-module module-native-protocol-tcp listen=127.0.0.1 auth-ip-acl=127.0.0.1
-          pactl -s tcp:127.0.0.1:4713 info
-          echo 'PULSE_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
-          echo 'QEMU_PA_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
-          echo 'QEMU_AUDIO_DRV=pa' >> "$GITHUB_ENV"
-          echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
-          echo 'QEMU_PA_SINK=blockiva' >> "$GITHUB_ENV"
+          sudo apt-get install -y -qq ffmpeg
+          mkdir -p "$GITHUB_WORKSPACE/store/indus/screenshots"
+          echo 'QEMU_AUDIO_DRV=wav' >> "$GITHUB_ENV"
+          echo "QEMU_WAV_PATH=$GITHUB_WORKSPACE/store/indus/screenshots/emulator-output.wav" >> "$GITHUB_ENV"
 
       - name: Release build daemon memory before emulator
         run: ./android/gradlew -p android --stop
@@ -111,10 +104,10 @@ jobs:
           ram-size: 2048M
           cores: 2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim
-          disable-animations: true
+          disable-animations: false
           script: bash tool/capture_android_ui.sh
 
-      - name: Verify captured Android audio
+      - name: Verify native emulator audio output
         run: python3 tool/check_android_audio.py store/indus/screenshots
 
       - name: Verify screenshot dimensions
@@ -129,8 +122,15 @@ jobs:
               '02-mid-game.png': (1080, 1920),
               '03-small-screen.png': (720, 1280),
           }
+          review = {f'review-{i:02}.png': (540, 960) for i in range(1, 11)}
+          expected.update(review)
+          expected.update({
+              'clear-seeded.png': (1080, 1920),
+              'clear-after.png': (1080, 1920),
+          })
+          expected.update({f'clear-review-{i:02}.png': (540, 960) for i in range(1, 7)})
           if {path.name for path in paths} != set(expected):
-              raise SystemExit('Expected startup, mid-game and small-screen captures')
+              raise SystemExit('Expected gameplay and seeded line-clear captures')
           for path in paths:
               with path.open('rb') as f:
                   f.read(16)

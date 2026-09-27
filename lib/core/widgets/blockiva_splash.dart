@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/game_icons.dart';
 
 import '../theme/app_theme.dart';
 
@@ -28,7 +29,7 @@ class BlockivaSplash extends StatelessWidget {
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.grid_view_rounded, color: AppTheme.primary, size: 64),
+                  Icon(GameIcons.board, color: AppTheme.primary, size: 64),
                   SizedBox(height: 18),
                   Text('BLOCKIVA', style: TextStyle(
                     color: AppTheme.gameText, fontSize: 30,

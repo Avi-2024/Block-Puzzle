@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../theme/game_icons.dart';
 import 'ad_service.dart';
 import 'admob_config.dart';
 import 'ads_consent_manager.dart';
@@ -109,7 +110,7 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
                 tooltip: 'Privacy options',
                 onPressed: _showPrivacyOptions,
                 icon: const Icon(
-                  Icons.privacy_tip_outlined,
+                  GameIcons.privacy,
                   color: Colors.white,
                   size: 20,
                 ),

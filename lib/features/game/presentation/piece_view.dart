@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -52,14 +54,17 @@ class PuzzleTile extends StatelessWidget {
     margin: const EdgeInsets.all(1.5),
     decoration: BoxDecoration(
       gradient: AppTheme.pieceGradient(paletteIndex),
-      border: highlighted ? Border.all(color: const Color(0xFFFFE8A3), width: 1.5) : null,
-      borderRadius: BorderRadius.circular(3),
+      border: Border.all(
+        color: highlighted ? const Color(0xFFFFE8A3) : const Color(0x66FFFFFF),
+        width: highlighted ? 1.5 : .8,
+      ),
+      borderRadius: BorderRadius.circular(3.5),
       boxShadow: elevated ? const <BoxShadow>[
         BoxShadow(color: Color(0x55000000), blurRadius: 6, offset: Offset(0, 4)),
       ] : null,
     ),
     child: const ClipRRect(
-      borderRadius: BorderRadius.all(Radius.circular(3)),
+      borderRadius: BorderRadius.all(Radius.circular(3.5)),
       child: CustomPaint(painter: _TileBevel()),
     ),
   );
@@ -72,16 +77,58 @@ class _TileBevel extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
-    final double edge = size.shortestSide * .12;
+    final double edge = size.shortestSide * .075;
     canvas.drawPath(Path()
       ..moveTo(0, 0)..lineTo(w, 0)..lineTo(w-edge, edge)
       ..lineTo(edge, edge)..lineTo(edge, h-edge)..lineTo(0, h)..close(),
-      Paint()..color = const Color(0x55FFFFFF));
+      Paint()..color = const Color(0x6BFFFFFF));
     canvas.drawPath(Path()
       ..moveTo(w, 0)..lineTo(w, h)..lineTo(0, h)
       ..lineTo(edge, h-edge)..lineTo(w-edge, h-edge)
       ..lineTo(w-edge, edge)..close(),
-      Paint()..color = const Color(0x33000000));
+      Paint()..color = const Color(0x40000000));
+    // A narrow specular band gives every unit a bright face at tray size.
+    // It stays inside the tile so adjacent blocks still read as one piece.
+    final Rect face = Rect.fromLTWH(edge + 1, edge + 1,
+        w - 2 * edge - 2, h * .29);
+    if (face.width > 0 && face.height > 0) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(face, const Radius.circular(1.5)),
+        Paint()..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[Color(0x32FFFFFF), Color(0x00FFFFFF)],
+        ).createShader(face),
+      );
+    }
+
+    // A recessed lens catches light at both tray and settled-board sizes.
+    // These highlights are painted from the tile color, with no borrowed art.
+    final double radius = size.shortestSide * .115;
+    if (radius >= 2) {
+      final Offset lens = Offset(w * .73, h * .34);
+      canvas.drawCircle(
+        lens.translate(-.55, -.75), radius + 1,
+        Paint()..color = Colors.white.withValues(alpha: .48),
+      );
+      canvas.drawCircle(
+        lens, radius,
+        Paint()..shader = RadialGradient(
+          center: const Alignment(.32, .38),
+          radius: .92,
+          colors: <Color>[
+            Colors.black.withValues(alpha: .22),
+            Colors.black.withValues(alpha: .12),
+            Colors.white.withValues(alpha: .34),
+          ],
+          stops: const <double>[0, .62, 1],
+        ).createShader(Rect.fromCircle(center: lens, radius: radius)),
+      );
+      canvas.drawCircle(
+        Offset(w * .80, h * .71), math.max(1, radius * .27),
+        Paint()..color = Colors.white.withValues(alpha: .38),
+      );
+    }
   }
 
   @override

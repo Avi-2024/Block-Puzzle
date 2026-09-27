@@ -13,6 +13,7 @@ import '../../../core/storage/game_stats_repository.dart';
 import '../../../core/storage/shared_preferences_game_session_repository.dart';
 import '../../../core/storage/shared_preferences_game_stats_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/game_icons.dart';
 import '../../daily_challenge/domain/daily_challenge_definition.dart';
 import '../../daily_challenge/domain/daily_piece_generator.dart';
 import '../../progression/application/progression_runtime.dart';
@@ -58,6 +59,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   bool _newBest = false;
   bool _recordSoundPlayed = false;
   bool _recordFlash = false;
+  bool _draggingPiece = false;
   int _startingBest = 0;
   int _outcomeToken = 0;
   int _trayGeneration = 0;
@@ -66,6 +68,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   String? _moveFeedback;
   MoveResult? _clearReward;
   Offset? _rewardOrigin;
+  bool _rewardNewBest = false;
   Map<int, int> _clearedTiles = const <int, int>{};
   int? _milestoneScore;
   Set<int> _clearedRows = <int>{};
@@ -153,6 +156,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (!_active) unawaited(_controller.persistSession());
     setState(() {
       _preview = null;
+      _draggingPiece = false;
       if (!_active) {
         _milestoneScore = null;
         _milestoneToken++;
@@ -163,7 +167,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
   Future<void> _showOutcome() async {
     final token = ++_outcomeToken;
-    await Future<void>.delayed(const Duration(milliseconds: 460));
+    await Future<void>.delayed(Duration(
+      milliseconds: (_clearReward?.linesCleared ?? 0) > 0 ? 1080 : 460,
+    ));
     if (!mounted || token != _outcomeToken || !_terminal) return;
     setState(() => _outcomeVisible = true);
     unawaited(_haptics.impact());
@@ -252,6 +258,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
         move,
         Offset((col + piece.width / 2) / GameEngine.size,
             (row + piece.height / 2) / GameEngine.size),
+        newBest: !widget.isDaily && oldScore <= _startingBest &&
+            _controller.engine.score > _startingBest,
       ));
     }
     if (move != null && move.linesCleared > 0) {
@@ -345,7 +353,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   }
 
   Future<void> _showMilestone(int score, int token) async {
-    await Future<void>.delayed(const Duration(milliseconds: 560));
+    // Avoid stacking the milestone over a clear, combo, or new-best headline.
+    await Future<void>.delayed(Duration(milliseconds:
+        (_clearReward?.linesCleared ?? 0) > 0 || _rewardNewBest ? 1100 : 560));
     if (!mounted || token != _milestoneToken || _terminal) return;
     setState(() => _milestoneScore = score);
     await Future<void>.delayed(const Duration(milliseconds: 820));
@@ -354,17 +364,21 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     }
   }
 
-  Future<void> _showMoveReward(MoveResult move, Offset origin) async {
+  Future<void> _showMoveReward(MoveResult move, Offset origin,
+      {bool newBest = false}) async {
     final int token = ++_rewardToken;
     setState(() {
       _clearReward = move;
       _rewardOrigin = origin;
+      _rewardNewBest = newBest;
     });
-    await Future<void>.delayed(Duration(milliseconds: move.linesCleared > 0 ? 680 : 540));
+    await Future<void>.delayed(Duration(milliseconds:
+        move.linesCleared > 0 || newBest ? 1060 : 480));
     if (!mounted || token != _rewardToken) return;
     setState(() {
       _clearReward = null;
       _rewardOrigin = null;
+      _rewardNewBest = false;
     });
   }
 
@@ -435,9 +449,11 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
     setState(() {
       _preview = null;
+      _draggingPiece = false;
       _moveFeedback = null;
       _clearReward = null;
       _rewardOrigin = null;
+      _rewardNewBest = false;
       _recordFlash = false;
       _clearedRows = <int>{};
       _clearedCols = <int>{};
@@ -512,15 +528,14 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       return const BlockivaSplash();
     }
 
-    final LinearGradient gameGradient =
-        AppTheme.gameplayGradientForScore(_controller.engine.score);
+    final LinearGradient gameGradient = AppTheme.gameBackgroundGradient;
     Widget content = Scaffold(
       backgroundColor: gameGradient.colors.last,
-      body: AnimatedContainer(
-        duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 700),
-        curve: Curves.easeInOutCubic,
+      body: Container(
         decoration: BoxDecoration(gradient: gameGradient),
-        child: SafeArea(
+        child: CustomPaint(
+          painter: const _GameplayBackdropPainter(),
+          child: SafeArea(
           child: Stack(
             children: <Widget>[
               Padding(
@@ -548,11 +563,12 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                     Expanded(
                       child: LayoutBuilder(
                         builder: (BuildContext context, BoxConstraints constraints) {
-                          final double side = (constraints.maxHeight - 132)
+                          final double side = (constraints.maxHeight - 146)
                               .clamp(0.0, constraints.maxWidth).toDouble();
                           return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: <Widget>[
+                              const SizedBox(height: 14),
                               SizedBox(
                                 width: side,
                                 height: side,
@@ -567,24 +583,47 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                             clearToken: _clearFlashToken,
                             reward: _clearReward,
                             rewardOrigin: _rewardOrigin,
+                            rewardNewBest: _rewardNewBest,
                             rewardToken: _rewardToken,
                             milestoneScore: _milestoneScore,
                           ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 16,
+                                child: _controller.engine.movesPlayed == 0 &&
+                                        !_draggingPiece && !_terminal
+                                    ? const Center(child: Text(
+                                        'Drag a block to place it',
+                                        style: TextStyle(
+                                          color: AppTheme.gameTextMuted,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ))
+                                    : null,
+                              ),
+                              SizedBox(height: math.min(32,
+                                math.max(0, constraints.maxHeight - side - 146) * .25)),
                               PieceTray(
                       key: ValueKey(_trayGeneration),
                       pieces: _controller.tray,
                       enabled: !_terminal && _active,
                       feedbackCellSize: () => _feedbackCellSize,
                       onDragStarted: () {
+                        setState(() => _draggingPiece = true);
                         unawaited(_haptics.selection());
                         unawaited(_audio.playPickup());
                       },
                       onDragUpdate: _updateDragPreview,
-                      onDragEnded: _finishDrag,
-                      onDragCancelled: () => _setPreview(null),
+                      onDragEnded: (piece) {
+                        setState(() => _draggingPiece = false);
+                        _finishDrag(piece);
+                      },
+                      onDragCancelled: () {
+                        setState(() => _draggingPiece = false);
+                        _setPreview(null);
+                      },
                     ),
                             ],
                           );
@@ -642,6 +681,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                 ),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -669,6 +709,39 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       child: content,
     );
   }
+}
+
+/// Low-contrast relief gives the blue stage depth without competing with the
+/// board or introducing animated decoration behind a player's next move.
+class _GameplayBackdropPainter extends CustomPainter {
+  const _GameplayBackdropPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double tile = size.width / 8;
+    final Paint face = Paint();
+    final Paint rim = Paint()
+      ..color = Colors.white.withValues(alpha: .027)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .55;
+    for (int row = 0; row * tile < size.height; row++) {
+      for (int col = 0; col < 8; col++) {
+        final Rect rect = Rect.fromLTWH(
+          col * tile + 2, row * tile + 2, tile - 4, tile - 4,
+        );
+        face.color = (row + col).isEven
+            ? Colors.white.withValues(alpha: .019)
+            : Colors.black.withValues(alpha: .018);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(3)), face,
+        );
+        canvas.drawLine(rect.topLeft, rect.topRight, rim);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GameplayBackdropPainter oldDelegate) => false;
 }
 
 class _PlacementPreview {
@@ -719,8 +792,8 @@ class _GameHeader extends StatelessWidget {
         children: <Widget>[
           _HudButton(
             icon: daily
-                ? Icons.arrow_back_rounded
-                : Icons.settings_rounded,
+                ? GameIcons.back
+                : GameIcons.settings,
             tooltip: daily
                 ? 'Back to endless'
                 : 'Settings',
@@ -732,14 +805,14 @@ class _GameHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppTheme.gameText,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.7,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.2,
               ),
             ),
           ),
           _HudButton(
-            icon: Icons.refresh_rounded,
+            icon: GameIcons.restart,
             tooltip: 'Restart',
             onPressed: onRestart,
           ),
@@ -765,15 +838,18 @@ class _HudButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: .10),
-        shape: const CircleBorder(),
+        color: Colors.white.withValues(alpha: .055),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: BorderSide(color: Colors.white.withValues(alpha: .19)),
+        ),
         child: InkWell(
-          customBorder: const CircleBorder(),
+          borderRadius: BorderRadius.circular(15),
           onTap: onPressed,
           child: SizedBox(
             width: 48,
             height: 48,
-            child: Icon(icon, color: AppTheme.gameText, size: 22),
+            child: Icon(icon, color: AppTheme.gameText, size: 21),
           ),
         ),
       ),
@@ -819,18 +895,18 @@ class _ScoreDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(
-                  challenge == null ? Icons.emoji_events_rounded : Icons.flag_rounded,
+                  challenge == null ? GameIcons.trophy : GameIcons.target,
                   color: recordFlash ? AppTheme.rewardCoral : AppTheme.rewardGold,
-                  size: 17,
+                  size: 15,
                 ),
                 const SizedBox(width: 5),
                 Text(
                   challenge != null ? 'TARGET ${challenge.targetScore}' :
-                      recordFlash ? 'NEW BEST  $bestScore' : '$bestScore',
+                      recordFlash ? 'NEW BEST  $bestScore' : 'BEST  $bestScore',
                   style: TextStyle(
                     color: recordFlash ? AppTheme.rewardGold : AppTheme.gameTextMuted,
-                    fontSize: 14, fontWeight: FontWeight.w900,
-                    letterSpacing: recordFlash ? .5 : 0,
+                    fontSize: 12, fontWeight: FontWeight.w700,
+                    letterSpacing: recordFlash ? .8 : 1,
                     shadows: recordFlash ? const <Shadow>[
                       Shadow(color: Color(0xAAEF6B88), blurRadius: 12),
                     ] : null,
@@ -858,12 +934,11 @@ class _ScoreDisplay extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
             ),
             child: Text(
-              '$movesLeft MOVES LEFT  •  +${challenge.rewardCoins} COINS',
+              '$movesLeft moves left  ·  +${challenge.rewardCoins} coins',
               style: const TextStyle(
                 color: AppTheme.gameTextMuted,
                 fontSize: 11,
-                fontWeight: FontWeight.w900,
-                letterSpacing: .25,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -933,14 +1008,14 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
           semanticsLabel: 'Score ${widget.score}',
           style: TextStyle(
             color: color,
-            fontSize: 42,
+            fontSize: 54,
             height: .95,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -2,
             shadows: <Shadow>[
               Shadow(color: _activeAccent.withValues(alpha: reducedMotion ? 0 :
                   .55 * (1 - progress)), blurRadius: 20),
-              const Shadow(color: Color(0x55000000), blurRadius: 10, offset: Offset(0, 4)),
+              const Shadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2)),
             ],
           ),
         ),
@@ -960,6 +1035,7 @@ class _Board extends StatelessWidget {
     required this.clearToken,
     required this.reward,
     required this.rewardOrigin,
+    required this.rewardNewBest,
     required this.rewardToken,
     required this.milestoneScore,
   });
@@ -973,6 +1049,7 @@ class _Board extends StatelessWidget {
   final int clearToken;
   final MoveResult? reward;
   final Offset? rewardOrigin;
+  final bool rewardNewBest;
   final int rewardToken;
   final int? milestoneScore;
 
@@ -988,8 +1065,8 @@ class _Board extends StatelessWidget {
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: Colors.white.withValues(alpha: .10)),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: AppTheme.gameCellEdge.withValues(alpha: .42)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
               color: Color(0x55030D22),
@@ -1034,6 +1111,7 @@ class _Board extends StatelessWidget {
               points: reward!.scoreGained,
               lines: reward!.linesCleared,
               combo: reward!.combo,
+              newBest: rewardNewBest,
               rows: reward!.clearedRows.toSet(),
               cols: reward!.clearedCols.toSet(),
               placementCenter: rewardOrigin,
@@ -1077,7 +1155,7 @@ class _BoardCell extends StatelessWidget {
               margin: const EdgeInsets.all(1.5),
               decoration: BoxDecoration(
                 color: invalidPreview ? const Color(0xFF6B3854) : AppTheme.gameCell,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(2.5),
                 border: invalidPreview
                     ? Border.all(color: const Color(0xFFFF8B9B), width: 1.2)
                     : null,
@@ -1193,7 +1271,7 @@ class _EndlessGameOverOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _OverlayCard(
-      icon: Icons.grid_off_rounded,
+      icon: GameIcons.board,
       title: newBest ? 'NEW PERSONAL BEST' : 'NO MORE MOVES',
       subtitle: coinsEarned > 0
           ? '+$coinsEarned coins earned this run'
@@ -1211,7 +1289,7 @@ class _EndlessGameOverOverlay extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 17),
               ),
               onPressed: onRevive,
-              icon: const Icon(Icons.play_circle_fill_rounded),
+              icon: const Icon(GameIcons.play),
               label: const Text('WATCH AD & CONTINUE'),
             ),
           ),
@@ -1221,7 +1299,7 @@ class _EndlessGameOverOverlay extends StatelessWidget {
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: onRestart,
-            icon: const Icon(Icons.replay_rounded),
+            icon: const Icon(GameIcons.restart),
             label: const Text('PLAY AGAIN'),
           ),
         ),
@@ -1252,7 +1330,7 @@ class _DailyOutcomeOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _OverlayCard(
-      icon: success ? Icons.workspace_premium_rounded : Icons.flag_rounded,
+      icon: success ? GameIcons.medal : GameIcons.target,
       title: success ? 'DAILY COMPLETE!' : 'CHALLENGE OVER',
       subtitle: success
           ? rewardGranted > 0
@@ -1269,7 +1347,7 @@ class _DailyOutcomeOverlay extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.replay_rounded),
+              icon: const Icon(GameIcons.restart),
               label: const Text('TRY AGAIN'),
             ),
           ),
@@ -1279,7 +1357,7 @@ class _DailyOutcomeOverlay extends StatelessWidget {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(GameIcons.back),
             label: const Text('BACK TO ENDLESS'),
           ),
         ),
