@@ -89,6 +89,7 @@ abstract final class AppTheme {
 
   static ThemeData get bright => ThemeData(
         brightness: Brightness.light,
+        fontFamily: 'Manrope',
         scaffoldBackgroundColor: background,
         colorScheme: const ColorScheme.light(
           primary: primary,

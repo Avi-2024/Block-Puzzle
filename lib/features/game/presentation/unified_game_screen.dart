@@ -768,9 +768,9 @@ class _GameHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppTheme.gameText,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.7,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.2,
               ),
             ),
           ),
@@ -801,15 +801,18 @@ class _HudButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: .10),
-        shape: const CircleBorder(),
+        color: Colors.white.withValues(alpha: .055),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: BorderSide(color: Colors.white.withValues(alpha: .19)),
+        ),
         child: InkWell(
-          customBorder: const CircleBorder(),
+          borderRadius: BorderRadius.circular(15),
           onTap: onPressed,
           child: SizedBox(
             width: 48,
             height: 48,
-            child: Icon(icon, color: AppTheme.gameText, size: 22),
+            child: Icon(icon, color: AppTheme.gameText, size: 21),
           ),
         ),
       ),
@@ -857,16 +860,16 @@ class _ScoreDisplay extends StatelessWidget {
                 Icon(
                   challenge == null ? GameIcons.trophy : GameIcons.target,
                   color: recordFlash ? AppTheme.rewardCoral : AppTheme.rewardGold,
-                  size: 17,
+                  size: 15,
                 ),
                 const SizedBox(width: 5),
                 Text(
                   challenge != null ? 'TARGET ${challenge.targetScore}' :
-                      recordFlash ? 'NEW BEST  $bestScore' : '$bestScore',
+                      recordFlash ? 'NEW BEST  $bestScore' : 'BEST  $bestScore',
                   style: TextStyle(
                     color: recordFlash ? AppTheme.rewardGold : AppTheme.gameTextMuted,
-                    fontSize: 14, fontWeight: FontWeight.w900,
-                    letterSpacing: recordFlash ? .5 : 0,
+                    fontSize: 12, fontWeight: FontWeight.w700,
+                    letterSpacing: recordFlash ? .8 : 1,
                     shadows: recordFlash ? const <Shadow>[
                       Shadow(color: Color(0xAAEF6B88), blurRadius: 12),
                     ] : null,
@@ -969,14 +972,14 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
           semanticsLabel: 'Score ${widget.score}',
           style: TextStyle(
             color: color,
-            fontSize: 42,
+            fontSize: 46,
             height: .95,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -2,
             shadows: <Shadow>[
               Shadow(color: _activeAccent.withValues(alpha: reducedMotion ? 0 :
                   .55 * (1 - progress)), blurRadius: 20),
-              const Shadow(color: Color(0x55000000), blurRadius: 10, offset: Offset(0, 4)),
+              const Shadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2)),
             ],
           ),
         ),

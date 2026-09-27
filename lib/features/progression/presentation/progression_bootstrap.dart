@@ -122,37 +122,30 @@ class _FloatingActionPill extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(15),
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           decoration: BoxDecoration(
-            color: AppTheme.gameBoard.withValues(alpha: .74),
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: Colors.white.withValues(alpha: .16)),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x66030A22),
-                blurRadius: 14,
-                offset: Offset(0, 7),
-              ),
-            ],
+            color: AppTheme.gameBoard.withValues(alpha: .45),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.white.withValues(alpha: .17)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(icon, color: iconColor, size: 17),
-              const SizedBox(width: 5),
+              Icon(icon, color: iconColor, size: 16),
+              const SizedBox(width: 7),
               Flexible(child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: AppTheme.gameText,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .15,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .35,
                 ),
               )),
             ],
