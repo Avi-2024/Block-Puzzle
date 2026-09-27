@@ -13,6 +13,7 @@ import '../../../core/storage/game_stats_repository.dart';
 import '../../../core/storage/shared_preferences_game_session_repository.dart';
 import '../../../core/storage/shared_preferences_game_stats_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/game_icons.dart';
 import '../../daily_challenge/domain/daily_challenge_definition.dart';
 import '../../daily_challenge/domain/daily_piece_generator.dart';
 import '../../progression/application/progression_runtime.dart';
@@ -754,8 +755,8 @@ class _GameHeader extends StatelessWidget {
         children: <Widget>[
           _HudButton(
             icon: daily
-                ? Icons.arrow_back_rounded
-                : Icons.settings_rounded,
+                ? GameIcons.back
+                : GameIcons.settings,
             tooltip: daily
                 ? 'Back to endless'
                 : 'Settings',
@@ -774,7 +775,7 @@ class _GameHeader extends StatelessWidget {
             ),
           ),
           _HudButton(
-            icon: Icons.refresh_rounded,
+            icon: GameIcons.restart,
             tooltip: 'Restart',
             onPressed: onRestart,
           ),
@@ -854,7 +855,7 @@ class _ScoreDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(
-                  challenge == null ? Icons.emoji_events_rounded : Icons.flag_rounded,
+                  challenge == null ? GameIcons.trophy : GameIcons.target,
                   color: recordFlash ? AppTheme.rewardCoral : AppTheme.rewardGold,
                   size: 17,
                 ),
@@ -1231,7 +1232,7 @@ class _EndlessGameOverOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _OverlayCard(
-      icon: Icons.grid_off_rounded,
+      icon: GameIcons.board,
       title: newBest ? 'NEW PERSONAL BEST' : 'NO MORE MOVES',
       subtitle: coinsEarned > 0
           ? '+$coinsEarned coins earned this run'
@@ -1249,7 +1250,7 @@ class _EndlessGameOverOverlay extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 17),
               ),
               onPressed: onRevive,
-              icon: const Icon(Icons.play_circle_fill_rounded),
+              icon: const Icon(GameIcons.play),
               label: const Text('WATCH AD & CONTINUE'),
             ),
           ),
@@ -1259,7 +1260,7 @@ class _EndlessGameOverOverlay extends StatelessWidget {
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: onRestart,
-            icon: const Icon(Icons.replay_rounded),
+            icon: const Icon(GameIcons.restart),
             label: const Text('PLAY AGAIN'),
           ),
         ),
@@ -1290,7 +1291,7 @@ class _DailyOutcomeOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _OverlayCard(
-      icon: success ? Icons.workspace_premium_rounded : Icons.flag_rounded,
+      icon: success ? GameIcons.medal : GameIcons.target,
       title: success ? 'DAILY COMPLETE!' : 'CHALLENGE OVER',
       subtitle: success
           ? rewardGranted > 0
@@ -1307,7 +1308,7 @@ class _DailyOutcomeOverlay extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.replay_rounded),
+              icon: const Icon(GameIcons.restart),
               label: const Text('TRY AGAIN'),
             ),
           ),
@@ -1317,7 +1318,7 @@ class _DailyOutcomeOverlay extends StatelessWidget {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(GameIcons.back),
             label: const Text('BACK TO ENDLESS'),
           ),
         ),

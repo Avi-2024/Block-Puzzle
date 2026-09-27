@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/game_icons.dart';
 import '../../../core/widgets/blockiva_splash.dart';
 import '../../daily_challenge/domain/daily_challenge_definition.dart';
 import '../../game/presentation/unified_game_screen.dart';
@@ -86,14 +87,14 @@ class ProgressionActions extends StatelessWidget {
         return Row(children: [
           Expanded(child: Align(alignment: Alignment.centerLeft, child: _FloatingActionPill(
             onTap: () => showProgressionSheet(context, runtime.controller),
-            icon: Icons.monetization_on_rounded,
+            icon: GameIcons.coin,
             iconColor: AppTheme.warning,
             label: '${runtime.controller.coins}',
           ))),
           Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: score)),
           Expanded(child: Align(alignment: Alignment.centerRight, child: _FloatingActionPill(
             onTap: () => _openDailyChallenge(context),
-            icon: done ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
+            icon: done ? GameIcons.calendarDone : GameIcons.calendar,
             iconColor: done ? AppTheme.success : AppTheme.warning,
             label: 'DAILY',
           ))),

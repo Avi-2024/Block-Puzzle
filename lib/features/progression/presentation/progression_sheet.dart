@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/game_icons.dart';
 import '../application/progression_controller.dart';
 import '../domain/achievement_definition.dart';
 import '../domain/game_theme_definition.dart';
@@ -179,7 +180,7 @@ class _DailyRewardCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.local_fire_department_rounded,
+                  GameIcons.fire,
                   color: AppTheme.warning,
                 ),
               ),
@@ -226,7 +227,7 @@ class _DailyRewardCard extends StatelessWidget {
                   ? () => controller.claimDailyReward()
                   : null,
               icon: Icon(
-                available ? Icons.card_giftcard_rounded : Icons.check_rounded,
+                available ? GameIcons.gift : GameIcons.check,
               ),
               label: Text(
                 available
@@ -427,7 +428,7 @@ class _AchievementRow extends StatelessWidget {
               ),
             ),
             child: Icon(
-              unlocked ? Icons.check_rounded : Icons.lock_outline_rounded,
+              unlocked ? GameIcons.check : GameIcons.lock,
               color: unlocked ? AppTheme.success : AppTheme.gameTextMuted,
               size: 20,
             ),
@@ -530,7 +531,7 @@ class _CoinPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Icon(
-            Icons.monetization_on_rounded,
+            GameIcons.coin,
             color: AppTheme.warning,
             size: compact ? 14 : 17,
           ),
