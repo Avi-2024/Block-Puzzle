@@ -96,7 +96,7 @@ class ProgressionActions extends StatelessWidget {
             onTap: () => _openDailyChallenge(context),
             icon: done ? GameIcons.calendarDone : GameIcons.calendar,
             iconColor: done ? AppTheme.success : AppTheme.warning,
-            label: 'DAILY',
+            label: 'Daily',
           ))),
         ]);
       },

@@ -592,12 +592,11 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                                 child: _controller.engine.movesPlayed == 0 &&
                                         !_draggingPiece && !_terminal
                                     ? const Center(child: Text(
-                                        'DRAG A BLOCK ONTO THE BOARD',
+                                        'Drag a block to place it',
                                         style: TextStyle(
                                           color: AppTheme.gameTextMuted,
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: .8,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ))
                                     : null,
@@ -897,12 +896,11 @@ class _ScoreDisplay extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
             ),
             child: Text(
-              '$movesLeft MOVES LEFT  •  +${challenge.rewardCoins} COINS',
+              '$movesLeft moves left  ·  +${challenge.rewardCoins} coins',
               style: const TextStyle(
                 color: AppTheme.gameTextMuted,
                 fontSize: 11,
-                fontWeight: FontWeight.w900,
-                letterSpacing: .25,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
