@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:blockiva/core/audio/game_audio_service.dart';
+import 'package:blockiva/core/ads/monetization_bootstrap.dart';
 import 'package:blockiva/core/audio/game_sound_player.dart';
 import 'package:blockiva/features/game/presentation/unified_game_screen.dart';
 import 'package:blockiva/features/game/presentation/piece_tray.dart';
@@ -77,9 +78,13 @@ void main() {
         await audio.initialize();
       });
       final capture = GlobalKey();
+      var privacyOpened = 0;
       await tester.pumpWidget(MaterialApp(theme: AppTheme.bright, home: RepaintBoundary(
         key: capture,
-        child: UnifiedGameScreen.endless(audio: audio),
+        child: PrivacyOptionsScope(
+          onOpen: () async { privacyOpened++; },
+          child: UnifiedGameScreen.endless(audio: audio),
+        ),
       )));
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pumpAndSettle();
@@ -117,6 +122,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Haptics'), findsOneWidget);
       expect(find.text('Sound'), findsOneWidget);
+      expect(find.text('Privacy options'), findsOneWidget);
+      await tester.tap(find.text('Privacy options'));
+      await tester.pumpAndSettle();
+      expect(privacyOpened, 1);
+      expect(find.text('Settings'), findsNothing);
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('KEEP PLAYING'));
       await tester.pumpAndSettle();

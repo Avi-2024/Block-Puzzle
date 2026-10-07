@@ -83,7 +83,8 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
 
   Future<void> _showPrivacyOptions() async {
     await _consentManager.showPrivacyOptions();
-    final bool canRequestAds = await ConsentInformation.instance.canRequestAds();
+    final bool canRequestAds = await ConsentInformation.instance
+        .canRequestAds();
     if (!canRequestAds) {
       AdRuntime.instance.reset();
       return;
@@ -95,28 +96,27 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        widget.child,
-        if (_privacyOptionsRequired)
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 8,
-            right: 62,
-            child: Material(
-              color: Colors.white.withValues(alpha: .10),
-              shape: const CircleBorder(),
-              child: IconButton(
-                tooltip: 'Privacy options',
-                onPressed: _showPrivacyOptions,
-                icon: const Icon(
-                  Icons.privacy_tip_outlined,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-      ],
+    return PrivacyOptionsScope(
+      onOpen: _privacyOptionsRequired ? _showPrivacyOptions : null,
+      child: widget.child,
     );
   }
+}
+
+/// Makes required consent controls available to Settings without covering the HUD.
+class PrivacyOptionsScope extends InheritedWidget {
+  const PrivacyOptionsScope({
+    required this.onOpen,
+    required super.child,
+    super.key,
+  });
+
+  final Future<void> Function()? onOpen;
+
+  static Future<void> Function()? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PrivacyOptionsScope>()?.onOpen;
+
+  @override
+  bool updateShouldNotify(PrivacyOptionsScope oldWidget) =>
+      onOpen != oldWidget.onOpen;
 }

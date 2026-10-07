@@ -91,3 +91,20 @@ Polish alone cannot establish that the game will trend. Player retention and
 store conversion need measured testing. Do not label this production-ready until
 these gates have recorded results. No paid services or public store release are
 part of this pass.
+
+## Native review follow-up
+
+The Android captures exposed a conditional consent icon crowding the restart
+control. Required privacy options now appear in Settings via an inherited
+callback scope, retaining the native UMP action. Mobile regression checks open
+that action and verify its callback across all five viewport sizes.
+
+On revision `a4a72bc`, analysis, the full test suite, seeded rule verification,
+debug APK packaging and release-mode APK startup passed in GitHub Actions.
+The release smoke artifact uses the generated scaffold's test signing, not the
+production store keystore. The emulator audio recording failed: the job log
+reports `Could not init pa audio driver` and the captured host sink has no
+playback streams. The app's native log reaches all eight events and
+`BLOCKIVA_AUDIO_DONE`, but that cannot prove audible output. The capture job
+now uses a private local UNIX PulseAudio socket instead of TCP; its output must
+be rechecked. Sound reliability remains an open release gate until it passes.

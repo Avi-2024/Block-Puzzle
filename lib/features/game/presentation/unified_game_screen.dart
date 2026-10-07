@@ -10,6 +10,7 @@ import '../../../core/widgets/blockiva_splash.dart';
 import '../../../core/widgets/blockiva_mark.dart';
 
 import '../../../core/ads/ad_service.dart';
+import '../../../core/ads/monetization_bootstrap.dart';
 import '../../../core/audio/game_audio_service.dart';
 import '../../../core/storage/game_stats_repository.dart';
 import '../../../core/storage/shared_preferences_game_session_repository.dart';
@@ -406,6 +407,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
   }
 
   Future<void> _openSettings() async {
+    final privacyOptions = PrivacyOptionsScope.maybeOf(context);
     unawaited(_audio.playButton());
     await showModalBottomSheet<void>(
       context: context,
@@ -465,6 +467,25 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
                     if (value) unawaited(_haptics.selection());
                   },
                 ),
+                if (privacyOptions != null)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.privacy_tip_outlined,
+                      color: AppTheme.gameTextMuted,
+                    ),
+                    title: const Text(
+                      'Privacy options',
+                      style: TextStyle(color: AppTheme.gameText),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppTheme.gameTextMuted,
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await privacyOptions();
+                    },
+                  ),
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: () => Navigator.pop(sheetContext),

@@ -83,12 +83,12 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=blockiva
           pactl set-default-sink blockiva
-          # QEMU may not inherit PulseAudio's per-user runtime socket. Give
-          # emulator and recorder the same explicit loopback-only endpoint.
-          pactl load-module module-native-protocol-tcp listen=127.0.0.1 auth-ip-acl=127.0.0.1
-          pactl -s tcp:127.0.0.1:4713 info
-          echo 'PULSE_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
-          echo 'QEMU_PA_SERVER=tcp:127.0.0.1:4713' >> "$GITHUB_ENV"
+          # A private local socket avoids bundled emulator PulseAudio TCP failures.
+          audio_socket_dir=$(mktemp -d /tmp/blockiva-pulse.XXXXXX)
+          pactl load-module module-native-protocol-unix socket="$audio_socket_dir/native" auth-anonymous=1
+          pactl -s "unix:$audio_socket_dir/native" info
+          echo "PULSE_SERVER=unix:$audio_socket_dir/native" >> "$GITHUB_ENV"
+          echo "QEMU_PA_SERVER=unix:$audio_socket_dir/native" >> "$GITHUB_ENV"
           echo 'QEMU_AUDIO_DRV=pa' >> "$GITHUB_ENV"
           echo 'PULSE_SINK=blockiva' >> "$GITHUB_ENV"
           echo 'QEMU_PA_SINK=blockiva' >> "$GITHUB_ENV"
