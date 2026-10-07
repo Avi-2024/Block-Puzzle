@@ -125,8 +125,9 @@ class _PieceTrayState extends State<PieceTray> {
                           ? const SizedBox.shrink()
                           : Listener(
                               onPointerDown: (PointerDownEvent event) {
-                                if (_activePiece == null)
+                                if (_activePiece == null) {
                                   _pointers[piece] = event.pointer;
+                                }
                               },
                               child: Draggable<BlockPiece>(
                                 key: ObjectKey(piece),
