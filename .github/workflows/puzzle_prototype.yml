@@ -1,0 +1,87 @@
+name: Fresh Puzzle Prototype
+on:
+  push:
+    branches: [codex/fresh-puzzle-prototype]
+    paths: ['prototype/**', '.github/workflows/puzzle_prototype.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: puzzle-prototype-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: prototype
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Test rules, touch input and responsive screens
+        run: PUZZLE_CAPTURE_UI=1 flutter test
+      - name: Upload actual Flutter review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-puzzle-screenshots
+          path: prototype/build/prototype-review/
+          if-no-files-found: ignore
+      - name: Generate isolated Android preview app
+        run: |
+          flutter create --platforms=android --org com.blockiva --project-name puzzle_prototype .
+          python3 tool/brand_android.py
+      - name: Build playable APK
+        run: |
+          flutter build apk --debug
+          mkdir -p build/review
+          cp build/app/outputs/flutter-apk/app-debug.apk build/review/block-puzzle-prototype.apk
+      - name: Upload playable APK and dependency lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-puzzle-playable-apk
+          path: |
+            prototype/build/review/block-puzzle-prototype.apk
+            prototype/pubspec.lock
+      - name: Build animation capture APK
+        run: |
+          flutter build apk --debug -t tool/preview_main.dart
+          cp build/app/outputs/flutter-apk/app-debug.apk build/review/animation-preview.apk
+          ./android/gradlew -p android --stop
+      - name: Enable emulator acceleration
+        working-directory: .
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Record the Flutter APK on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 2048M
+          cores: 2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -no-audio
+          disable-animations: false
+          script: bash prototype/tool/capture_preview.sh
+      - name: Upload Android animation video and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-puzzle-android-preview
+          path: prototype/build/native-preview/
+          if-no-files-found: ignore
