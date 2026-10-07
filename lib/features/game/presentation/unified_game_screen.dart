@@ -275,8 +275,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
       final Map<int, int> tiles = <int, int>{};
       for (int r = 0; r < GameEngine.size; r++) {
         for (int c = 0; c < GameEngine.size; c++) {
-          if (!move.clearedRows.contains(r) && !move.clearedCols.contains(c))
+          if (!move.clearedRows.contains(r) && !move.clearedCols.contains(c)) {
             continue;
+          }
           final int index = r * GameEngine.size + c;
           final bool newlyPlaced = piece.cells.any(
             (cell) => row + cell.row == r && col + cell.col == c,
@@ -307,8 +308,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
     } else if (_newBest && !_recordSoundPlayed) {
       _recordSoundPlayed = true;
       unawaited(_flashNewBest());
-      if (move == null || move.linesCleared == 0)
+      if (move == null || move.linesCleared == 0) {
         unawaited(_audio.playHighScore());
+      }
     }
   }
 
