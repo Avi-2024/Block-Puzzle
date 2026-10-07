@@ -82,22 +82,42 @@ class ProgressionActions extends StatelessWidget {
       animation: runtime,
       builder: (context, _) {
         final challenge = DailyChallengeDefinition.forDate(DateTime.now());
-        final done = runtime.controller.isDailyChallengeCompleted(challenge.dayKey);
-        return Row(children: [
-          Expanded(child: Align(alignment: Alignment.centerLeft, child: _FloatingActionPill(
-            onTap: () => showProgressionSheet(context, runtime.controller),
-            icon: Icons.monetization_on_rounded,
-            iconColor: AppTheme.warning,
-            label: '${runtime.controller.coins}',
-          ))),
-          Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: score)),
-          Expanded(child: Align(alignment: Alignment.centerRight, child: _FloatingActionPill(
-            onTap: () => _openDailyChallenge(context),
-            icon: done ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
-            iconColor: done ? AppTheme.success : AppTheme.warning,
-            label: 'DAILY',
-          ))),
-        ]);
+        final done = runtime.controller.isDailyChallengeCompleted(
+          challenge.dayKey,
+        );
+        return Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _FloatingActionPill(
+                  onTap: () =>
+                      showProgressionSheet(context, runtime.controller),
+                  icon: Icons.monetization_on_rounded,
+                  iconColor: AppTheme.warning,
+                  label: '${runtime.controller.coins}',
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: FittedBox(fit: BoxFit.scaleDown, child: score),
+            ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _FloatingActionPill(
+                  onTap: () => _openDailyChallenge(context),
+                  icon: done
+                      ? Icons.check_circle_rounded
+                      : Icons.calendar_today_rounded,
+                  iconColor: done ? AppTheme.success : AppTheme.warning,
+                  label: 'DAILY',
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
@@ -143,17 +163,19 @@ class _FloatingActionPill extends StatelessWidget {
             children: <Widget>[
               Icon(icon, color: iconColor, size: 17),
               const SizedBox(width: 5),
-              Flexible(child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.gameText,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .15,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.gameText,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .15,
+                  ),
                 ),
-              )),
+              ),
             ],
           ),
         ),

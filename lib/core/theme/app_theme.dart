@@ -16,15 +16,15 @@ abstract final class AppTheme {
   static const Color danger = Color(0xFFFF5573);
 
   // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
-  static const Color gameBackgroundTop = Color(0xFF304773);
-  static const Color gameBackgroundMid = Color(0xFF283B65);
-  static const Color gameBackgroundBottom = Color(0xFF1B2B4D);
+  static const Color gameBackgroundTop = Color(0xFF243858);
+  static const Color gameBackgroundMid = Color(0xFF1A2B47);
+  static const Color gameBackgroundBottom = Color(0xFF101D34);
   static const Color gameBoard = Color(0xFF132442);
   static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF253957);
+  static const Color gameCell = Color(0xFF20314B);
   static const Color gameCellEdge = Color(0xFF536D96);
   static const Color gameText = Color(0xFFFFFFFF);
-  static const Color gameTextMuted = Color(0xFFD9E7FF);
+  static const Color gameTextMuted = Color(0xFFB7C8DF);
   static const Color gameOverlay = Color(0xDC071330);
   static const Color rewardGold = Color(0xFFFFDC77);
   static const Color rewardCyan = Color(0xFF6BE5F2);

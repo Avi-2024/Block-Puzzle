@@ -55,7 +55,7 @@ void main() {
       }
     }
   });
-  for (final size in [const Size(320, 568), const Size(360, 640), const Size(393, 852), const Size(412, 915)]) {
+  for (final size in [const Size(320, 568), const Size(360, 640), const Size(393, 852), const Size(412, 915), const Size(800, 1280)]) {
     testWidgets('mobile HUD, board, settings fit $size', (tester) async {
       SharedPreferences.setMockInitialValues({});
       SharedPreferencesAsyncPlatform.instance = _MemoryAsyncPreferences();
@@ -82,6 +82,14 @@ void main() {
         (widget) => widget is Text && widget.semanticsLabel == 'Score 0',
       ));
       expect(initialScore.style!.color, AppTheme.gameText);
+      // The score must remain readable beside retention controls on a small phone.
+      expect(tester.getSize(find.byWidgetPredicate(
+        (widget) => widget is Text && widget.semanticsLabel == 'Score 0',
+      )).height, greaterThanOrEqualTo(40));
+      expect(find.text('Drag a block. Fill a row or column.'), findsOneWidget);
+      if (size.width >= 800) {
+        expect(tester.getSize(find.byType(PieceTray)).width, lessThanOrEqualTo(480));
+      }
       expect(tester.takeException(), isNull);
       if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
         await tester.runAsync(() async {
