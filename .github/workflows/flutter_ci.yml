@@ -38,11 +38,6 @@ jobs:
           set -o pipefail
           BLOCKIVA_CAPTURE_UI=1 flutter test 2>&1 | tee test.log
 
-      - name: Assemble actual widget motion preview
-        run: |
-          python3 -m pip install --quiet pillow
-          python3 tool/create_motion_preview.py
-
       - name: Upload mobile widget review captures
         if: always()
         uses: actions/upload-artifact@v4

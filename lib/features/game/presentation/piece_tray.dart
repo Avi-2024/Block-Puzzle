@@ -71,7 +71,7 @@ class _PieceTrayState extends State<PieceTray> {
     return Listener(
       onPointerCancel: _cancel,
       child: SizedBox(
-      height: 100,
+      height: 116,
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           // Keep normal pieces large, shrinking a batch only when one of its
@@ -102,7 +102,7 @@ class _PieceTrayState extends State<PieceTray> {
                       ? const SizedBox.shrink()
                       : Listener(
                           onPointerDown: (PointerDownEvent event) {
-                            if (_activePiece == null) { _pointers[piece] = event.pointer; }
+                            if (_activePiece == null) _pointers[piece] = event.pointer;
                           },
                           child: Draggable<BlockPiece>(
                           key: ObjectKey(piece),

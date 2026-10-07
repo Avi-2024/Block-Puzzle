@@ -47,12 +47,6 @@ void main() {
   setUpAll(() async {
     if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
       final artifacts = File(Platform.resolvedExecutable).parent.parent.parent;
-      final icons = File('${artifacts.path}/material_fonts/MaterialIcons-Regular.otf');
-      if (await icons.exists()) {
-        final loader = FontLoader('MaterialIcons');
-        loader.addFont(icons.readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
-        await loader.load();
-      }
       final font = File('${artifacts.path}/material_fonts/Roboto-Regular.ttf');
       if (await font.exists()) {
         final loader = FontLoader('Roboto');
@@ -98,27 +92,6 @@ void main() {
           File('${directory.path}/game-${size.width.toInt()}.png').writeAsBytesSync(bytes!.buffer.asUint8List());
           image.dispose();
         });
-      }
-      if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1' && size.width == 393) {
-        final tray = tester.widget<PieceTray>(find.byType(PieceTray));
-        final piece = tray.pieces.first!;
-        final board = tester.getRect(find.byType(GridView));
-        final cell = board.width / 8;
-        final pointer = board.topLeft + Offset(piece.width * cell / 2, piece.height * cell / 2 + 92);
-        tray.onDragUpdate(piece, pointer);
-        await tester.pump();
-        tray.onDragEnded(piece);
-        for (var frame = 0; frame < 14; frame++) {
-          await tester.pump(const Duration(milliseconds: 40));
-          await tester.runAsync(() async {
-            final boundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-            final image = await boundary.toImage(pixelRatio: 1);
-            final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-            final directory = Directory('build/mobile-review/motion')..createSync(recursive: true);
-            File('${directory.path}/${frame.toString().padLeft(2, '0')}.png').writeAsBytesSync(bytes!.buffer.asUint8List());
-            image.dispose();
-          });
-        }
       }
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       await tester.pump();

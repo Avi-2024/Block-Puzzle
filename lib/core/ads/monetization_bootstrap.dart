@@ -100,8 +100,8 @@ class _MonetizationBootstrapState extends State<MonetizationBootstrap> {
         widget.child,
         if (_privacyOptionsRequired)
           Positioned(
-            bottom: MediaQuery.paddingOf(context).bottom + 12,
-            right: MediaQuery.sizeOf(context).width / 2 - 24,
+            top: MediaQuery.paddingOf(context).top + 8,
+            right: 62,
             child: Material(
               color: Colors.white.withValues(alpha: .10),
               shape: const CircleBorder(),

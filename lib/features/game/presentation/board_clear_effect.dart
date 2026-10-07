@@ -24,7 +24,7 @@ class BoardClearEffect extends StatelessWidget {
       child: ClipRect(
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 340),
+          duration: const Duration(milliseconds: 420),
           builder: (BuildContext context, double progress, Widget? child) =>
               CustomPaint(painter: _ClearPainter(rows, cols, tileColors, progress)),
         ),
