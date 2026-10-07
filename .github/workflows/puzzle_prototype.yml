@@ -29,6 +29,20 @@ jobs:
           java-version: '17'
       - name: Install dependencies
         run: flutter pub get
+      - name: Format original Dart sources
+        run: |
+          dart format lib test tool
+          dart fix --apply --code=curly_braces_in_flow_control_structures
+          dart format lib test tool
+      - name: Retain formatted sources and resolved dependencies
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-puzzle-formatted-source
+          path: |
+            prototype/lib/
+            prototype/test/
+            prototype/tool/*.dart
+            prototype/pubspec.lock
       - name: Analyze
         run: flutter analyze
       - name: Test rules, touch input and responsive screens

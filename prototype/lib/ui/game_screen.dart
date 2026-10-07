@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart' show TickerCanceled;
 import 'package:flutter/services.dart';
 import '../game/puzzle.dart';
 import '../game/puzzle_store.dart';
@@ -88,7 +87,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
     if(canPlace(_state.board,piece,x,y)){_ghostX=x;_ghostY=y;}
   }
   void _beginDrag(int slot, DragStartDetails details) {
-    if(!_input || _state.tray[slot]==null) return;
+    if(!_input || _dragSlot!=null || _state.tray[slot]==null) return;
     _flight.stop(canceled:true);
     setState(() {
       _dragSlot=slot;_selected=null;_floatingPiece=_state.tray[slot];
@@ -96,8 +95,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
     });
     if(_haptics) unawaited(HapticFeedback.selectionClick());
   }
-  void _updateDrag(DragUpdateDetails details) {
-    if(_dragSlot==null || _floatingPiece==null || !_input) return;
+  void _updateDrag(int slot,DragUpdateDetails details) {
+    if(_dragSlot!=slot || _floatingPiece==null || !_input) return;
     setState(() { _floatingGlobal=_pieceTopLeft(_floatingPiece!,details.globalPosition);_previewAt(_floatingGlobal!); });
   }
   Future<void> _returnPiece() async {
@@ -115,14 +114,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
     if(mounted) _clearDrag();
   }
   void _clearDrag() { if(mounted) setState(() { _dragSlot=null;_floatingPiece=null;_floatingGlobal=null;_ghostX=null;_ghostY=null; }); }
-  void _endDrag(DragEndDetails details) {
-    if(_dragSlot==null) return;
+  void _endDrag(int slot,DragEndDetails details) {
+    if(_dragSlot!=slot) return;
     if(_ghostX!=null && _ghostY!=null && _input) {
       _commit(_dragSlot!,_ghostX!,_ghostY!);
     } else { unawaited(_returnPiece()); }
   }
   void _select(int slot) {
-    if(!_input || _state.tray[slot]==null) return;
+    if(!_input || _dragSlot!=null || _state.tray[slot]==null) return;
     setState(() { _selected=_selected==slot?null:slot;_status=_selected==null?'Find your next move':'Tap a cell to place'; });
   }
   void _tapBoard(TapUpDetails details) {
@@ -236,7 +235,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin, 
     final unit=math.min(24.0,(width/3-12)/5);
     return Expanded(child:Listener(onPointerDown:(event)=>_pointer=event.kind,child:GestureDetector(
       key:ValueKey('piece-slot-$slot'),behavior:HitTestBehavior.opaque,
-      onTap:()=>_select(slot),onPanStart:(details)=>_beginDrag(slot,details),onPanUpdate:_updateDrag,onPanEnd:_endDrag,onPanCancel:()=>unawaited(_returnPiece()),
+      onTap:()=>_select(slot),onPanStart:(details)=>_beginDrag(slot,details),onPanUpdate:(details)=>_updateDrag(slot,details),onPanEnd:(details)=>_endDrag(slot,details),onPanCancel:(){if(_dragSlot==slot)unawaited(_returnPiece());},
       child:Semantics(button:true,label:piece==null?'Used piece slot ${slot+1}':'Piece ${slot+1}, ${piece.width} wide, ${piece.height} high',selected:_selected==slot,
         child:SizedBox(key:_slotKeys[slot],height:height,child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
           Expanded(child:Center(child:piece==null||hidden?const SizedBox.shrink():AnimatedBuilder(animation:_refill,builder:(context,child){

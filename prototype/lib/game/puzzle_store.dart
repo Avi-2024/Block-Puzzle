@@ -14,8 +14,10 @@ class PuzzleStore {
     try {
       final raw = preferences.getString(sessionKey);
       final state = raw == null ? null : PuzzleState.decode(jsonDecode(raw));
-      if (state != null) return PuzzleState(board: state.board, tray: state.tray,
-        score: state.score, best: max(best, state.best), combo: state.combo, moves: state.moves);
+      if (state != null) {
+        return PuzzleState(board: state.board, tray: state.tray,
+          score: state.score, best: max(best, state.best), combo: state.combo, moves: state.moves);
+      }
     } on FormatException { /* A damaged session must not prevent startup. */ }
     return engine.fresh(best: best);
   }
