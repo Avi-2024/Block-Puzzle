@@ -968,9 +968,7 @@ class _ScoreDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(
-                  challenge == null
-                      ? Icons.emoji_events_rounded
-                      : Icons.flag_rounded,
+                  Icons.flag_rounded,
                   color: recordFlash
                       ? AppTheme.rewardCoral
                       : AppTheme.rewardGold,
@@ -978,11 +976,7 @@ class _ScoreDisplay extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  challenge != null
-                      ? 'TARGET ${challenge.targetScore}'
-                      : recordFlash
-                      ? 'NEW BEST  $bestScore'
-                      : 'BEST  $bestScore',
+                  'TARGET ${challenge.targetScore}',
                   style: TextStyle(
                     color: recordFlash
                         ? AppTheme.rewardGold
@@ -1014,7 +1008,7 @@ class _ScoreDisplay extends StatelessWidget {
               ? AppTheme.rewardCoral
               : AppTheme.rewardGold,
         ),
-        if (challenge != null) ...<Widget>[
+        ...<Widget>[
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
