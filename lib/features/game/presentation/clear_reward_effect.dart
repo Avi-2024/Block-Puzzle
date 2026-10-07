@@ -50,7 +50,7 @@ class ClearRewardEffect extends StatelessWidget {
         alignment: anchor,
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: 1),
-          duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 650 : 510),
+          duration: Duration(milliseconds: reducedMotion ? 0 : cleared ? 560 : 380),
           builder: (context, value, child) {
             final double opacity = reducedMotion ? 1 :
                 math.min(1, value * 9) * ((1 - value) / .23).clamp(0.0, 1.0);

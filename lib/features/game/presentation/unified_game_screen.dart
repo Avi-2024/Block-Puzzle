@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../core/feedback/game_haptics.dart';
 import '../../../core/widgets/blockiva_splash.dart';
 
@@ -30,7 +31,8 @@ import 'piece_tray.dart';
 import 'piece_view.dart';
 
 class UnifiedGameScreen extends StatefulWidget {
-  const UnifiedGameScreen.endless({this.audio, super.key}) : dailyChallenge = null;
+  const UnifiedGameScreen.endless({this.audio, super.key})
+    : dailyChallenge = null;
 
   const UnifiedGameScreen.daily({
     required DailyChallengeDefinition challenge,
@@ -47,7 +49,8 @@ class UnifiedGameScreen extends StatefulWidget {
   State<UnifiedGameScreen> createState() => _UnifiedGameScreenState();
 }
 
-class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindingObserver {
+class _UnifiedGameScreenState extends State<UnifiedGameScreen>
+    with WidgetsBindingObserver {
   final GlobalKey _boardGridKey = GlobalKey(debugLabel: 'blockiva-board-grid');
   late final GameSessionController _controller;
   late final GameAudioService _audio;
@@ -167,8 +170,13 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (!mounted || token != _outcomeToken || !_terminal) return;
     setState(() => _outcomeVisible = true);
     unawaited(_haptics.impact());
-    unawaited(_dailySuccess ? _audio.playCombo()
-        : _newBest ? _audio.playHighScore() : _audio.playGameOver());
+    unawaited(
+      _dailySuccess
+          ? _audio.playCombo()
+          : _newBest
+          ? _audio.playHighScore()
+          : _audio.playGameOver(),
+    );
   }
 
   void _refresh() {
@@ -235,9 +243,13 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     if (_terminal || !_active) return;
     final int oldScore = _controller.engine.score;
     final List<int?> before = _controller.engine.canPlace(piece, row, col)
-        ? List<int?>.generate(GameEngine.size * GameEngine.size,
-            (index) => _controller.engine.cellAt(index ~/ GameEngine.size,
-                index % GameEngine.size))
+        ? List<int?>.generate(
+            GameEngine.size * GameEngine.size,
+            (index) => _controller.engine.cellAt(
+              index ~/ GameEngine.size,
+              index % GameEngine.size,
+            ),
+          )
         : const <int?>[];
     final bool placed = _controller.placePiece(piece, row, col);
     if (!placed) {
@@ -248,21 +260,27 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
 
     final move = _controller.lastMove;
     if (move != null) {
-      unawaited(_showMoveReward(
-        move,
-        Offset((col + piece.width / 2) / GameEngine.size,
-            (row + piece.height / 2) / GameEngine.size),
-      ));
+      unawaited(
+        _showMoveReward(
+          move,
+          Offset(
+            (col + piece.width / 2) / GameEngine.size,
+            (row + piece.height / 2) / GameEngine.size,
+          ),
+        ),
+      );
     }
     if (move != null && move.linesCleared > 0) {
       unawaited(_haptics.reward());
       final Map<int, int> tiles = <int, int>{};
       for (int r = 0; r < GameEngine.size; r++) {
         for (int c = 0; c < GameEngine.size; c++) {
-          if (!move.clearedRows.contains(r) && !move.clearedCols.contains(c)) continue;
+          if (!move.clearedRows.contains(r) && !move.clearedCols.contains(c))
+            continue;
           final int index = r * GameEngine.size + c;
           final bool newlyPlaced = piece.cells.any(
-              (cell) => row + cell.row == r && col + cell.col == c);
+            (cell) => row + cell.row == r && col + cell.col == c,
+          );
           final int? color = newlyPlaced ? piece.paletteIndex : before[index];
           if (color != null) tiles[index] = color;
         }
@@ -279,8 +297,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     final int milestoneToken = ++_milestoneToken;
     if (_milestoneScore != null) setState(() => _milestoneScore = null);
     if (!_terminal && oldScore ~/ 500 < _controller.engine.score ~/ 500) {
-      unawaited(_showMilestone((_controller.engine.score ~/ 500) * 500,
-          milestoneToken));
+      unawaited(
+        _showMilestone((_controller.engine.score ~/ 500) * 500, milestoneToken),
+      );
     }
     _newBest = !widget.isDaily && _controller.engine.score > _startingBest;
     if (_terminal) {
@@ -288,7 +307,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
     } else if (_newBest && !_recordSoundPlayed) {
       _recordSoundPlayed = true;
       unawaited(_flashNewBest());
-      if (move == null || move.linesCleared == 0) unawaited(_audio.playHighScore());
+      if (move == null || move.linesCleared == 0)
+        unawaited(_audio.playHighScore());
     }
   }
 
@@ -326,7 +346,10 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
   }
 
   Future<void> _flashClearedLines(
-      List<int> rows, List<int> cols, Map<int, int> tiles) async {
+    List<int> rows,
+    List<int> cols,
+    Map<int, int> tiles,
+  ) async {
     final int token = ++_clearFlashToken;
     if (mounted) {
       setState(() {
@@ -360,7 +383,9 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       _clearReward = move;
       _rewardOrigin = origin;
     });
-    await Future<void>.delayed(Duration(milliseconds: move.linesCleared > 0 ? 680 : 540));
+    await Future<void>.delayed(
+      Duration(milliseconds: move.linesCleared > 0 ? 680 : 540),
+    );
     if (!mounted || token != _rewardToken) return;
     setState(() {
       _clearReward = null;
@@ -389,35 +414,51 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
           top: false,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Text('Settings', style: TextStyle(
-                color: AppTheme.gameText, fontSize: 24, fontWeight: FontWeight.w800,
-              )),
-              const SizedBox(height: 16),
-              SwitchListTile.adaptive(
-                title: const Text('Sound', style: TextStyle(color: AppTheme.gameText)),
-                value: _audio.enabled,
-                onChanged: (value) async {
-                  await _audio.setEnabled(value);
-                  if (!context.mounted) return;
-                  refresh(() {});
-                  if (value) unawaited(_audio.playButton());
-                },
-              ),
-              SwitchListTile.adaptive(
-                title: const Text('Haptics', style: TextStyle(color: AppTheme.gameText)),
-                value: _haptics.enabled,
-                onChanged: (value) async {
-                  await _haptics.setEnabled(value);
-                  if (!context.mounted) return;
-                  refresh(() {});
-                  if (value) unawaited(_haptics.selection());
-                },
-              ),
-              const SizedBox(height: 12),
-              FilledButton(onPressed: () => Navigator.pop(sheetContext),
-                child: const Text('KEEP PLAYING')),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Settings',
+                  style: TextStyle(
+                    color: AppTheme.gameText,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile.adaptive(
+                  title: const Text(
+                    'Sound',
+                    style: TextStyle(color: AppTheme.gameText),
+                  ),
+                  value: _audio.enabled,
+                  onChanged: (value) async {
+                    await _audio.setEnabled(value);
+                    if (!context.mounted) return;
+                    refresh(() {});
+                    if (value) unawaited(_audio.playButton());
+                  },
+                ),
+                SwitchListTile.adaptive(
+                  title: const Text(
+                    'Haptics',
+                    style: TextStyle(color: AppTheme.gameText),
+                  ),
+                  value: _haptics.enabled,
+                  onChanged: (value) async {
+                    await _haptics.setEnabled(value);
+                    if (!context.mounted) return;
+                    refresh(() {});
+                    if (value) unawaited(_haptics.selection());
+                  },
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: const Text('KEEP PLAYING'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -512,12 +553,15 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
       return const BlockivaSplash();
     }
 
-    final LinearGradient gameGradient =
-        AppTheme.gameplayGradientForScore(_controller.engine.score);
+    final LinearGradient gameGradient = AppTheme.gameplayGradientForScore(
+      _controller.engine.score,
+    );
     Widget content = Scaffold(
       backgroundColor: gameGradient.colors.last,
       body: AnimatedContainer(
-        duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 700),
+        duration: Duration(
+          milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 700,
+        ),
         curve: Curves.easeInOutCubic,
         decoration: BoxDecoration(gradient: gameGradient),
         child: SafeArea(
@@ -533,64 +577,65 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                       onRestart: _confirmRestart,
                     ),
                     const SizedBox(height: 2),
-                    if (widget.isDaily)
-                      _ScoreDisplay(score: _controller.engine.score,
-                        bestScore: _controller.bestScore, daily: _daily,
-                        movesLeft: _dailyMovesLeft, lastMove: _controller.lastMove,
-                        recordFlash: false)
-                    else
-                      ProgressionActions(score: _ScoreDisplay(
-                        score: _controller.engine.score, bestScore: _controller.bestScore,
-                        daily: null, movesLeft: 0,
-                        lastMove: _controller.lastMove, recordFlash: _recordFlash,
-                      )),
+                    _ScoreDisplay(
+                      score: _controller.engine.score,
+                      bestScore: _controller.bestScore,
+                      daily: _daily,
+                      movesLeft: _dailyMovesLeft,
+                      lastMove: _controller.lastMove,
+                      recordFlash: _recordFlash,
+                    ),
                     const SizedBox(height: 8),
                     Expanded(
                       child: LayoutBuilder(
-                        builder: (BuildContext context, BoxConstraints constraints) {
-                          final double side = (constraints.maxHeight - 132)
-                              .clamp(0.0, constraints.maxWidth).toDouble();
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              SizedBox(
-                                width: side,
-                                height: side,
-                                child: RepaintBoundary(
-                                  child: _Board(
-                            gridKey: _boardGridKey,
-                            engine: _controller.engine,
-                            preview: _preview,
-                            clearedRows: _clearedRows,
-                            clearedCols: _clearedCols,
-                            clearedTiles: _clearedTiles,
-                            clearToken: _clearFlashToken,
-                            reward: _clearReward,
-                            rewardOrigin: _rewardOrigin,
-                            rewardToken: _rewardToken,
-                            milestoneScore: _milestoneScore,
-                          ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              PieceTray(
-                      key: ValueKey(_trayGeneration),
-                      pieces: _controller.tray,
-                      enabled: !_terminal && _active,
-                      feedbackCellSize: () => _feedbackCellSize,
-                      onDragStarted: () {
-                        unawaited(_haptics.selection());
-                        unawaited(_audio.playPickup());
-                      },
-                      onDragUpdate: _updateDragPreview,
-                      onDragEnded: _finishDrag,
-                      onDragCancelled: () => _setPreview(null),
-                    ),
-                            ],
-                          );
-                        },
+                        builder:
+                            (BuildContext context, BoxConstraints constraints) {
+                              final double side = (constraints.maxHeight - 116)
+                                  .clamp(0.0, constraints.maxWidth)
+                                  .toDouble();
+                              return Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  SizedBox(
+                                    width: side,
+                                    height: side,
+                                    child: RepaintBoundary(
+                                      child: _Board(
+                                        gridKey: _boardGridKey,
+                                        engine: _controller.engine,
+                                        preview: _preview,
+                                        clearedRows: _clearedRows,
+                                        clearedCols: _clearedCols,
+                                        clearedTiles: _clearedTiles,
+                                        clearToken: _clearFlashToken,
+                                        reward: _clearReward,
+                                        rewardOrigin: _rewardOrigin,
+                                        rewardToken: _rewardToken,
+                                        milestoneScore: _milestoneScore,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  PieceTray(
+                                    key: ValueKey(_trayGeneration),
+                                    pieces: _controller.tray,
+                                    enabled: !_terminal && _active,
+                                    feedbackCellSize: () => _feedbackCellSize,
+                                    onDragStarted: () {
+                                      unawaited(_haptics.selection());
+                                      unawaited(_audio.playPickup());
+                                    },
+                                    onDragUpdate: _updateDragPreview,
+                                    onDragEnded: _finishDrag,
+                                    onDragCancelled: () => _setPreview(null),
+                                  ),
+                                ],
+                              );
+                            },
                       ),
                     ),
+                    if (!widget.isDaily)
+                      const ProgressionActions(score: SizedBox.shrink()),
                   ],
                 ),
               ),
@@ -601,12 +646,20 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen> with WidgetsBindi
                 child: IgnorePointer(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
-                    transitionBuilder: (Widget child, Animation<double> animation) =>
-                        FadeTransition(opacity: animation, child: ScaleTransition(
-                          scale: Tween<double>(begin: .8, end: 1).animate(
-                            CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-                          ), child: child,
-                        )),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) =>
+                            FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: .8, end: 1).animate(
+                                  CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOutBack,
+                                  ),
+                                ),
+                                child: child,
+                              ),
+                            ),
                     child: _moveFeedback == null
                         ? const SizedBox.shrink()
                         : Center(
@@ -718,12 +771,8 @@ class _GameHeader extends StatelessWidget {
       child: Row(
         children: <Widget>[
           _HudButton(
-            icon: daily
-                ? Icons.arrow_back_rounded
-                : Icons.settings_rounded,
-            tooltip: daily
-                ? 'Back to endless'
-                : 'Settings',
+            icon: daily ? Icons.arrow_back_rounded : Icons.settings_rounded,
+            tooltip: daily ? 'Back to endless' : 'Settings',
             onPressed: onLeftAction,
           ),
           Expanded(
@@ -765,7 +814,7 @@ class _HudButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: .10),
+        color: Colors.transparent,
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -806,7 +855,9 @@ class _ScoreDisplay extends StatelessWidget {
         SizedBox(
           height: 20,
           child: AnimatedSwitcher(
-            duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 220),
+            duration: Duration(
+              milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 220,
+            ),
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: ScaleTransition(
@@ -819,21 +870,33 @@ class _ScoreDisplay extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(
-                  challenge == null ? Icons.emoji_events_rounded : Icons.flag_rounded,
-                  color: recordFlash ? AppTheme.rewardCoral : AppTheme.rewardGold,
+                  challenge == null
+                      ? Icons.emoji_events_rounded
+                      : Icons.flag_rounded,
+                  color: recordFlash
+                      ? AppTheme.rewardCoral
+                      : AppTheme.rewardGold,
                   size: 17,
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  challenge != null ? 'TARGET ${challenge.targetScore}' :
-                      recordFlash ? 'NEW BEST  $bestScore' : '$bestScore',
+                  challenge != null
+                      ? 'TARGET ${challenge.targetScore}'
+                      : recordFlash
+                      ? 'NEW BEST  $bestScore'
+                      : 'BEST  $bestScore',
                   style: TextStyle(
-                    color: recordFlash ? AppTheme.rewardGold : AppTheme.gameTextMuted,
-                    fontSize: 14, fontWeight: FontWeight.w900,
+                    color: recordFlash
+                        ? AppTheme.rewardGold
+                        : AppTheme.gameTextMuted,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: recordFlash ? .5 : 0,
-                    shadows: recordFlash ? const <Shadow>[
-                      Shadow(color: Color(0xAAEF6B88), blurRadius: 12),
-                    ] : null,
+                    shadows: recordFlash
+                        ? const <Shadow>[
+                            Shadow(color: Color(0xAAEF6B88), blurRadius: 12),
+                          ]
+                        : null,
                   ),
                 ),
               ],
@@ -843,11 +906,15 @@ class _ScoreDisplay extends StatelessWidget {
         const SizedBox(height: 1),
         _AnimatedScore(
           score: score,
-          accent: recordFlash ? AppTheme.rewardCoral :
-              lastMove == null || lastMove!.linesCleared == 0
-                  ? AppTheme.rewardCyan :
-              lastMove!.combo > 1 ? AppTheme.rewardViolet :
-              lastMove!.linesCleared > 1 ? AppTheme.rewardCoral : AppTheme.rewardGold,
+          accent: recordFlash
+              ? AppTheme.rewardCoral
+              : lastMove == null || lastMove!.linesCleared == 0
+              ? AppTheme.rewardCyan
+              : lastMove!.combo > 1
+              ? AppTheme.rewardViolet
+              : lastMove!.linesCleared > 1
+              ? AppTheme.rewardCoral
+              : AppTheme.rewardGold,
         ),
         if (challenge != null) ...<Widget>[
           const SizedBox(height: 6),
@@ -884,9 +951,11 @@ class _AnimatedScore extends StatefulWidget {
   State<_AnimatedScore> createState() => _AnimatedScoreState();
 }
 
-class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProviderStateMixin {
+class _AnimatedScoreState extends State<_AnimatedScore>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _animation = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 420),
+    vsync: this,
+    duration: const Duration(milliseconds: 420),
   )..value = 1;
   late double _from = widget.score.toDouble();
   late double _to = widget.score.toDouble();
@@ -909,7 +978,8 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
     _animation.forward(from: 0);
   }
 
-  double get _currentValue => _from + (_to - _from) * Curves.easeOutCubic.transform(_animation.value);
+  double get _currentValue =>
+      _from + (_to - _from) * Curves.easeOutCubic.transform(_animation.value);
 
   @override
   void dispose() {
@@ -924,8 +994,11 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
       final bool reducedMotion = MediaQuery.disableAnimationsOf(context);
       final double progress = reducedMotion ? 1 : _animation.value;
       final double value = reducedMotion ? _to : _currentValue;
-      final Color color = Color.lerp(_activeAccent, AppTheme.gameText,
-          reducedMotion ? 1 : Curves.easeOutCubic.transform(progress))!;
+      final Color color = Color.lerp(
+        _activeAccent,
+        AppTheme.gameText,
+        reducedMotion ? 1 : Curves.easeOutCubic.transform(progress),
+      )!;
       return Transform.scale(
         scale: 1 + (reducedMotion ? 0 : .115 * math.sin(math.pi * progress)),
         child: Text(
@@ -933,14 +1006,22 @@ class _AnimatedScoreState extends State<_AnimatedScore> with SingleTickerProvide
           semanticsLabel: 'Score ${widget.score}',
           style: TextStyle(
             color: color,
-            fontSize: 42,
+            fontSize: 58,
             height: .95,
             fontWeight: FontWeight.w900,
             letterSpacing: -1.5,
             shadows: <Shadow>[
-              Shadow(color: _activeAccent.withValues(alpha: reducedMotion ? 0 :
-                  .55 * (1 - progress)), blurRadius: 20),
-              const Shadow(color: Color(0x55000000), blurRadius: 10, offset: Offset(0, 4)),
+              Shadow(
+                color: _activeAccent.withValues(
+                  alpha: reducedMotion ? 0 : .55 * (1 - progress),
+                ),
+                blurRadius: 20,
+              ),
+              const Shadow(
+                color: Color(0x55000000),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
             ],
           ),
         ),
@@ -985,10 +1066,10 @@ class _Board extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1,
       child: Container(
-        padding: const EdgeInsets.all(5),
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(color: Colors.white.withValues(alpha: .10)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
@@ -1001,48 +1082,61 @@ class _Board extends StatelessWidget {
         child: RepaintBoundary(
           key: gridKey,
           child: Stack(
-          children: <Widget>[
-          GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: GameEngine.size,
-            ),
-            itemCount: GameEngine.size * GameEngine.size,
-            itemBuilder: (BuildContext context, int index) {
-              final int row = index ~/ GameEngine.size;
-              final int col = index % GameEngine.size;
-              final int? paletteIndex = engine.cellAt(row, col);
-              final bool previewed = preview?.contains(row, col) ?? false;
-              final bool valid = previewed && (preview?.valid ?? false);
-              final bool invalid = previewed && !(preview?.valid ?? true);
-              return _BoardCell(
-                paletteIndex: paletteIndex,
-                previewPaletteIndex: valid ? preview!.piece.paletteIndex : null,
-                invalidPreview: invalid,
-                willClear: predicted.rows.contains(row) || predicted.cols.contains(col),
-              );
-            },
-          ),
-          if (clearedRows.isNotEmpty || clearedCols.isNotEmpty)
-            Positioned.fill(child: BoardClearEffect(
-              key: ValueKey<int>(clearToken), rows: clearedRows, cols: clearedCols,
-              tileColors: clearedTiles,
-            )),
-          if (reward != null)
-            Positioned.fill(child: ClearRewardEffect(
-              key: ValueKey<int>(rewardToken),
-              points: reward!.scoreGained,
-              lines: reward!.linesCleared,
-              combo: reward!.combo,
-              rows: reward!.clearedRows.toSet(),
-              cols: reward!.clearedCols.toSet(),
-              placementCenter: rewardOrigin,
-            )),
-          if (milestoneScore != null)
-            Positioned.fill(child: MilestoneCelebration(
-              key: ValueKey<int>(milestoneScore!), score: milestoneScore!,
-            )),
-          ],
+            children: <Widget>[
+              GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: GameEngine.size,
+                ),
+                itemCount: GameEngine.size * GameEngine.size,
+                itemBuilder: (BuildContext context, int index) {
+                  final int row = index ~/ GameEngine.size;
+                  final int col = index % GameEngine.size;
+                  final int? paletteIndex = engine.cellAt(row, col);
+                  final bool previewed = preview?.contains(row, col) ?? false;
+                  final bool valid = previewed && (preview?.valid ?? false);
+                  final bool invalid = previewed && !(preview?.valid ?? true);
+                  return _BoardCell(
+                    paletteIndex: paletteIndex,
+                    previewPaletteIndex: valid
+                        ? preview!.piece.paletteIndex
+                        : null,
+                    invalidPreview: invalid,
+                    willClear:
+                        predicted.rows.contains(row) ||
+                        predicted.cols.contains(col),
+                  );
+                },
+              ),
+              if (clearedRows.isNotEmpty || clearedCols.isNotEmpty)
+                Positioned.fill(
+                  child: BoardClearEffect(
+                    key: ValueKey<int>(clearToken),
+                    rows: clearedRows,
+                    cols: clearedCols,
+                    tileColors: clearedTiles,
+                  ),
+                ),
+              if (reward != null)
+                Positioned.fill(
+                  child: ClearRewardEffect(
+                    key: ValueKey<int>(rewardToken),
+                    points: reward!.scoreGained,
+                    lines: reward!.linesCleared,
+                    combo: reward!.combo,
+                    rows: reward!.clearedRows.toSet(),
+                    cols: reward!.clearedCols.toSet(),
+                    placementCenter: rewardOrigin,
+                  ),
+                ),
+              if (milestoneScore != null)
+                Positioned.fill(
+                  child: MilestoneCelebration(
+                    key: ValueKey<int>(milestoneScore!),
+                    score: milestoneScore!,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1071,12 +1165,18 @@ class _BoardCell extends StatelessWidget {
     return Opacity(
       opacity: validPreview && !occupied ? .48 : 1,
       child: visualPalette != null
-          ? PuzzleTile(paletteIndex: visualPalette, highlighted: willClear)
+          ? PuzzleTile(
+              paletteIndex: visualPalette,
+              highlighted: willClear,
+              animatePlacement: occupied,
+            )
           : AnimatedContainer(
               duration: const Duration(milliseconds: 90),
               margin: const EdgeInsets.all(1.5),
               decoration: BoxDecoration(
-                color: invalidPreview ? const Color(0xFF6B3854) : AppTheme.gameCell,
+                color: invalidPreview
+                    ? const Color(0xFF6B3854)
+                    : AppTheme.gameCell,
                 borderRadius: BorderRadius.circular(3),
                 border: invalidPreview
                     ? Border.all(color: const Color(0xFFFF8B9B), width: 1.2)

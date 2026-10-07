@@ -16,15 +16,15 @@ abstract final class AppTheme {
   static const Color danger = Color(0xFFFF5573);
 
   // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
-  static const Color gameBackgroundTop = Color(0xFF304773);
-  static const Color gameBackgroundMid = Color(0xFF283B65);
-  static const Color gameBackgroundBottom = Color(0xFF1B2B4D);
-  static const Color gameBoard = Color(0xFF132442);
+  static const Color gameBackgroundTop = Color(0xFF3546BC);
+  static const Color gameBackgroundMid = Color(0xFF2D4FC6);
+  static const Color gameBackgroundBottom = Color(0xFF253FA7);
+  static const Color gameBoard = Color(0xFF192957);
   static const Color gameBoardDeep = Color(0xFF020819);
-  static const Color gameCell = Color(0xFF253957);
+  static const Color gameCell = Color(0xFF283D79);
   static const Color gameCellEdge = Color(0xFF536D96);
   static const Color gameText = Color(0xFFFFFFFF);
-  static const Color gameTextMuted = Color(0xFFD9E7FF);
+  static const Color gameTextMuted = Color(0xFFDCE6FF);
   static const Color gameOverlay = Color(0xDC071330);
   static const Color rewardGold = Color(0xFFFFDC77);
   static const Color rewardCyan = Color(0xFF6BE5F2);
@@ -34,13 +34,13 @@ abstract final class AppTheme {
   // Bright, clearly distinguishable puzzle colors. The engine stores only
   // palette indices; presentation owns the actual color system.
   static const List<Color> piecePalette = <Color>[
-    Color(0xFF399FEF), // blue
-    Color(0xFF26C7DC), // cyan
-    Color(0xFF39CC77), // green
-    Color(0xFFF6CC4F), // yellow
-    Color(0xFFF59348), // orange
-    Color(0xFFEE5D71), // coral
-    Color(0xFFA871EC), // violet
+    Color(0xFF416DFF), // blue
+    Color(0xFF19CAE8), // cyan
+    Color(0xFF35D34B), // green
+    Color(0xFFFFD12E), // yellow
+    Color(0xFFFF872F), // orange
+    Color(0xFFF34848), // coral
+    Color(0xFFAD57EE), // violet
   ];
 
   static LinearGradient pieceGradient(int index) {
@@ -49,9 +49,9 @@ abstract final class AppTheme {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: <Color>[
-        Color.lerp(base, Colors.white, .13)!,
+        Color.lerp(base, Colors.white, .09)!,
         base,
-        Color.lerp(base, Colors.black, .16)!,
+        Color.lerp(base, Colors.black, .10)!,
       ],
       stops: const <double>[0, .45, 1],
     );
@@ -73,10 +73,10 @@ abstract final class AppTheme {
   static LinearGradient gameplayGradientForScore(int score) {
     final List<Color> colors = switch ((score ~/ 1000) % 3) {
       1 => const <Color>[
-        Color(0xFF454273), Color(0xFF35315F), Color(0xFF211F46),
+        Color(0xFF583AB4), Color(0xFF4744B9), Color(0xFF343294),
       ],
       2 => const <Color>[
-        Color(0xFF296177), Color(0xFF24506A), Color(0xFF1A324D),
+        Color(0xFF237EAE), Color(0xFF276DB5), Color(0xFF25569A),
       ],
       _ => const <Color>[
         gameBackgroundTop, gameBackgroundMid, gameBackgroundBottom,

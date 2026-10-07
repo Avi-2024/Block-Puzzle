@@ -42,25 +42,49 @@ class PieceView extends StatelessWidget {
 
 /// Shared by settled cells, tray pieces and the lifted drag piece.
 class PuzzleTile extends StatelessWidget {
-  const PuzzleTile({required this.paletteIndex, this.elevated = false, this.highlighted = false, super.key});
+  const PuzzleTile({
+    required this.paletteIndex,
+    this.elevated = false,
+    this.highlighted = false,
+    this.animatePlacement = false,
+    super.key,
+  });
   final int paletteIndex;
   final bool highlighted;
   final bool elevated;
+  final bool animatePlacement;
 
   @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.all(1.5),
-    decoration: BoxDecoration(
-      gradient: AppTheme.pieceGradient(paletteIndex),
-      border: highlighted ? Border.all(color: const Color(0xFFFFE8A3), width: 1.5) : null,
-      borderRadius: BorderRadius.circular(3),
-      boxShadow: elevated ? const <BoxShadow>[
-        BoxShadow(color: Color(0x55000000), blurRadius: 6, offset: Offset(0, 4)),
-      ] : null,
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween(begin: animatePlacement ? .78 : 1, end: 1),
+    duration: Duration(
+      milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 160,
     ),
-    child: const ClipRRect(
-      borderRadius: BorderRadius.all(Radius.circular(3)),
-      child: CustomPaint(painter: _TileBevel()),
+    curve: Curves.easeOutBack,
+    builder: (context, scale, child) =>
+        Transform.scale(scale: scale, child: child),
+    child: Container(
+      margin: const EdgeInsets.all(1.5),
+      decoration: BoxDecoration(
+        gradient: AppTheme.pieceGradient(paletteIndex),
+        border: highlighted
+            ? Border.all(color: const Color(0xFFFFE8A3), width: 1.5)
+            : null,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: elevated
+            ? const <BoxShadow>[
+                BoxShadow(
+                  color: Color(0x55000000),
+                  blurRadius: 6,
+                  offset: Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: const ClipRRect(
+        borderRadius: BorderRadius.all(Radius.circular(3)),
+        child: CustomPaint(painter: _TileBevel()),
+      ),
     ),
   );
 }
@@ -72,16 +96,29 @@ class _TileBevel extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
-    final double edge = size.shortestSide * .12;
-    canvas.drawPath(Path()
-      ..moveTo(0, 0)..lineTo(w, 0)..lineTo(w-edge, edge)
-      ..lineTo(edge, edge)..lineTo(edge, h-edge)..lineTo(0, h)..close(),
-      Paint()..color = const Color(0x55FFFFFF));
-    canvas.drawPath(Path()
-      ..moveTo(w, 0)..lineTo(w, h)..lineTo(0, h)
-      ..lineTo(edge, h-edge)..lineTo(w-edge, h-edge)
-      ..lineTo(w-edge, edge)..close(),
-      Paint()..color = const Color(0x33000000));
+    final double edge = size.shortestSide * .18;
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, 0)
+        ..lineTo(w, 0)
+        ..lineTo(w - edge, edge)
+        ..lineTo(edge, edge)
+        ..lineTo(edge, h - edge)
+        ..lineTo(0, h)
+        ..close(),
+      Paint()..color = const Color(0x77FFFFFF),
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(w, 0)
+        ..lineTo(w, h)
+        ..lineTo(0, h)
+        ..lineTo(edge, h - edge)
+        ..lineTo(w - edge, h - edge)
+        ..lineTo(w - edge, edge)
+        ..close(),
+      Paint()..color = const Color(0x55000000),
+    );
   }
 
   @override

@@ -127,9 +127,9 @@ class _FloatingActionPill extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           decoration: BoxDecoration(
-            color: AppTheme.gameBoard.withValues(alpha: .74),
+            color: Colors.white.withValues(alpha: .08),
             borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: Colors.white.withValues(alpha: .16)),
+            border: Border.all(color: Colors.white.withValues(alpha: .12)),
             boxShadow: const <BoxShadow>[
               BoxShadow(
                 color: Color(0x66030A22),
