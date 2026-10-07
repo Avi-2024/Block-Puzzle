@@ -99,6 +99,27 @@ void main() {
           image.dispose();
         });
       }
+      if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1' && size.width == 393) {
+        final tray = tester.widget<PieceTray>(find.byType(PieceTray));
+        final piece = tray.pieces.first!;
+        final board = tester.getRect(find.byType(GridView));
+        final cell = board.width / 8;
+        final pointer = board.topLeft + Offset(piece.width * cell / 2, piece.height * cell / 2 + 92);
+        tray.onDragUpdate(piece, pointer);
+        await tester.pump();
+        tray.onDragEnded(piece);
+        for (var frame = 0; frame < 14; frame++) {
+          await tester.pump(const Duration(milliseconds: 40));
+          await tester.runAsync(() async {
+            final boundary = capture.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+            final image = await boundary.toImage(pixelRatio: 1);
+            final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+            final directory = Directory('build/mobile-review/motion')..createSync(recursive: true);
+            File('${directory.path}/${frame.toString().padLeft(2, '0')}.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+            image.dispose();
+          });
+        }
+      }
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       await tester.pump();
       expect(tester.widget<PieceTray>(find.byType(PieceTray)).enabled, isFalse);
