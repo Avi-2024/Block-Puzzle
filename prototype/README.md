@@ -32,7 +32,8 @@ that preserves the current game; Back to game restores it.
   intersecting clears, scoring, storage, touch placement and four screen sizes.
 
 `Fresh Puzzle Prototype` CI checks the code, captures real Flutter screenshots,
-builds a playable debug APK and records a separate review APK on Android.
+builds a playable ARM64 release-mode APK with test signing and records a separate
+review APK on Android.
 
 This is a review prototype, not a store release. Sound design, final brand/icon,
 production signing, monetization and physical-device performance testing are
