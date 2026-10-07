@@ -145,7 +145,7 @@ class _FloatingActionPill extends StatelessWidget {
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
           decoration: BoxDecoration(
             color: AppTheme.gameBoard.withValues(alpha: .74),
             borderRadius: BorderRadius.circular(99),
@@ -170,7 +170,7 @@ class _FloatingActionPill extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppTheme.gameText,
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w900,
                     letterSpacing: .15,
                   ),

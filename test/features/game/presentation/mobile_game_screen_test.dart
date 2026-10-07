@@ -47,6 +47,12 @@ void main() {
   setUpAll(() async {
     if (Platform.environment['BLOCKIVA_CAPTURE_UI'] == '1') {
       final artifacts = File(Platform.resolvedExecutable).parent.parent.parent;
+      final icons = File('${artifacts.path}/material_fonts/MaterialIcons-Regular.otf');
+      if (await icons.exists()) {
+        final loader = FontLoader('MaterialIcons');
+        loader.addFont(icons.readAsBytes().then((bytes) => ByteData.sublistView(bytes)));
+        await loader.load();
+      }
       final font = File('${artifacts.path}/material_fonts/Roboto-Regular.ttf');
       if (await font.exists()) {
         final loader = FontLoader('Roboto');
@@ -83,7 +89,7 @@ void main() {
       ));
       expect(initialScore.style!.color, AppTheme.gameText);
       // The score must remain readable beside retention controls on a small phone.
-      expect(tester.getSize(find.byWidgetPredicate(
+      expect(tester.getRect(find.byWidgetPredicate(
         (widget) => widget is Text && widget.semanticsLabel == 'Score 0',
       )).height, greaterThanOrEqualTo(40));
       expect(find.text('Drag a block. Fill a row or column.'), findsOneWidget);
