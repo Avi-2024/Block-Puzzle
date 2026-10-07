@@ -15,10 +15,10 @@ abstract final class AppTheme {
   static const Color warning = Color(0xFFFFDA64);
   static const Color danger = Color(0xFFFF5573);
 
-  // A quiet midnight-blue stage keeps the bright pieces and rewards legible.
-  static const Color gameBackgroundTop = Color(0xFF3546BC);
-  static const Color gameBackgroundMid = Color(0xFF2D4FC6);
-  static const Color gameBackgroundBottom = Color(0xFF253FA7);
+  // A royal-blue stage with restrained depth keeps the pieces legible.
+  static const Color gameBackgroundTop = Color(0xFF344DB2);
+  static const Color gameBackgroundMid = Color(0xFF2C47AD);
+  static const Color gameBackgroundBottom = Color(0xFF243C96);
   static const Color gameBoard = Color(0xFF192957);
   static const Color gameBoardDeep = Color(0xFF020819);
   static const Color gameCell = Color(0xFF283D79);
@@ -58,28 +58,30 @@ abstract final class AppTheme {
   }
 
   static LinearGradient get gameBackgroundGradient => const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[
-          gameBackgroundTop,
-          gameBackgroundMid,
-          gameBackgroundBottom,
-        ],
-        stops: <double>[0, .50, 1],
-      );
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[gameBackgroundTop, gameBackgroundMid, gameBackgroundBottom],
+    stops: <double>[0, .50, 1],
+  );
 
   /// A small Blockiva-owned set of moods. The score selects the stage, so a
   /// resumed run always returns to the same colors without stored UI state.
   static LinearGradient gameplayGradientForScore(int score) {
     final List<Color> colors = switch ((score ~/ 1000) % 3) {
       1 => const <Color>[
-        Color(0xFF583AB4), Color(0xFF4744B9), Color(0xFF343294),
+        Color(0xFF583AB4),
+        Color(0xFF4744B9),
+        Color(0xFF343294),
       ],
       2 => const <Color>[
-        Color(0xFF237EAE), Color(0xFF276DB5), Color(0xFF25569A),
+        Color(0xFF237EAE),
+        Color(0xFF276DB5),
+        Color(0xFF25569A),
       ],
       _ => const <Color>[
-        gameBackgroundTop, gameBackgroundMid, gameBackgroundBottom,
+        gameBackgroundTop,
+        gameBackgroundMid,
+        gameBackgroundBottom,
       ],
     };
     return LinearGradient(
@@ -91,61 +93,57 @@ abstract final class AppTheme {
   }
 
   static LinearGradient get boardGradient => const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: <Color>[
-          Color(0xFF123B93),
-          gameBoard,
-          Color(0xFF061944),
-          gameBoardDeep,
-        ],
-        stops: <double>[0, .34, .74, 1],
-      );
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: <Color>[
+      Color(0xFF123B93),
+      gameBoard,
+      Color(0xFF061944),
+      gameBoardDeep,
+    ],
+    stops: <double>[0, .34, .74, 1],
+  );
 
   static ThemeData get bright => ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: background,
-        colorScheme: const ColorScheme.light(
-          primary: primary,
-          secondary: accent,
-          surface: surface,
-          error: danger,
-          onPrimary: Colors.white,
-          onSurface: ink,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          foregroundColor: ink,
-          elevation: 0,
-          centerTitle: false,
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            color: ink,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -1.4,
-          ),
-          headlineMedium: TextStyle(color: ink, fontWeight: FontWeight.w900),
-          titleLarge: TextStyle(color: ink, fontWeight: FontWeight.w800),
-          bodyLarge: TextStyle(color: ink),
-          bodyMedium: TextStyle(color: inkMuted),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: primary,
-            textStyle: const TextStyle(fontWeight: FontWeight.w900),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-          ),
-        ),
-        dialogTheme: DialogThemeData(
-          backgroundColor: surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ),
-        useMaterial3: true,
-      );
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: background,
+    colorScheme: const ColorScheme.light(
+      primary: primary,
+      secondary: accent,
+      surface: surface,
+      error: danger,
+      onPrimary: Colors.white,
+      onSurface: ink,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      foregroundColor: ink,
+      elevation: 0,
+      centerTitle: false,
+    ),
+    textTheme: const TextTheme(
+      headlineLarge: TextStyle(
+        color: ink,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -1.4,
+      ),
+      headlineMedium: TextStyle(color: ink, fontWeight: FontWeight.w900),
+      titleLarge: TextStyle(color: ink, fontWeight: FontWeight.w800),
+      bodyLarge: TextStyle(color: ink),
+      bodyMedium: TextStyle(color: inkMuted),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: primary,
+        textStyle: const TextStyle(fontWeight: FontWeight.w900),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    ),
+    useMaterial3: true,
+  );
 }

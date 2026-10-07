@@ -82,22 +82,41 @@ class ProgressionActions extends StatelessWidget {
       animation: runtime,
       builder: (context, _) {
         final challenge = DailyChallengeDefinition.forDate(DateTime.now());
-        final done = runtime.controller.isDailyChallengeCompleted(challenge.dayKey);
-        return Row(children: [
-          Expanded(child: Align(alignment: Alignment.centerLeft, child: _FloatingActionPill(
-            onTap: () => showProgressionSheet(context, runtime.controller),
-            icon: Icons.monetization_on_rounded,
-            iconColor: AppTheme.warning,
-            label: '${runtime.controller.coins}',
-          ))),
-          Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: score)),
-          Expanded(child: Align(alignment: Alignment.centerRight, child: _FloatingActionPill(
-            onTap: () => _openDailyChallenge(context),
-            icon: done ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
-            iconColor: done ? AppTheme.success : AppTheme.warning,
-            label: 'DAILY',
-          ))),
-        ]);
+        final done = runtime.controller.isDailyChallengeCompleted(
+          challenge.dayKey,
+        );
+        return Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _FloatingActionPill(
+                  onTap: () =>
+                      showProgressionSheet(context, runtime.controller),
+                  icon: Icons.monetization_on_rounded,
+                  iconColor: AppTheme.warning,
+                  label: '${runtime.controller.coins}',
+                ),
+              ),
+            ),
+            Expanded(
+              child: FittedBox(fit: BoxFit.scaleDown, child: score),
+            ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _FloatingActionPill(
+                  onTap: () => _openDailyChallenge(context),
+                  icon: done
+                      ? Icons.check_circle_rounded
+                      : Icons.calendar_today_rounded,
+                  iconColor: done ? AppTheme.success : AppTheme.warning,
+                  label: 'DAILY',
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
@@ -121,39 +140,34 @@ class _FloatingActionPill extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .08),
-            borderRadius: BorderRadius.circular(99),
+            color: Colors.white.withValues(alpha: .05),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.white.withValues(alpha: .12)),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x66030A22),
-                blurRadius: 14,
-                offset: Offset(0, 7),
-              ),
-            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(icon, color: iconColor, size: 17),
               const SizedBox(width: 5),
-              Flexible(child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.gameText,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .15,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.gameText,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .15,
+                  ),
                 ),
-              )),
+              ),
             ],
           ),
         ),

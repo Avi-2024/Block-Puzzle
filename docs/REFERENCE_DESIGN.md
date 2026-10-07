@@ -18,3 +18,11 @@ free central area of the lower toolbar so it does not crowd restart.
 
 Visual and animation review must use actual Flutter captures. No claim of
 production sound reliability: the previous emulator recording backend failed.
+
+## Gameplay screen refinement
+
+Gameplay is reviewed independently before extending its design to other screens.
+Compact score and personal-best row, larger usable board on short phones,
+12px board corners, subtle depth, and 14px secondary-control corners replace
+the oversized centered score and circular footer. Stage is now #344DB2 /
+#2C47AD / #243C96. Actual Flutter capture and four-size layout checks required.

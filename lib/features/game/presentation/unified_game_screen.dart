@@ -570,7 +570,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
           child: Stack(
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 8),
                 child: Column(
                   children: <Widget>[
                     _GameHeader(
@@ -578,7 +578,7 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
                       onLeftAction: widget.isDaily ? _back : _openSettings,
                       onRestart: _confirmRestart,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 8),
                     _ScoreDisplay(
                       score: _controller.engine.score,
                       bestScore: _controller.bestScore,
@@ -596,7 +596,8 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
                                   .clamp(0.0, constraints.maxWidth)
                                   .toDouble();
                               return Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: <Widget>[
                                   SizedBox(
                                     width: side,
@@ -618,18 +619,24 @@ class _UnifiedGameScreenState extends State<UnifiedGameScreen>
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  PieceTray(
-                                    key: ValueKey(_trayGeneration),
-                                    pieces: _controller.tray,
-                                    enabled: !_terminal && _active,
-                                    feedbackCellSize: () => _feedbackCellSize,
-                                    onDragStarted: () {
-                                      unawaited(_haptics.selection());
-                                      unawaited(_audio.playPickup());
-                                    },
-                                    onDragUpdate: _updateDragPreview,
-                                    onDragEnded: _finishDrag,
-                                    onDragCancelled: () => _setPreview(null),
+                                  Expanded(
+                                    child: Center(
+                                      child: PieceTray(
+                                        key: ValueKey(_trayGeneration),
+                                        pieces: _controller.tray,
+                                        enabled: !_terminal && _active,
+                                        feedbackCellSize: () =>
+                                            _feedbackCellSize,
+                                        onDragStarted: () {
+                                          unawaited(_haptics.selection());
+                                          unawaited(_audio.playPickup());
+                                        },
+                                        onDragUpdate: _updateDragPreview,
+                                        onDragEnded: _finishDrag,
+                                        onDragCancelled: () =>
+                                            _setPreview(null),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               );
@@ -769,7 +776,7 @@ class _GameHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 44,
       child: Row(
         children: <Widget>[
           _HudButton(
@@ -783,14 +790,14 @@ class _GameHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppTheme.gameText,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.7,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.6,
               ),
             ),
           ),
           _HudButton(
-            icon: Icons.refresh_rounded,
+            icon: Icons.replay_rounded,
             tooltip: 'Restart',
             onPressed: onRestart,
           ),
@@ -852,6 +859,95 @@ class _ScoreDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DailyChallengeDefinition? challenge = daily;
+    if (challenge == null) {
+      return SizedBox(
+        height: MediaQuery.sizeOf(context).height < 700 ? 72 : 88,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'SCORE',
+                    style: TextStyle(
+                      color: AppTheme.gameTextMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: _AnimatedScore(
+                      score: score,
+                      accent: recordFlash
+                          ? AppTheme.rewardGold
+                          : AppTheme.rewardCyan,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            AnimatedContainer(
+              duration: Duration(
+                milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 220,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: recordFlash ? .14 : .06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppTheme.rewardGold.withValues(
+                    alpha: recordFlash ? .65 : .18,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Icon(
+                    Icons.emoji_events_rounded,
+                    color: AppTheme.rewardGold,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 9),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        recordFlash ? 'NEW BEST' : 'PERSONAL BEST',
+                        style: const TextStyle(
+                          color: AppTheme.gameTextMuted,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: .8,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$bestScore',
+                        style: const TextStyle(
+                          color: AppTheme.rewardGold,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Column(
       children: <Widget>[
         SizedBox(
@@ -1008,7 +1104,7 @@ class _AnimatedScoreState extends State<_AnimatedScore>
           semanticsLabel: 'Score ${widget.score}',
           style: TextStyle(
             color: color,
-            fontSize: 58,
+            fontSize: MediaQuery.sizeOf(context).height < 700 ? 44 : 54,
             height: .95,
             fontWeight: FontWeight.w900,
             letterSpacing: -1.5,
@@ -1068,16 +1164,16 @@ class _Board extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1,
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: AppTheme.gameBoard,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white.withValues(alpha: .10)),
           boxShadow: const <BoxShadow>[
             BoxShadow(
-              color: Color(0x55030D22),
-              blurRadius: 22,
-              offset: Offset(0, 12),
+              color: Color(0x33030D22),
+              blurRadius: 18,
+              offset: Offset(0, 6),
             ),
           ],
         ),
