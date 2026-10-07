@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../domain/block_piece.dart';
 import 'board_drag_projector.dart';
 import 'piece_view.dart';
@@ -72,144 +71,105 @@ class _PieceTrayState extends State<PieceTray> {
     return Listener(
       onPointerCancel: _cancel,
       child: SizedBox(
-        height: 116,
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            // Keep normal pieces large, shrinking a batch only when one of its
-            // actual shapes needs more room. Use one cell size across the tray.
-            final int widthCells = widget.pieces
-                .whereType<BlockPiece>()
-                .fold<int>(1, (value, piece) => math.max(value, piece.width));
-            final int heightCells = widget.pieces
-                .whereType<BlockPiece>()
-                .fold<int>(1, (value, piece) => math.max(value, piece.height));
-            final double cellSize = math
-                .min(
-                  25,
-                  math.min(
-                    (constraints.maxWidth / 3 - 12) / widthCells,
-                    (constraints.maxHeight - 12) / heightCells,
-                  ),
-                )
-                .clamp(1.0, 25.0)
-                .toDouble();
-            return Row(
-              children: List<Widget>.generate(3, (int index) {
-                final BlockPiece? piece = index < widget.pieces.length
-                    ? widget.pieces[index]
-                    : null;
-                return Expanded(
-                  child: AnimatedContainer(
-                    duration: Duration(
-                      milliseconds: MediaQuery.disableAnimationsOf(context)
-                          ? 0
-                          : 120,
-                    ),
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.gameBoard.withValues(
-                        alpha: identical(_activePiece, piece) && piece != null
-                            ? .16
-                            : .34,
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: .05),
-                      ),
-                    ),
-                    child: Center(
-                      child: piece == null
-                          ? const SizedBox.shrink()
-                          : Listener(
-                              onPointerDown: (PointerDownEvent event) {
-                                if (_activePiece == null) {
-                                  _pointers[piece] = event.pointer;
-                                }
-                              },
-                              child: Draggable<BlockPiece>(
-                                key: ObjectKey(piece),
-                                data: piece,
-                                rootOverlay: true,
-                                dragAnchorStrategy: pointerDragAnchorStrategy,
-                                maxSimultaneousDrags:
-                                    widget.enabled &&
-                                        (_activePiece == null ||
-                                            identical(_activePiece, piece))
-                                    ? 1
-                                    : 0,
-                                hitTestBehavior: HitTestBehavior.opaque,
-                                onDragStarted: () => _start(piece),
-                                onDragUpdate: (DragUpdateDetails details) {
-                                  if (identical(_activePiece, piece) &&
-                                      widget.enabled) {
-                                    widget.onDragUpdate(
-                                      piece,
-                                      details.globalPosition,
-                                    );
-                                  }
-                                },
-                                onDragEnd: (_) => _end(piece),
-                                feedback: Builder(
-                                  builder: (BuildContext context) {
-                                    if (!identical(_activePiece, piece)) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    final double size = widget
-                                        .feedbackCellSize();
-                                    return Material(
-                                      color: Colors.transparent,
-                                      child: Transform.translate(
-                                        offset: Offset(
-                                          -(piece.width * size) / 2,
-                                          -(piece.height * size) / 2 -
-                                              BoardDragProjector.fingerLift,
-                                        ),
-                                        child: PieceView(
-                                          piece: piece,
-                                          cellSize: size,
-                                          elevated: true,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                childWhenDragging: Opacity(
-                                  opacity: .10,
+      height: 116,
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          // Keep normal pieces large, shrinking a batch only when one of its
+          // actual shapes needs more room. Use one cell size across the tray.
+          final int widthCells = widget.pieces.whereType<BlockPiece>().fold<int>(
+            1, (value, piece) => math.max(value, piece.width),
+          );
+          final int heightCells = widget.pieces.whereType<BlockPiece>().fold<int>(
+            1, (value, piece) => math.max(value, piece.height),
+          );
+          final double cellSize = math
+              .min(
+                25,
+                math.min(
+                  (constraints.maxWidth / 3 - 12) / widthCells,
+                  (constraints.maxHeight - 12) / heightCells,
+                ),
+              )
+              .clamp(1.0, 25.0).toDouble();
+          return Row(
+            children: List<Widget>.generate(3, (int index) {
+              final BlockPiece? piece = index < widget.pieces.length
+                  ? widget.pieces[index]
+                  : null;
+              return Expanded(
+                child: Center(
+                  child: piece == null
+                      ? const SizedBox.shrink()
+                      : Listener(
+                          onPointerDown: (PointerDownEvent event) {
+                            if (_activePiece == null) _pointers[piece] = event.pointer;
+                          },
+                          child: Draggable<BlockPiece>(
+                          key: ObjectKey(piece),
+                          data: piece,
+                          rootOverlay: true,
+                          dragAnchorStrategy: pointerDragAnchorStrategy,
+                          maxSimultaneousDrags:
+                              widget.enabled &&
+                                  (_activePiece == null ||
+                                      identical(_activePiece, piece))
+                              ? 1
+                              : 0,
+                          hitTestBehavior: HitTestBehavior.opaque,
+                          onDragStarted: () => _start(piece),
+                          onDragUpdate: (DragUpdateDetails details) {
+                            if (identical(_activePiece, piece) &&
+                                widget.enabled) {
+                              widget.onDragUpdate(
+                                piece,
+                                details.globalPosition,
+                              );
+                            }
+                          },
+                          onDragEnd: (_) => _end(piece),
+                          feedback: Builder(
+                            builder: (BuildContext context) {
+                              if (!identical(_activePiece, piece)) {
+                                return const SizedBox.shrink();
+                              }
+                              final double size = widget.feedbackCellSize();
+                              return Material(
+                                color: Colors.transparent,
+                                child: Transform.translate(
+                                  offset: Offset(
+                                    -(piece.width * size) / 2,
+                                    -(piece.height * size) / 2 -
+                                        BoardDragProjector.fingerLift,
+                                  ),
                                   child: PieceView(
                                     piece: piece,
-                                    cellSize: cellSize,
+                                    cellSize: size,
+                                    elevated: true,
                                   ),
                                 ),
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    minWidth: 48,
-                                    minHeight: 48,
-                                  ),
-                                  child: Center(
-                                    child: AnimatedOpacity(
-                                      duration: const Duration(
-                                        milliseconds: 100,
-                                      ),
-                                      opacity: widget.enabled ? 1 : .28,
-                                      child: PieceView(
-                                        piece: piece,
-                                        cellSize: cellSize,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                );
-              }),
-            );
-          },
-        ),
+                              );
+                            },
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: .10,
+                            child: PieceView(piece: piece, cellSize: cellSize),
+                          ),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                            child: Center(child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 100),
+                              opacity: widget.enabled ? 1 : .28,
+                              child: PieceView(piece: piece, cellSize: cellSize),
+                            )),
+                          ),
+                        ),
+                      ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
       ),
     );
   }
