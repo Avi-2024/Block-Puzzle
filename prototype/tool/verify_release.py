@@ -73,13 +73,15 @@ try:
             raise AssertionError('The old APK unexpectedly passed ABI validation')
         adb('install', '-r', str(prior), timeout=60)
         adb('logcat', '-c')
-        adb('shell', 'am', 'start', '-W', '-n', f'{OLD_PACKAGE}/.MainActivity')
+        # The broken activity never finishes launching, so -W may wait forever.
+        adb('shell', 'am', 'start', '-n', f'{OLD_PACKAGE}/.MainActivity')
         time.sleep(4)
         old_log = adb('logcat', '-d').decode(errors='replace')
         (out / 'prior-crash-logcat.txt').write_text(old_log)
         if not all(term in old_log for term in ("Could not find 'libflutter.so'", 'FATAL EXCEPTION', OLD_PACKAGE)):
             raise AssertionError('Did not reproduce the old APK missing-engine startup failure')
         adb('shell', 'am', 'force-stop', OLD_PACKAGE)
+        adb('shell', 'input', 'keyevent', '3')
         # Keep the old package installed: verify the replacement coexists safely.
 
     metadata = check(apk)
