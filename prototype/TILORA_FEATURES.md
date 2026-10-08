@@ -26,6 +26,17 @@ All work is isolated to `prototype/` on `codex/fresh-puzzle-prototype`. The root
 
 Verified on 2026-10-08 in [CI run 37760856527](https://github.com/Avi-2024/Block-Puzzle/actions/runs/37760856527): analyzer clean, 26 tests passed, ARM64 playable APK built, and Android emulator checks passed for four consecutive clears, theme application, tutorial replay, results, clipboard confirmation and the native sharing sheet. No receiving app or recipient was selected.
 
-CI formats, analyzes and tests the original Flutter code, captures real widget screenshots at small and standard sizes, builds the ARM64 APK and runs the animation-review APK on Android. The deterministic preview app is a separate entry point; the playable APK does not auto-play or replace saved games with review data.
+The 0.2.1 compatibility build in [CI run 37809406932](https://github.com/Avi-2024/Block-Puzzle/actions/runs/37809406932) passed analysis, all 26 tests, complete ARM32/ARM64/x86-64 runtime checks and the separate Android animation preview. The exact downloadable APK passed ordinary launcher startup, first-play guide, skip to board, theme application, cold relaunch, preference restoration and background resume on the Android 15 emulator. The earlier APK's missing-`libflutter.so` startup crash was reproduced on Android 10.
+
+Replacement APK SHA-256: `452616ae6046e392dc8603ae93be03ff6ec896dadffe1ecd9f6e733c3676f4b8`.
+
+The same downloadable APK also passed every startup check on Android 10 in
+[verification run 37811896879](https://github.com/Avi-2024/Block-Puzzle/actions/runs/37811896879).
+That run first reproduced the old APK's missing-engine crash, then installed and
+launched the replacement while keeping the older package installed. Android
+10 and 15 checks used x86-64 emulators; ARM32/ARM64 binaries passed packaging
+validation, but the affected physical phone has not yet been tested.
+
+CI formats, analyzes and tests the original Flutter code, captures real widget screenshots at small and standard sizes, builds the universal APK and runs the animation-review APK on Android. The deterministic preview app is a separate entry point; the playable APK does not auto-play or replace saved games with review data.
 
 This is a test-signed prototype APK, not a Play Store release. Store signing, final package identity, trademark/name clearance, device testing and store privacy declarations remain release work.

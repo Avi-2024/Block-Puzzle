@@ -44,6 +44,9 @@ and records a separate review APK on Android. Every advertised ABI must contain
 both `libflutter.so` and `libapp.so`. The exact downloadable APK is also installed
 and launched normally on Android API 29 and 35, including first run, cold restart,
 preference restoration and background resume.
+The manual `Verify Existing Tilora APK` workflow can check a retained playable APK
+on Android 10 by its build run ID, without rebuilding it. Its optional legacy run
+ID also reproduces the earlier missing-engine crash before testing the replacement.
 
 CI test-signing keys may differ between builds. If Android reports a signature
 conflict with an older preview, do not uninstall it without backing up progress:

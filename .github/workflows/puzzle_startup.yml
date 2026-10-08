@@ -1,8 +1,5 @@
 name: Verify Existing Tilora APK
 on:
-  push:
-    branches: [codex/fresh-puzzle-prototype]
-    paths: ['.github/workflows/puzzle_startup.yml']
   workflow_dispatch:
     inputs:
       build_run_id:
@@ -25,15 +22,15 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: fresh-puzzle-playable-apk
-          run-id: ${{ inputs.build_run_id || '37809406932' }}
+          run-id: ${{ inputs.build_run_id }}
           github-token: ${{ github.token }}
           path: prototype/build/playable/
       - name: Download baseline APK
-        if: github.event_name == 'push' || inputs.legacy_build_run_id != ''
+        if: inputs.legacy_build_run_id != ''
         uses: actions/download-artifact@v4
         with:
           name: fresh-puzzle-playable-apk
-          run-id: ${{ inputs.legacy_build_run_id || '37760856527' }}
+          run-id: ${{ inputs.legacy_build_run_id }}
           github-token: ${{ github.token }}
           path: prototype/build/prior/
       - name: Enable emulator acceleration
