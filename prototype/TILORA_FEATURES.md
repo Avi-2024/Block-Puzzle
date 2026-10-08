@@ -1,5 +1,18 @@
 # Tilora prototype — approved feature pass
 
+## 0.2.1 startup compatibility correction
+
+The earlier ARM64-only build included plugin libraries in ARM32 and x86-64 folders
+without the corresponding Flutter engine and app libraries. These extra ABI folders
+could allow installation on a processor for which the app could not run. The replacement
+build includes complete runtimes for all three ABIs and fails CI if any are missing.
+
+The replacement installs separately as **Tilora Preview** so users do not need to
+uninstall an older preview signed by another CI runner. Earlier app data stays in the
+earlier package. Renderer selection is now part of the manifest, and the actual
+downloadable release APK receives normal-launch smoke tests on Android API 29 and 35.
+Device-specific failures still require the affected phone model and crash logs.
+
 All work is isolated to `prototype/` on `codex/fresh-puzzle-prototype`. The root application and main branch are unchanged.
 
 - Original Tilora wordmark and five-tile T icon; no extracted third-party APK code or assets.

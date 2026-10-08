@@ -25,13 +25,13 @@ timeout 45 adb install -r build/review/animation-preview.apk
 timeout 15 adb logcat -c
 adb logcat -v threadtime > build/native-preview/live-logcat.txt 2>&1 &
 log_pid=$!
-timeout 15 adb shell am force-stop com.blockiva.puzzle_prototype
+timeout 15 adb shell am force-stop com.blockiva.tilora_preview
 adb shell screenrecord --size 540x960 --bit-rate 2500000 --time-limit 24 /sdcard/puzzle-preview.mp4 &
 record_pid=$!
-# The legacy renderer avoids Impeller errors in the CI emulator's graphics driver.
-timeout 30 adb shell am start -W -n com.blockiva.puzzle_prototype/.MainActivity --ez enable-impeller false
+# Use the same manifest-selected renderer and ordinary launch as the playable APK.
+timeout 30 adb shell am start -W -n com.blockiva.tilora_preview/com.blockiva.puzzle_prototype.MainActivity
 sleep 16
-timeout 15 adb shell pidof com.blockiva.puzzle_prototype
+timeout 15 adb shell pidof com.blockiva.tilora_preview
 timeout 15 adb exec-out screencap -p > build/native-preview/finale.png
 timeout 20 adb shell uiautomator dump /sdcard/puzzle-window.xml
 timeout 15 adb pull /sdcard/puzzle-window.xml build/native-preview/finale.xml
@@ -41,7 +41,7 @@ import xml.etree.ElementTree as ET
 root = ET.parse('build/native-preview/finale.xml').getroot()
 nodes = list(root.iter('node'))
 labels = ' '.join(node.get('text', '') + ' ' + node.get('content-desc', '') for node in nodes)
-if not any(node.get('package') == 'com.blockiva.puzzle_prototype' for node in nodes):
+if not any(node.get('package') == 'com.blockiva.tilora_preview' for node in nodes):
     raise SystemExit('The puzzle app is not visible')
 if 'All clear' not in labels or '2,620' not in labels:
     raise SystemExit('The four-move animation did not finish with the expected score')

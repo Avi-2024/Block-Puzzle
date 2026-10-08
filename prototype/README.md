@@ -16,7 +16,10 @@ python3 tool/brand_android.py
 flutter run
 ```
 
-The Android preview has its own package, `com.blockiva.puzzle_prototype`.
+The compatibility preview has its own package, `com.blockiva.tilora_preview`,
+and installs as **Tilora Preview** alongside the earlier `com.blockiva.puzzle_prototype`
+app. Existing progress in that older app is retained there; it is not migrated
+into the separate preview. The Android namespace remains `com.blockiva.puzzle_prototype`.
 The working title is Tilora. Settings includes a deterministic animation review
 that preserves the current game; Back to game restores it.
 
@@ -36,17 +39,20 @@ that preserves the current game; Back to game restores it.
   intersecting clears, scoring, storage, touch placement and four screen sizes.
 
 `Fresh Puzzle Prototype` CI checks the code, captures real Flutter screenshots,
-builds a playable ARM64 release-mode APK with test signing and records a separate
-review APK on Android.
+builds a universal release-mode APK (ARM32, ARM64 and x86-64) with test signing
+and records a separate review APK on Android. Every advertised ABI must contain
+both `libflutter.so` and `libapp.so`. The exact downloadable APK is also installed
+and launched normally on Android API 29 and 35, including first run, cold restart,
+preference restoration and background resume.
 
 CI test-signing keys may differ between builds. If Android reports a signature
 conflict with an older preview, do not uninstall it without backing up progress:
 uninstalling deletes that app's saved data. A stable release signing key is not
 configured by this prototype.
 
-Android recording uses the legacy Flutter renderer to work around graphics
-errors in the CI emulator. The playable APK uses Flutter's default renderer;
-the recording is a visual review, not a device performance benchmark. The
+The compatibility APK and recording both select the legacy Flutter renderer
+in the manifest. Startup tests use ordinary launcher intents without runtime
+renderer overrides. The recording is a visual review, not a device performance benchmark. The
 manual `Puzzle Android Recording` workflow can reuse a capture APK by passing
 its build run ID while that artifact is retained.
 

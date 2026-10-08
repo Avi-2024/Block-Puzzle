@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: puzzle-prototype-${{ github.ref }}
   cancel-in-progress: true
@@ -60,9 +61,10 @@ jobs:
           python3 tool/brand_android.py
       - name: Build playable APK
         run: |
-          flutter build apk --release --target-platform android-arm64
+          flutter build apk --release --target-platform android-arm,android-arm64,android-x64
           mkdir -p build/review
           cp build/app/outputs/flutter-apk/app-release.apk build/review/block-puzzle-prototype.apk
+          python3 tool/check_apk_abis.py build/review/block-puzzle-prototype.apk
       - name: Upload playable APK and dependency lock
         uses: actions/upload-artifact@v4
         with:
@@ -112,4 +114,49 @@ jobs:
         with:
           name: fresh-puzzle-android-preview
           path: prototype/build/native-preview/
+          if-no-files-found: ignore
+  verify-playable-startup:
+    needs: quality-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [29, 35]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: fresh-puzzle-playable-apk
+          path: prototype/build/playable/
+      - name: Download previously delivered APK for regression reproduction
+        if: matrix.api == 29
+        uses: actions/download-artifact@v4
+        with:
+          name: fresh-puzzle-playable-apk
+          run-id: 37760856527
+          github-token: ${{ github.token }}
+          path: prototype/build/prior/
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify exact downloadable APK without launch overrides
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 2048M
+          cores: 2
+          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -no-boot-anim -no-audio
+          disable-animations: false
+          script: cd prototype && python3 tool/verify_release.py
+      - name: Retain startup screenshots and crash logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tilora-startup-api-${{ matrix.api }}
+          path: prototype/build/startup-review/
           if-no-files-found: ignore

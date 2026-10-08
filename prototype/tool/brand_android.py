@@ -1,9 +1,21 @@
 from pathlib import Path
 
+# Separate install identity: the new test APK must not require uninstalling a
+# differently test-signed older preview (which would erase its saved progress).
+application_id = 'com.blockiva.tilora_preview'
+namespace = 'com.blockiva.puzzle_prototype'
+gradle = Path('android/app/build.gradle.kts')
+gradle.write_text(gradle.read_text().replace(
+    f'applicationId = "{namespace}"', f'applicationId = "{application_id}"'))
 manifest = Path('android/app/src/main/AndroidManifest.xml')
-text = manifest.read_text().replace('android:label="puzzle_prototype"', 'android:label="Tilora"')
-text = text.replace('android:name=".MainActivity"', 'android:name=".MainActivity" android:screenOrientation="portrait"')
+text = manifest.read_text().replace('android:label="puzzle_prototype"', 'android:label="Tilora Preview"')
+text = text.replace('android:name=".MainActivity"', f'android:name="{namespace}.MainActivity" android:screenOrientation="portrait"')
 text = text.replace('android:icon="@mipmap/ic_launcher"', 'android:icon="@drawable/puzzle_icon"')
+if 'io.flutter.embedding.android.EnableImpeller' not in text:
+    text = text.replace('</application>', '''<meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
+    </application>''')
 manifest.write_text(text)
 resources = Path('android/app/src/main/res')
 (resources / 'drawable').mkdir(parents=True, exist_ok=True)
