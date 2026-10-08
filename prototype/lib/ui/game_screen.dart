@@ -6,6 +6,10 @@ import 'package:flutter/services.dart';
 import '../game/puzzle.dart';
 import '../game/puzzle_store.dart';
 import 'puzzle_painters.dart';
+import 'puzzle_theme.dart';
+import 'result_screen.dart';
+import 'theme_screen.dart';
+import 'tutorial_screen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({
@@ -45,6 +49,7 @@ class _GameScreenState extends State<GameScreen>
   PuzzleState? _savedPlayState;
   PointerDeviceKind _pointer = PointerDeviceKind.touch;
   String _status = 'Find your next move';
+  PuzzlePalette get _palette => PuzzleTheme.of(context);
   bool get _reduced => _reduce || MediaQuery.disableAnimationsOf(context);
   bool get _input => _active && !_busy && !_gameOver && !_demoPlaying;
   @override
@@ -263,6 +268,9 @@ class _GameScreenState extends State<GameScreen>
           best: state.best,
           combo: state.combo,
           moves: state.moves,
+          maxCombo: state.maxCombo,
+          linesCleared: state.linesCleared,
+          startingBest: state.startingBest,
         ),
         beforeClear: result.beforeClear,
         placed: result.placed,
@@ -378,7 +386,7 @@ class _GameScreenState extends State<GameScreen>
       final yes = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color(0xFF173758),
+          backgroundColor: _palette.end,
           title: const Text('Start a new game?'),
           content: const Text('Your best score will be kept.'),
           actions: [
@@ -459,11 +467,11 @@ class _GameScreenState extends State<GameScreen>
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF153456),
+      backgroundColor: _palette.end,
       showDragHandle: true,
       builder: (sheetContext) => StatefulBuilder(
         builder: (context, updateSheet) => SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -503,7 +511,21 @@ class _GameScreenState extends State<GameScreen>
                     );
                   },
                 ),
-                const Divider(color: Color(0x22FFFFFF)),
+                Divider(color: _palette.line),
+                ListTile(
+                  leading: const Icon(Icons.palette_outlined), title: const Text('Themes'),
+                  subtitle: Text(_palette.name),
+                  onTap: () { Navigator.pop(sheetContext); unawaited(openThemes(this.context)); },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.touch_app_outlined), title: const Text('How to play'),
+                  subtitle: const Text('Drag → clear → combo'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    unawaited(Navigator.of(this.context).push<void>(MaterialPageRoute(builder: (guideContext) => TutorialScreen(
+                      replay: true, reduceMotion: _reduced, onComplete: () => Navigator.pop(guideContext)))));
+                  },
+                ),
                 ListTile(
                   leading: const Icon(Icons.play_circle_outline),
                   title: const Text('Preview combo animations'),
@@ -522,36 +544,14 @@ class _GameScreenState extends State<GameScreen>
                   ),
                 ),
               ],
-            ),
+            )),
           ),
         ),
       ),
     );
   }
 
-  Widget _mark() => Transform.rotate(
-    angle: -.12,
-    child: SizedBox(
-      width: 22,
-      height: 22,
-      child: Wrap(
-        spacing: 2,
-        runSpacing: 2,
-        children: [2, 1, 0, 4]
-            .map(
-              (c) => Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: puzzleColors[c],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    ),
-  );
+  Widget _mark() => const TiloraMark(size: 25);
   Widget _scores(bool compact) => SizedBox(
     height: compact ? 58 : 74,
     child: Row(
@@ -562,12 +562,12 @@ class _GameScreenState extends State<GameScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Text(
+            Text(
               'SCORE',
               style: TextStyle(
                 fontSize: 11,
                 letterSpacing: 1.8,
-                color: Color(0xFFB3C9E5),
+                color: _palette.muted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -597,8 +597,8 @@ class _GameScreenState extends State<GameScreen>
                       letterSpacing: -1.5,
                       fontWeight: FontWeight.w700,
                       color: progress < .7
-                          ? const Color(0xFFFFF0C0)
-                          : const Color(0xFFF5F8FF),
+                          ? _palette.accent
+                          : _palette.ink,
                     ),
                   ),
                 );
@@ -615,18 +615,18 @@ class _GameScreenState extends State<GameScreen>
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.emoji_events_outlined,
                     size: 14,
-                    color: Color(0xFFE7C778),
+                    color: _palette.accent,
                   ),
                   const SizedBox(width: 5),
                   Text(
                     _newBest ? 'NEW BEST' : 'BEST',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       letterSpacing: 1.5,
-                      color: Color(0xFFB3C9E5),
+                      color: _palette.muted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -639,8 +639,8 @@ class _GameScreenState extends State<GameScreen>
                   fontSize: compact ? 20 : 23,
                   fontWeight: FontWeight.w600,
                   color: _newBest
-                      ? const Color(0xFFFFDFA0)
-                      : const Color(0xFFDFEBFC),
+                      ? _palette.accent
+                      : _palette.ink,
                 ),
               ),
             ],
@@ -712,6 +712,7 @@ class _GameScreenState extends State<GameScreen>
                                     ),
                                     painter: PiecePainter(
                                       piece,
+                                      palette: _palette,
                                       opacity:
                                           _selected == null || _selected == slot
                                           ? 1
@@ -727,10 +728,8 @@ class _GameScreenState extends State<GameScreen>
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           color: _selected == slot
-                              ? const Color(0xFFAAF0D8)
-                              : piece == null
-                              ? const Color(0x207798BE)
-                              : const Color(0x35B5CBEA),
+                              ? _palette.accent
+                              : _palette.line.withValues(alpha: piece == null ? .25 : .7),
                           borderRadius: BorderRadius.circular(1),
                         ),
                       ),
@@ -746,20 +745,14 @@ class _GameScreenState extends State<GameScreen>
   );
   @override
   Widget build(BuildContext context) {
+    if (_gameOver) return ResultScreen(state: _state, onPlayAgain: _newGame, reduceMotion: _reduced);
     final rootBox = _box(_rootKey), floating = _floatingPiece;
     final local = _floatingGlobal == null || rootBox == null
         ? null
         : rootBox.globalToLocal(_floatingGlobal!);
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(value: _palette.systemStyle, child: Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2B5C94), Color(0xFF254F85), Color(0xFF19385F)],
-            stops: [0, .28, 1],
-          ),
-        ),
+        decoration: BoxDecoration(gradient: _palette.gradient),
         child: SafeArea(
           child: Stack(
             key: _rootKey,
@@ -788,7 +781,7 @@ class _GameScreenState extends State<GameScreen>
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'BLOCK PUZZLE',
+                                      'TILORA',
                                       maxLines: 1,
                                       style: TextStyle(
                                         fontSize: compact ? 14 : 16,
@@ -800,10 +793,10 @@ class _GameScreenState extends State<GameScreen>
                                   IconButton(
                                     tooltip: 'Settings',
                                     onPressed: _demoPlaying ? null : _settings,
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.tune_rounded,
                                       size: 22,
-                                      color: Color(0xFFCFDDF1),
+                                      color: _palette.muted,
                                     ),
                                   ),
                                 ],
@@ -845,20 +838,20 @@ class _GameScreenState extends State<GameScreen>
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 11,
-                                                    color: Color(0xFFB9CEE8),
+                                                    color: _palette.muted,
                                                   ),
                                                 ),
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            const Text(
+                                            Text(
                                               'CLASSIC',
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 letterSpacing: 1.5,
-                                                color: Color(0xFFB9CEE8),
+                                                color: _palette.muted,
                                               ),
                                             ),
                                           ],
@@ -882,6 +875,7 @@ class _GameScreenState extends State<GameScreen>
                                                 ),
                                                 painter: PuzzleBoardPainter(
                                                   board: _state.board,
+                                                  palette: _palette,
                                                   animation: _fx,
                                                   reduceMotion: _reduced,
                                                   move: _move,
@@ -899,11 +893,11 @@ class _GameScreenState extends State<GameScreen>
                                       _tray(space.maxWidth, trayHeight),
                                       SizedBox(
                                         height: hintHeight,
-                                        child: const Text(
+                                        child: Text(
                                           'Fill a row or column to clear it',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: Color(0xFFBACCE5),
+                                            color: _palette.muted,
                                           ),
                                         ),
                                       ),
@@ -927,7 +921,7 @@ class _GameScreenState extends State<GameScreen>
                                   _demo ? 'Back to game' : 'New game',
                                 ),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFFBDD0E8),
+                                  foregroundColor: _palette.muted,
                                   textStyle: const TextStyle(fontSize: 12, fontFamily: 'Roboto'),
                                 ),
                               ),
@@ -949,59 +943,7 @@ class _GameScreenState extends State<GameScreen>
                         floating.width * _unit,
                         floating.height * _unit,
                       ),
-                      painter: PiecePainter(floating),
-                    ),
-                  ),
-                ),
-              if (_gameOver)
-                Positioned.fill(
-                  child: ColoredBox(
-                    color: const Color(0xAD0C2542),
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Material(
-                          color: const Color(0xFF193C61),
-                          borderRadius: BorderRadius.circular(24),
-                          child: Padding(
-                            padding: const EdgeInsets.all(28),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.grid_view_rounded,
-                                  size: 32,
-                                  color: Color(0xFF8AD7BB),
-                                ),
-                                const SizedBox(height: 14),
-                                const Text(
-                                  'No more moves',
-                                  style: TextStyle(
-                                    fontSize: 25,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'You scored ${_number(_state.score)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFFCBDCF1),
-                                  ),
-                                ),
-                                const SizedBox(height: 22),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton(
-                                    onPressed: _newGame,
-                                    child: const Text('Play again'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      painter: PiecePainter(floating, palette: _palette),
                     ),
                   ),
                 ),
@@ -1009,6 +951,6 @@ class _GameScreenState extends State<GameScreen>
           ),
         ),
       ),
-    );
+    ));
   }
 }

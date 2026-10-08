@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../game/puzzle.dart';
+import 'puzzle_theme.dart';
 
 const puzzleColors = <Color>[
   Color(0xFF5297DF),
@@ -34,6 +35,7 @@ void paintTile(
   int color, {
   double opacity = 1,
   double scale = 1,
+  PuzzlePalette palette = PuzzlePalette.ocean,
 }) {
   if (opacity <= 0) return;
   final r = Rect.fromCenter(
@@ -44,15 +46,15 @@ void paintTile(
   final radius = Radius.circular(r.width * .115);
   canvas.drawRRect(
     RRect.fromRectAndRadius(r.shift(Offset(0, rect.width * .06)), radius),
-    Paint()..color = puzzleDark[color].withValues(alpha: opacity),
+    Paint()..color = palette.tileDark(color).withValues(alpha: opacity),
   );
   final shader = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      puzzleLight[color].withValues(alpha: opacity),
-      puzzleColors[color].withValues(alpha: opacity),
-      puzzleColors[color].withValues(alpha: opacity),
+      palette.tileLight(color).withValues(alpha: opacity),
+      palette.colors[color].withValues(alpha: opacity),
+      palette.colors[color].withValues(alpha: opacity),
     ],
     stops: const [0, .3, 1],
   ).createShader(r);
@@ -77,7 +79,8 @@ void paintTile(
 }
 
 class PiecePainter extends CustomPainter {
-  PiecePainter(this.piece, {this.opacity = 1});
+  PiecePainter(this.piece, {this.opacity = 1, this.palette = PuzzlePalette.ocean});
+  final PuzzlePalette palette;
   final Piece piece;
   final double opacity;
   @override
@@ -89,13 +92,14 @@ class PiecePainter extends CustomPainter {
         Rect.fromLTWH(c.x * unit, c.y * unit, unit * .895, unit * .895),
         piece.color,
         opacity: opacity,
+        palette: palette,
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant PiecePainter old) =>
-      old.piece != piece || old.opacity != opacity;
+      old.piece != piece || old.opacity != opacity || old.palette != palette;
 }
 
 class RewardStyle {
@@ -165,8 +169,10 @@ class PuzzleBoardPainter extends CustomPainter {
     this.ghost,
     this.ghostX = 0,
     this.ghostY = 0,
+    this.palette = PuzzlePalette.ocean,
   }) : super(repaint: animation);
   final List<int> board;
+  final PuzzlePalette palette;
   final Animation<double> animation;
   final bool reduceMotion;
   final PuzzleMove? move;
@@ -182,7 +188,7 @@ class PuzzleBoardPainter extends CustomPainter {
       const Rect.fromLTWH(0, 0, 320, 320),
       const Radius.circular(15),
     );
-    canvas.drawRRect(bg, Paint()..color = const Color(0xFF102C4C));
+    canvas.drawRRect(bg, Paint()..color = palette.panel);
     final effect = move;
     final visible =
         effect != null &&
@@ -195,7 +201,7 @@ class PuzzleBoardPainter extends CustomPainter {
       final rect = Rect.fromLTWH(x, y, 34, 34);
       canvas.drawRRect(
         RRect.fromRectAndRadius(rect, const Radius.circular(4)),
-        Paint()..color = const Color(0xFF1B3B60),
+        Paint()..color = palette.cell,
       );
       final color = visible[i];
       if (color < 0) continue;
@@ -210,7 +216,7 @@ class PuzzleBoardPainter extends CustomPainter {
           scale = 1 + .055 * math.sin(elapsed / 180 * math.pi);
         }
       }
-      paintTile(canvas, rect, color, opacity: opacity, scale: scale);
+      paintTile(canvas, rect, color, opacity: opacity, scale: scale, palette: palette);
     }
     if (ghost case final piece?) {
       for (final c in piece.cells) {
@@ -220,11 +226,11 @@ class PuzzleBoardPainter extends CustomPainter {
           34,
           34,
         );
-        paintTile(canvas, rect, piece.color, opacity: .32);
+        paintTile(canvas, rect, piece.color, opacity: .32, palette: palette);
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect.deflate(.5), const Radius.circular(4)),
           Paint()
-            ..color = const Color(0xAAC4FFF1)
+            ..color = palette.accent.withValues(alpha: .8)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1.2,
         );
@@ -294,7 +300,7 @@ class PuzzleBoardPainter extends CustomPainter {
         final alpha = math.pow(1 - t, 1.25).toDouble() * .9;
         final color = i % 3 == 0
             ? reward.light
-            : puzzleLight[effect.beforeClear[cell]];
+            : palette.tileLight(effect.beforeClear[cell]);
         if (i % 5 == 0) {
           _spark(
             canvas,
@@ -465,10 +471,10 @@ class PuzzleBoardPainter extends CustomPainter {
     canvas.rotate(reduceMotion ? 0 : .052);
     final caption = _text(
       cfg.caption,
-      const TextStyle(
+      TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: Color(0xFFE8F3FF),
+        color: palette.ink,
         height: 1,
       ),
     );
@@ -478,7 +484,7 @@ class PuzzleBoardPainter extends CustomPainter {
       TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w800,
-        color: cfg.light,
+        color: palette.light ? palette.ink : cfg.light,
         height: 1,
       ),
     );
@@ -493,5 +499,5 @@ class PuzzleBoardPainter extends CustomPainter {
       old.ghost != ghost ||
       old.ghostX != ghostX ||
       old.ghostY != ghostY ||
-      old.reduceMotion != reduceMotion;
+      old.reduceMotion != reduceMotion || old.palette != palette;
 }

@@ -22,6 +22,9 @@ class PuzzleStore {
           best: max(best, state.best),
           combo: state.combo,
           moves: state.moves,
+          maxCombo: state.maxCombo,
+          linesCleared: state.linesCleared,
+          startingBest: state.startingBest,
         );
       }
     } on FormatException {
@@ -40,6 +43,18 @@ class PuzzleStore {
   }
 
   bool get haptics => preferences.getBool('puzzle.prototype.haptics') ?? true;
+  String get theme => preferences.getString('puzzle.prototype.theme') ?? 'ocean';
+  bool get tutorialCompleted => preferences.getBool('puzzle.prototype.tutorial') ?? false;
+  Future<void> setTheme(String value) async {
+    if (!await preferences.setString('puzzle.prototype.theme', value)) {
+      throw StateError('Theme could not be saved');
+    }
+  }
+  Future<void> completeTutorial() async {
+    if (!await preferences.setBool('puzzle.prototype.tutorial', true)) {
+      throw StateError('Introduction could not be saved');
+    }
+  }
   bool get reduceMotion =>
       preferences.getBool('puzzle.prototype.reduce_motion') ?? false;
   Future<void> setHaptics(bool value) async {

@@ -66,6 +66,9 @@ class PuzzleState {
     this.best = 0,
     this.combo = 0,
     this.moves = 0,
+    this.maxCombo = 0,
+    this.linesCleared = 0,
+    this.startingBest = 0,
   }) : board = List.unmodifiable(board),
        tray = List.unmodifiable(tray);
   final List<int> board;
@@ -74,6 +77,10 @@ class PuzzleState {
   final int best;
   final int combo;
   final int moves;
+  final int maxCombo;
+  final int linesCleared;
+  final int startingBest;
+  bool get isNewRecord => score > 0 && score > startingBest;
   bool get gameOver =>
       !tray.whereType<Piece>().any((p) => canFitSomewhere(board, p));
   Map<String, Object?> toJson() => {
@@ -84,6 +91,9 @@ class PuzzleState {
     'best': best,
     'combo': combo,
     'moves': moves,
+    'maxCombo': maxCombo,
+    'linesCleared': linesCleared,
+    'startingBest': startingBest,
   };
   static PuzzleState? decode(Object? value) {
     if (value is! Map<String, dynamic> || value['version'] != 1) return null;
@@ -105,6 +115,10 @@ class PuzzleState {
       final number = value[name];
       if (number is! int || number < 0) return null;
     }
+    for (final name in ['maxCombo', 'linesCleared', 'startingBest']) {
+      final number = value[name];
+      if (number != null && (number is! int || number < 0)) return null;
+    }
     return PuzzleState(
       board: board.cast<int>(),
       tray: pieces,
@@ -112,6 +126,11 @@ class PuzzleState {
       best: max(value['score'] as int, value['best'] as int),
       combo: value['combo'] as int,
       moves: value['moves'] as int,
+      maxCombo: max(value['maxCombo'] as int? ?? 0, value['combo'] as int),
+      linesCleared: value['linesCleared'] as int? ?? 0,
+      // Old sessions cannot reconstruct the best at the start of a round.
+      // Avoid claiming a new record when upgrading one of those sessions.
+      startingBest: value['startingBest'] as int? ?? value['best'] as int,
     );
   }
 }
@@ -161,7 +180,7 @@ class PuzzleEngine {
   final Random _random;
   PuzzleState fresh({int best = 0}) {
     final board = List<int>.filled(64, -1);
-    return PuzzleState(board: board, tray: _batch(board), best: best);
+    return PuzzleState(board: board, tray: _batch(board), best: best, startingBest: best);
   }
 
   List<Piece?> _batch(List<int> board) {
@@ -222,6 +241,9 @@ class PuzzleEngine {
       best: max(current.best, current.score + points),
       combo: combo,
       moves: current.moves + 1,
+      maxCombo: max(current.maxCombo, combo),
+      linesCleared: current.linesCleared + rows.length + cols.length,
+      startingBest: current.startingBest,
     );
     return PuzzleMove(
       state: state,
@@ -306,4 +328,5 @@ PuzzleState reviewScene() => PuzzleState(
   tray: const [Piece(2, 1), Piece(9, 2), Piece(8, 4)],
   score: 1280,
   best: 2460,
+  startingBest: 2460,
 );

@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'game/puzzle.dart';
 import 'game/puzzle_store.dart';
 import 'ui/game_screen.dart';
+import 'ui/puzzle_theme.dart';
+import 'ui/tutorial_screen.dart';
 
 Future<void> main() => launch();
 
@@ -35,37 +37,57 @@ Future<void> launch({bool autoPlay = false}) async {
   );
 }
 
-class PuzzleApp extends StatelessWidget {
+class PuzzleApp extends StatefulWidget {
   const PuzzleApp({
     super.key,
     required this.engine,
     required this.initialState,
     this.store,
     this.autoPlay = false,
+    this.showIntroduction,
   });
   final PuzzleEngine engine;
   final PuzzleState initialState;
   final PuzzleStore? store;
   final bool autoPlay;
+  final bool? showIntroduction;
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Block Puzzle Preview',
+  State<PuzzleApp> createState() => _PuzzleAppState();
+}
+
+class _PuzzleAppState extends State<PuzzleApp> {
+  late PuzzlePalette _palette;
+  late bool _intro;
+  final _messenger = GlobalKey<ScaffoldMessengerState>();
+  @override
+  void initState() {
+    super.initState();
+    _palette = PuzzlePalette.fromId(widget.store?.theme);
+    _intro = widget.showIntroduction ?? (widget.store != null && !widget.store!.tutorialCompleted && widget.initialState.moves == 0 && !widget.autoPlay);
+  }
+  Future<void> _theme(PuzzlePalette palette) async {
+    await widget.store?.setTheme(palette.id);
+    if (mounted) setState(() => _palette = palette);
+  }
+  Future<void> _completeIntro() async {
+    setState(() => _intro = false);
+    try {
+      await widget.store?.completeTutorial();
+    } catch (_) {
+      _messenger.currentState?.showSnackBar(const SnackBar(content: Text('You can play, but the introduction preference could not be saved.')));
+    }
+  }
+  @override
+  Widget build(BuildContext context) => PuzzleTheme(palette: _palette, onChanged: _theme, child: MaterialApp(
+    title: 'Tilora',
+    scaffoldMessengerKey: _messenger,
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      brightness: Brightness.dark,
-      fontFamily: 'Roboto',
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF65BFA4),
-        brightness: Brightness.dark,
-      ),
-      scaffoldBackgroundColor: const Color(0xFF19385F),
-      useMaterial3: true,
+    theme: _palette.themeData,
+    home: _intro ? TutorialScreen(onComplete: _completeIntro, reduceMotion: widget.store?.reduceMotion ?? false) : GameScreen(
+      engine: widget.engine,
+      initialState: widget.initialState,
+      store: widget.store,
+      autoPlay: widget.autoPlay,
     ),
-    home: GameScreen(
-      engine: engine,
-      initialState: initialState,
-      store: store,
-      autoPlay: autoPlay,
-    ),
-  );
+  ));
 }
