@@ -35,6 +35,12 @@ that preserves the current game; Back to game restores it.
 builds a playable ARM64 release-mode APK with test signing and records a separate
 review APK on Android.
 
+Android recording uses the legacy Flutter renderer to work around graphics
+errors in the CI emulator. The playable APK uses Flutter's default renderer;
+the recording is a visual review, not a device performance benchmark. The
+manual `Puzzle Android Recording` workflow can reuse a capture APK by passing
+its build run ID while that artifact is retained.
+
 This is a review prototype, not a store release. Sound design, final brand/icon,
 production signing, monetization and physical-device performance testing are
 outside this first build. It makes no FPS, retention or market-performance claim.

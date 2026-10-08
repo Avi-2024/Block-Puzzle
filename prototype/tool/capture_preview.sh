@@ -28,8 +28,8 @@ log_pid=$!
 timeout 15 adb shell am force-stop com.blockiva.puzzle_prototype
 adb shell screenrecord --size 540x960 --bit-rate 2500000 --time-limit 24 /sdcard/puzzle-preview.mp4 &
 record_pid=$!
-# Software rendering isolates visual review from the CI emulator's GPU driver.
-timeout 30 adb shell am start -W -n com.blockiva.puzzle_prototype/.MainActivity --ez enable-impeller false --ez enable-software-rendering true
+# The legacy renderer avoids Impeller errors in the CI emulator's graphics driver.
+timeout 30 adb shell am start -W -n com.blockiva.puzzle_prototype/.MainActivity --ez enable-impeller false
 sleep 16
 timeout 15 adb shell pidof com.blockiva.puzzle_prototype
 timeout 15 adb exec-out screencap -p > build/native-preview/finale.png
