@@ -31,7 +31,7 @@ class ResultScreen extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(26, 8, 26, 20),
+                    padding: EdgeInsets.fromLTRB(26, 8, 26, compact ? 12 : 20),
                     child: Column(
                       children: [
                         Row(
@@ -45,7 +45,7 @@ class ResultScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        SizedBox(height: compact ? 16 : 36),
+                        SizedBox(height: compact ? 10 : 36),
                         Text(
                           'CLASSIC · ROUND COMPLETE',
                           style: TextStyle(
@@ -55,8 +55,8 @@ class ResultScreen extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(height: compact ? 20 : 32),
-                        TweenAnimationBuilder<double>(
+                        SizedBox(height: compact ? 0 : 32),
+                        if (!compact) TweenAnimationBuilder<double>(
                           tween: Tween(begin: .85, end: 1),
                           duration: Duration(
                             milliseconds:
@@ -134,7 +134,7 @@ class ResultScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(color: p.muted, fontSize: 13),
                         ),
-                        SizedBox(height: compact ? 20 : 30),
+                        SizedBox(height: compact ? 12 : 30),
                         if (state.isNewRecord)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -175,7 +175,7 @@ class ResultScreen extends StatelessWidget {
                             semanticsLabel: 'Final score ${state.score}',
                             style: TextStyle(
                               color: p.ink,
-                              fontSize: compact ? 58 : 76,
+                              fontSize: compact ? 54 : 76,
                               height: 1.12,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -3,
@@ -187,9 +187,9 @@ class ResultScreen extends StatelessWidget {
                           'Personal best  ${formatScore(state.best)}',
                           style: TextStyle(color: p.muted, fontSize: 13),
                         ),
-                        SizedBox(height: compact ? 20 : 28),
+                        SizedBox(height: compact ? 12 : 28),
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 19),
+                          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 19),
                           decoration: BoxDecoration(
                             color: p.panel.withValues(
                               alpha: p.light ? .20 : .7,

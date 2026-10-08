@@ -82,6 +82,8 @@ void main() {
         expect(find.text('NEW PERSONAL BEST'), findsOneWidget);
         expect(find.text('×6'), findsOneWidget);
         expect(find.text('42'), findsOneWidget);
+        expect(tester.getBottomLeft(find.text('LINES CLEARED')).dy,
+          lessThan(tester.getTopLeft(find.byKey(const ValueKey('play-again'))).dy));
         expect(tester.takeException(), isNull);
         await capture(
           tester,
