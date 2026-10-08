@@ -98,12 +98,12 @@ jobs:
       - name: Record the Flutter APK on Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 29
           arch: x86_64
           profile: pixel_6
           ram-size: 1536M
           cores: 2
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -no-audio
+          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -no-boot-anim -no-audio
           disable-animations: false
           script: bash prototype/tool/capture_preview.sh
       - name: Upload Android animation video and diagnostics

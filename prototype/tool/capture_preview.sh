@@ -3,10 +3,13 @@ set -euo pipefail
 cd prototype
 mkdir -p build/native-preview
 free -m > build/native-preview/runner-memory.txt
+log_pid=''
 collect_diagnostics() {
   capture_status=$?
+  if [ -n "$log_pid" ]; then kill "$log_pid" 2>/dev/null || true; fi
   timeout 15 adb logcat -d > build/native-preview/android-logcat.txt 2>&1 || true
   free -m >> build/native-preview/runner-memory.txt
+  sudo dmesg --ctime | tail -n 100 > build/native-preview/runner-kernel.txt || true
   if [ "$capture_status" -ne 0 ]; then
     timeout 15 adb exec-out screencap -p > build/native-preview/failure.png 2>/dev/null || true
     timeout 20 adb pull /sdcard/puzzle-preview.mp4 build/native-preview/partial-recording.mp4 || true
@@ -20,6 +23,8 @@ timeout 15 adb shell wm density 420
 timeout 15 adb shell am force-stop com.android.launcher3
 timeout 45 adb install -r build/review/animation-preview.apk
 timeout 15 adb logcat -c
+adb logcat -v threadtime > build/native-preview/live-logcat.txt 2>&1 &
+log_pid=$!
 timeout 15 adb shell am force-stop com.blockiva.puzzle_prototype
 adb shell screenrecord --size 540x960 --bit-rate 2500000 --time-limit 24 /sdcard/puzzle-preview.mp4 &
 record_pid=$!
