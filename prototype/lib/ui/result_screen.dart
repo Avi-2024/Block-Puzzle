@@ -56,65 +56,68 @@ class ResultScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: compact ? 0 : 32),
-                        if (!compact) TweenAnimationBuilder<double>(
-                          tween: Tween(begin: .85, end: 1),
-                          duration: Duration(
-                            milliseconds:
-                                reduceMotion ||
-                                    MediaQuery.disableAnimationsOf(context)
-                                ? 0
-                                : 650,
-                          ),
-                          curve: Curves.easeOutBack,
-                          builder: (context, value, child) =>
-                              Transform.scale(scale: value, child: child),
-                          child: SizedBox(
-                            height: compact ? 76 : 104,
-                            width: 150,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Transform.rotate(
-                                  angle: .785,
-                                  child: Container(
-                                    width: compact ? 60 : 76,
-                                    height: compact ? 60 : 76,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: p.accent.withValues(alpha: .08),
-                                      border: Border.all(
-                                        color: p.accent.withValues(alpha: .25),
+                        if (!compact)
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: .85, end: 1),
+                            duration: Duration(
+                              milliseconds:
+                                  reduceMotion ||
+                                      MediaQuery.disableAnimationsOf(context)
+                                  ? 0
+                                  : 650,
+                            ),
+                            curve: Curves.easeOutBack,
+                            builder: (context, value, child) =>
+                                Transform.scale(scale: value, child: child),
+                            child: SizedBox(
+                              height: compact ? 76 : 104,
+                              width: 150,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Transform.rotate(
+                                    angle: .785,
+                                    child: Container(
+                                      width: compact ? 60 : 76,
+                                      height: compact ? 60 : 76,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: p.accent.withValues(alpha: .08),
+                                        border: Border.all(
+                                          color: p.accent.withValues(
+                                            alpha: .25,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Icon(
-                                  Icons.emoji_events_outlined,
-                                  color: p.accent,
-                                  size: compact ? 44 : 56,
-                                ),
-                                Positioned(
-                                  left: 6,
-                                  top: 13,
-                                  child: Icon(
-                                    Icons.auto_awesome,
-                                    size: 15,
-                                    color: p.accent.withValues(alpha: .65),
+                                  Icon(
+                                    Icons.emoji_events_outlined,
+                                    color: p.accent,
+                                    size: compact ? 44 : 56,
                                   ),
-                                ),
-                                Positioned(
-                                  right: 7,
-                                  bottom: 12,
-                                  child: Icon(
-                                    Icons.auto_awesome,
-                                    size: 10,
-                                    color: p.accent.withValues(alpha: .5),
+                                  Positioned(
+                                    left: 6,
+                                    top: 13,
+                                    child: Icon(
+                                      Icons.auto_awesome,
+                                      size: 15,
+                                      color: p.accent.withValues(alpha: .65),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Positioned(
+                                    right: 7,
+                                    bottom: 12,
+                                    child: Icon(
+                                      Icons.auto_awesome,
+                                      size: 10,
+                                      color: p.accent.withValues(alpha: .5),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                         SizedBox(height: compact ? 18 : 28),
                         Text(
                           'Beautifully played.',
@@ -189,7 +192,9 @@ class ResultScreen extends StatelessWidget {
                         ),
                         SizedBox(height: compact ? 12 : 28),
                         Container(
-                          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 19),
+                          padding: EdgeInsets.symmetric(
+                            vertical: compact ? 10 : 19,
+                          ),
                           decoration: BoxDecoration(
                             color: p.panel.withValues(
                               alpha: p.light ? .20 : .7,

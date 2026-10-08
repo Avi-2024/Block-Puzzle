@@ -554,16 +554,25 @@ class _GameScreenState extends State<GameScreen>
                     },
                   ),
                   // Only included in the separate, deterministic capture APK.
-                  if (widget.autoPlay) ListTile(
-                    leading: const Icon(Icons.emoji_events_outlined),
-                    title: const Text('Preview result screen'),
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      unawaited(Navigator.of(this.context).push<void>(MaterialPageRoute(
-                        builder: (reviewContext) => ResultScreen(state: _state, reduceMotion: _reduced,
-                          onPlayAgain: () => Navigator.pop(reviewContext)))));
-                    },
-                  ),
+                  if (widget.autoPlay)
+                    ListTile(
+                      leading: const Icon(Icons.emoji_events_outlined),
+                      title: const Text('Preview result screen'),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        unawaited(
+                          Navigator.of(this.context).push<void>(
+                            MaterialPageRoute(
+                              builder: (reviewContext) => ResultScreen(
+                                state: _state,
+                                reduceMotion: _reduced,
+                                onPlayAgain: () => Navigator.pop(reviewContext),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,

@@ -11,6 +11,8 @@ All work is isolated to `prototype/` on `codex/fresh-puzzle-prototype`. The root
 
 ## Verification
 
+Verified on 2026-10-08 in [CI run 37760856527](https://github.com/Avi-2024/Block-Puzzle/actions/runs/37760856527): analyzer clean, 26 tests passed, ARM64 playable APK built, and Android emulator checks passed for four consecutive clears, theme application, tutorial replay, results, clipboard confirmation and the native sharing sheet. No receiving app or recipient was selected.
+
 CI formats, analyzes and tests the original Flutter code, captures real widget screenshots at small and standard sizes, builds the ARM64 APK and runs the animation-review APK on Android. The deterministic preview app is a separate entry point; the playable APK does not auto-play or replace saved games with review data.
 
 This is a test-signed prototype APK, not a Play Store release. Store signing, final package identity, trademark/name clearance, device testing and store privacy declarations remain release work.

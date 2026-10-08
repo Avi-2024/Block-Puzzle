@@ -82,8 +82,12 @@ void main() {
         expect(find.text('NEW PERSONAL BEST'), findsOneWidget);
         expect(find.text('×6'), findsOneWidget);
         expect(find.text('42'), findsOneWidget);
-        expect(tester.getBottomLeft(find.text('LINES CLEARED')).dy,
-          lessThan(tester.getTopLeft(find.byKey(const ValueKey('play-again'))).dy));
+        expect(
+          tester.getBottomLeft(find.text('LINES CLEARED')).dy,
+          lessThan(
+            tester.getTopLeft(find.byKey(const ValueKey('play-again'))).dy,
+          ),
+        );
         expect(tester.takeException(), isNull);
         await capture(
           tester,
@@ -251,13 +255,19 @@ void main() {
         SystemChannels.platform,
         (call) async {
           if (call.method == 'Clipboard.setData') {
-            clipboard = (call.arguments as Map<Object?, Object?>)['text'] as String?;
+            clipboard =
+                (call.arguments as Map<Object?, Object?>)['text'] as String?;
           }
           if (call.method == 'Clipboard.getData') return {'text': clipboard};
           return null;
         },
       );
-      addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
       phone(tester, const Size(320, 568));
       SharedPreferences.setMockInitialValues({});
       final store = PuzzleStore(await SharedPreferences.getInstance());
