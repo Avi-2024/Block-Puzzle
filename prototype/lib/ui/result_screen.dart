@@ -18,7 +18,7 @@ class ResultScreen extends StatelessWidget {
     final p = PuzzleTheme.of(context);
     return GameSurface(child: LayoutBuilder(builder: (context, bounds) {
       final compact = bounds.maxHeight < 650;
-      return SingleChildScrollView(child: ConstrainedBox(constraints: BoxConstraints(minHeight: bounds.maxHeight),
+      return Column(children: [Expanded(child: SingleChildScrollView(
         child: Padding(padding: const EdgeInsets.fromLTRB(26, 8, 26, 20), child: Column(children: [
           Row(children: [const TiloraBrand(), const Spacer(), IconButton(tooltip: 'Themes', onPressed: () => openThemes(context), icon: const Icon(Icons.palette_outlined))]),
           SizedBox(height: compact ? 16 : 36),
@@ -47,10 +47,12 @@ class ResultScreen extends StatelessWidget {
           Container(padding: const EdgeInsets.symmetric(vertical: 19), decoration: BoxDecoration(color: p.panel.withValues(alpha: p.light ? .20 : .7), borderRadius: BorderRadius.circular(18), border: Border.all(color: p.line.withValues(alpha: .35))),
             child: IntrinsicHeight(child: Row(children: [Expanded(child: _stat(p, '×${state.maxCombo}', 'BIGGEST COMBO')),
               VerticalDivider(width: 1, color: p.line), Expanded(child: _stat(p, '${state.linesCleared}', 'LINES CLEARED'))]))),
-          SizedBox(height: compact ? 22 : 32),
+        ])))),
+        Padding(padding: const EdgeInsets.fromLTRB(26, 8, 26, 12), child: Column(mainAxisSize: MainAxisSize.min, children: [
           SizedBox(width: double.infinity, child: FilledButton.icon(key: const ValueKey('play-again'), onPressed: onPlayAgain, icon: const Icon(Icons.refresh_rounded, size: 21), label: const Text('Play again'))),
           const SizedBox(height: 6), TextButton.icon(onPressed: () => showDialog<void>(context: context, builder: (_) => _ShareScoreDialog(state: state)), icon: const Icon(Icons.ios_share_rounded, size: 18), label: const Text('Share score')),
-        ])))) ;
+        ])),
+      ]);
     }));
   }
   Widget _stat(PuzzlePalette p, String value, String label) => Column(children: [Text(value, style: TextStyle(color: p.ink, fontSize: 25, fontWeight: FontWeight.w700)),
