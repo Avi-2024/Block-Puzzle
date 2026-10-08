@@ -1,0 +1,61 @@
+name: Verify Existing Tilora APK
+on:
+  push:
+    branches: [codex/fresh-puzzle-prototype]
+    paths: ['.github/workflows/puzzle_startup.yml']
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Run containing fresh-puzzle-playable-apk
+        required: true
+        type: string
+      legacy_build_run_id:
+        description: Optional old APK run for missing-engine regression reproduction
+        required: false
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify-android-10:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: fresh-puzzle-playable-apk
+          run-id: ${{ inputs.build_run_id || '37809406932' }}
+          github-token: ${{ github.token }}
+          path: prototype/build/playable/
+      - name: Download baseline APK
+        if: github.event_name == 'push' || inputs.legacy_build_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: fresh-puzzle-playable-apk
+          run-id: ${{ inputs.legacy_build_run_id || '37760856527' }}
+          github-token: ${{ github.token }}
+          path: prototype/build/prior/
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify exact downloadable APK without launch overrides
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 2048M
+          cores: 2
+          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -no-boot-anim -no-audio
+          disable-animations: false
+          script: cd prototype && python3 tool/verify_release.py
+      - name: Retain startup screenshots and crash logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tilora-startup-api-29
+          path: prototype/build/startup-review/
+          if-no-files-found: ignore
