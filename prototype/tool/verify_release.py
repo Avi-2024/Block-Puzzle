@@ -77,7 +77,7 @@ try:
         time.sleep(4)
         old_log = adb('logcat', '-d').decode(errors='replace')
         (out / 'prior-crash-logcat.txt').write_text(old_log)
-        if 'libflutter.so' not in old_log or not any(term in old_log for term in ('UnsatisfiedLinkError', 'MissingLibraryException', 'couldn\'t find')):
+        if not all(term in old_log for term in ("Could not find 'libflutter.so'", 'FATAL EXCEPTION', OLD_PACKAGE)):
             raise AssertionError('Did not reproduce the old APK missing-engine startup failure')
         adb('shell', 'am', 'force-stop', OLD_PACKAGE)
         # Keep the old package installed: verify the replacement coexists safely.
