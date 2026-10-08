@@ -471,80 +471,110 @@ class _GameScreenState extends State<GameScreen>
       showDragHandle: true,
       builder: (sheetContext) => StatefulBuilder(
         builder: (context, updateSheet) => SafeArea(
-          child: SingleChildScrollView(child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 14),
-                  child: Text(
-                    'Settings',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 14),
+                    child: Text(
+                      'Settings',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-                SwitchListTile(
-                  title: const Text('Haptics'),
-                  value: _haptics,
-                  onChanged: (value) {
-                    setState(() => _haptics = value);
-                    updateSheet(() {});
-                    unawaited(
-                      widget.store?.setHaptics(value) ?? Future<void>.value(),
-                    );
-                  },
-                ),
-                SwitchListTile(
-                  title: const Text('Reduce motion'),
-                  subtitle: Text(
-                    MediaQuery.disableAnimationsOf(context)
-                        ? 'Your device also limits motion'
-                        : 'Keep feedback gentle',
+                  SwitchListTile(
+                    title: const Text('Haptics'),
+                    value: _haptics,
+                    onChanged: (value) {
+                      setState(() => _haptics = value);
+                      updateSheet(() {});
+                      unawaited(
+                        widget.store?.setHaptics(value) ?? Future<void>.value(),
+                      );
+                    },
                   ),
-                  value: _reduce,
-                  onChanged: (value) {
-                    setState(() => _reduce = value);
-                    updateSheet(() {});
-                    unawaited(
-                      widget.store?.setReduceMotion(value) ??
-                          Future<void>.value(),
-                    );
-                  },
-                ),
-                Divider(color: _palette.line),
-                ListTile(
-                  leading: const Icon(Icons.palette_outlined), title: const Text('Themes'),
-                  subtitle: Text(_palette.name),
-                  onTap: () { Navigator.pop(sheetContext); unawaited(openThemes(this.context)); },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.touch_app_outlined), title: const Text('How to play'),
-                  subtitle: const Text('Drag → clear → combo'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    unawaited(Navigator.of(this.context).push<void>(MaterialPageRoute(builder: (guideContext) => TutorialScreen(
-                      replay: true, reduceMotion: _reduced, onComplete: () => Navigator.pop(guideContext)))));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.play_circle_outline),
-                  title: const Text('Preview combo animations'),
-                  subtitle: const Text('Your current game will be kept'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    unawaited(_playDemo());
-                  },
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(sheetContext),
-                    child: const Text('Keep playing'),
+                  SwitchListTile(
+                    title: const Text('Reduce motion'),
+                    subtitle: Text(
+                      MediaQuery.disableAnimationsOf(context)
+                          ? 'Your device also limits motion'
+                          : 'Keep feedback gentle',
+                    ),
+                    value: _reduce,
+                    onChanged: (value) {
+                      setState(() => _reduce = value);
+                      updateSheet(() {});
+                      unawaited(
+                        widget.store?.setReduceMotion(value) ??
+                            Future<void>.value(),
+                      );
+                    },
                   ),
-                ),
-              ],
-            )),
+                  Divider(color: _palette.line),
+                  ListTile(
+                    leading: const Icon(Icons.palette_outlined),
+                    title: const Text('Themes'),
+                    subtitle: Text(_palette.name),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      unawaited(openThemes(this.context));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.touch_app_outlined),
+                    title: const Text('How to play'),
+                    subtitle: const Text('Drag → clear → combo'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      unawaited(
+                        Navigator.of(this.context).push<void>(
+                          MaterialPageRoute(
+                            builder: (guideContext) => TutorialScreen(
+                              replay: true,
+                              reduceMotion: _reduced,
+                              onComplete: () => Navigator.pop(guideContext),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.play_circle_outline),
+                    title: const Text('Preview combo animations'),
+                    subtitle: const Text('Your current game will be kept'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      unawaited(_playDemo());
+                    },
+                  ),
+                  // Only included in the separate, deterministic capture APK.
+                  if (widget.autoPlay) ListTile(
+                    leading: const Icon(Icons.emoji_events_outlined),
+                    title: const Text('Preview result screen'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      unawaited(Navigator.of(this.context).push<void>(MaterialPageRoute(
+                        builder: (reviewContext) => ResultScreen(state: _state, reduceMotion: _reduced,
+                          onPlayAgain: () => Navigator.pop(reviewContext)))));
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      child: const Text('Keep playing'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -587,7 +617,9 @@ class _GameScreenState extends State<GameScreen>
                   alignment: Alignment.centerLeft,
                   scale: _reduced
                       ? 1
-                      : 1 + .055 * math.sin(math.min(1, progress * 1.7) * math.pi),
+                      : 1 +
+                            .055 *
+                                math.sin(math.min(1, progress * 1.7) * math.pi),
                   child: Text(
                     _number(value.round()),
                     semanticsLabel: 'Score ${_state.score}',
@@ -596,9 +628,7 @@ class _GameScreenState extends State<GameScreen>
                       height: 1.15,
                       letterSpacing: -1.5,
                       fontWeight: FontWeight.w700,
-                      color: progress < .7
-                          ? _palette.accent
-                          : _palette.ink,
+                      color: progress < .7 ? _palette.accent : _palette.ink,
                     ),
                   ),
                 );
@@ -638,9 +668,7 @@ class _GameScreenState extends State<GameScreen>
                 style: TextStyle(
                   fontSize: compact ? 20 : 23,
                   fontWeight: FontWeight.w600,
-                  color: _newBest
-                      ? _palette.accent
-                      : _palette.ink,
+                  color: _newBest ? _palette.accent : _palette.ink,
                 ),
               ),
             ],
@@ -729,7 +757,9 @@ class _GameScreenState extends State<GameScreen>
                         decoration: BoxDecoration(
                           color: _selected == slot
                               ? _palette.accent
-                              : _palette.line.withValues(alpha: piece == null ? .25 : .7),
+                              : _palette.line.withValues(
+                                  alpha: piece == null ? .25 : .7,
+                                ),
                           borderRadius: BorderRadius.circular(1),
                         ),
                       ),
@@ -745,212 +775,227 @@ class _GameScreenState extends State<GameScreen>
   );
   @override
   Widget build(BuildContext context) {
-    if (_gameOver) return ResultScreen(state: _state, onPlayAgain: _newGame, reduceMotion: _reduced);
+    if (_gameOver) {
+      return ResultScreen(
+        state: _state,
+        onPlayAgain: _newGame,
+        reduceMotion: _reduced,
+      );
+    }
     final rootBox = _box(_rootKey), floating = _floatingPiece;
     final local = _floatingGlobal == null || rootBox == null
         ? null
         : rootBox.globalToLocal(_floatingGlobal!);
-    return AnnotatedRegion<SystemUiOverlayStyle>(value: _palette.systemStyle, child: Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(gradient: _palette.gradient),
-        child: SafeArea(
-          child: Stack(
-            key: _rootKey,
-            children: [
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 460),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxHeight < 650,
-                          horizontal = compact ? 16.0 : 20.0;
-                      return Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontal,
-                          compact ? 6 : 12,
-                          horizontal,
-                          4,
-                        ),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: 44,
-                              child: Row(
-                                children: [
-                                  _mark(),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'TILORA',
-                                      maxLines: 1,
-                                      style: TextStyle(
-                                        fontSize: compact ? 14 : 16,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 1.1,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Settings',
-                                    onPressed: _demoPlaying ? null : _settings,
-                                    icon: Icon(
-                                      Icons.tune_rounded,
-                                      size: 22,
-                                      color: _palette.muted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: compact ? 2 : 14),
-                            _scores(compact),
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, space) {
-                                  final trayHeight = compact ? 76.0 : 108.0,
-                                      hintHeight = compact ? 16.0 : 20.0,
-                                      metaHeight = compact ? 22.0 : 30.0;
-                                  final boardSize = math.max(
-                                    80.0,
-                                    math.min(
-                                      space.maxWidth,
-                                      space.maxHeight -
-                                          trayHeight -
-                                          hintHeight -
-                                          metaHeight,
-                                    ),
-                                  );
-                                  return Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: boardSize,
-                                        height: metaHeight,
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Semantics(
-                                                liveRegion: true,
-                                                child: Text(
-                                                  _status,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: _palette.muted,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'CLASSIC',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                letterSpacing: 1.5,
-                                                color: _palette.muted,
-                                              ),
-                                            ),
-                                          ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: _palette.systemStyle,
+      child: Scaffold(
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: _palette.gradient),
+          child: SafeArea(
+            child: Stack(
+              key: _rootKey,
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxHeight < 650,
+                            horizontal = compact ? 16.0 : 20.0;
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            horizontal,
+                            compact ? 6 : 12,
+                            horizontal,
+                            4,
+                          ),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 44,
+                                child: Row(
+                                  children: [
+                                    _mark(),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'TILORA',
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: compact ? 14 : 16,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1.1,
                                         ),
                                       ),
-                                      RepaintBoundary(
-                                        child: GestureDetector(
-                                          onTapUp: _tapBoard,
-                                          child: SizedBox(
-                                            key: _boardKey,
-                                            width: boardSize,
-                                            height: boardSize,
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    boardSize * 15 / 320,
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Settings',
+                                      onPressed: _demoPlaying
+                                          ? null
+                                          : _settings,
+                                      icon: Icon(
+                                        Icons.tune_rounded,
+                                        size: 22,
+                                        color: _palette.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: compact ? 2 : 14),
+                              _scores(compact),
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (context, space) {
+                                    final trayHeight = compact ? 76.0 : 108.0,
+                                        hintHeight = compact ? 16.0 : 20.0,
+                                        metaHeight = compact ? 22.0 : 30.0;
+                                    final boardSize = math.max(
+                                      80.0,
+                                      math.min(
+                                        space.maxWidth,
+                                        space.maxHeight -
+                                            trayHeight -
+                                            hintHeight -
+                                            metaHeight,
+                                      ),
+                                    );
+                                    return Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: boardSize,
+                                          height: metaHeight,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Semantics(
+                                                  liveRegion: true,
+                                                  child: Text(
+                                                    _status,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: _palette.muted,
+                                                    ),
                                                   ),
-                                              child: CustomPaint(
-                                                key: const ValueKey(
-                                                  'puzzle-board',
                                                 ),
-                                                painter: PuzzleBoardPainter(
-                                                  board: _state.board,
-                                                  palette: _palette,
-                                                  animation: _fx,
-                                                  reduceMotion: _reduced,
-                                                  move: _move,
-                                                  ghost: _ghostX == null
-                                                      ? null
-                                                      : _floatingPiece,
-                                                  ghostX: _ghostX ?? 0,
-                                                  ghostY: _ghostY ?? 0,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'CLASSIC',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  letterSpacing: 1.5,
+                                                  color: _palette.muted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        RepaintBoundary(
+                                          child: GestureDetector(
+                                            onTapUp: _tapBoard,
+                                            child: SizedBox(
+                                              key: _boardKey,
+                                              width: boardSize,
+                                              height: boardSize,
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      boardSize * 15 / 320,
+                                                    ),
+                                                child: CustomPaint(
+                                                  key: const ValueKey(
+                                                    'puzzle-board',
+                                                  ),
+                                                  painter: PuzzleBoardPainter(
+                                                    board: _state.board,
+                                                    palette: _palette,
+                                                    animation: _fx,
+                                                    reduceMotion: _reduced,
+                                                    move: _move,
+                                                    ghost: _ghostX == null
+                                                        ? null
+                                                        : _floatingPiece,
+                                                    ghostX: _ghostX ?? 0,
+                                                    ghostY: _ghostY ?? 0,
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      _tray(space.maxWidth, trayHeight),
-                                      SizedBox(
-                                        height: hintHeight,
-                                        child: Text(
-                                          'Fill a row or column to clear it',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: _palette.muted,
+                                        _tray(space.maxWidth, trayHeight),
+                                        SizedBox(
+                                          height: hintHeight,
+                                          child: Text(
+                                            'Fill a row or column to clear it',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: _palette.muted,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                            SizedBox(
-                              height: 44,
-                              width: double.infinity,
-                              child: TextButton.icon(
-                                onPressed: _newGame,
-                                icon: Icon(
-                                  _demo
-                                      ? Icons.arrow_back_rounded
-                                      : Icons.refresh_rounded,
-                                  size: 17,
-                                ),
-                                label: Text(
-                                  _demo ? 'Back to game' : 'New game',
-                                ),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: _palette.muted,
-                                  textStyle: const TextStyle(fontSize: 12, fontFamily: 'Roboto'),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              if (local != null && floating != null)
-                Positioned(
-                  left: local.dx,
-                  top: local.dy,
-                  child: IgnorePointer(
-                    child: CustomPaint(
-                      size: Size(
-                        floating.width * _unit,
-                        floating.height * _unit,
-                      ),
-                      painter: PiecePainter(floating, palette: _palette),
+                              SizedBox(
+                                height: 44,
+                                width: double.infinity,
+                                child: TextButton.icon(
+                                  onPressed: _newGame,
+                                  icon: Icon(
+                                    _demo
+                                        ? Icons.arrow_back_rounded
+                                        : Icons.refresh_rounded,
+                                    size: 17,
+                                  ),
+                                  label: Text(
+                                    _demo ? 'Back to game' : 'New game',
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: _palette.muted,
+                                    textStyle: const TextStyle(
+                                      fontSize: 12,
+                                      fontFamily: 'Roboto',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-            ],
+                if (local != null && floating != null)
+                  Positioned(
+                    left: local.dx,
+                    top: local.dy,
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        size: Size(
+                          floating.width * _unit,
+                          floating.height * _unit,
+                        ),
+                        painter: PiecePainter(floating, palette: _palette),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 }

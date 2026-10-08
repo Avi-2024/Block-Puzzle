@@ -135,23 +135,38 @@ void main() {
       expect(store.load(engine).best, 2460);
     },
   );
-  test('new rounds reset stats, retain best, and compare against the starting best', () {
-    final engine = PuzzleEngine();
-    final fresh = engine.fresh(best: 2000);
-    expect(fresh.maxCombo, 0);
-    expect(fresh.linesCleared, 0);
-    expect(fresh.startingBest, 2000);
-    expect(fresh.isNewRecord, isFalse);
-    final played = PuzzleState(board: fresh.board, tray: fresh.tray, score: 2010, best: 2010,
-      maxCombo: 4, linesCleared: 18, startingBest: 2000);
-    final decoded = PuzzleState.decode(jsonDecode(jsonEncode(played.toJson())))!;
-    expect(decoded.maxCombo, 4);
-    expect(decoded.linesCleared, 18);
-    expect(decoded.isNewRecord, isTrue);
-    expect(engine.fresh(best: decoded.best).best, 2010);
-  });
+  test(
+    'new rounds reset stats, retain best, and compare against the starting best',
+    () {
+      final engine = PuzzleEngine();
+      final fresh = engine.fresh(best: 2000);
+      expect(fresh.maxCombo, 0);
+      expect(fresh.linesCleared, 0);
+      expect(fresh.startingBest, 2000);
+      expect(fresh.isNewRecord, isFalse);
+      final played = PuzzleState(
+        board: fresh.board,
+        tray: fresh.tray,
+        score: 2010,
+        best: 2010,
+        maxCombo: 4,
+        linesCleared: 18,
+        startingBest: 2000,
+      );
+      final decoded = PuzzleState.decode(
+        jsonDecode(jsonEncode(played.toJson())),
+      )!;
+      expect(decoded.maxCombo, 4);
+      expect(decoded.linesCleared, 18);
+      expect(decoded.isNewRecord, isTrue);
+      expect(engine.fresh(best: decoded.best).best, 2010);
+    },
+  );
   test('version-one sessions migrate without inventing historic records', () {
-    final old = reviewScene().toJson()..remove('maxCombo')..remove('linesCleared')..remove('startingBest');
+    final old = reviewScene().toJson()
+      ..remove('maxCombo')
+      ..remove('linesCleared')
+      ..remove('startingBest');
     final decoded = PuzzleState.decode(old)!;
     expect(decoded.score, 1280);
     expect(decoded.maxCombo, decoded.combo);
@@ -160,15 +175,18 @@ void main() {
     expect(decoded.isNewRecord, isFalse);
     expect(PuzzleState.decode(old..['maxCombo'] = -1), isNull);
   });
-  test('theme and introduction preferences persist separately from progress', () async {
-    SharedPreferences.setMockInitialValues({});
-    final store = PuzzleStore(await SharedPreferences.getInstance());
-    await store.save(reviewScene());
-    await store.setTheme('sand');
-    await store.completeTutorial();
-    final restored = PuzzleStore(store.preferences);
-    expect(restored.theme, 'sand');
-    expect(restored.tutorialCompleted, isTrue);
-    expect(restored.load(PuzzleEngine()).score, 1280);
-  });
+  test(
+    'theme and introduction preferences persist separately from progress',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = PuzzleStore(await SharedPreferences.getInstance());
+      await store.save(reviewScene());
+      await store.setTheme('sand');
+      await store.completeTutorial();
+      final restored = PuzzleStore(store.preferences);
+      expect(restored.theme, 'sand');
+      expect(restored.tutorialCompleted, isTrue);
+      expect(restored.load(PuzzleEngine()).score, 1280);
+    },
+  );
 }

@@ -51,6 +51,7 @@ Path('build/native-preview/verification.txt').write_text('Android review complet
 PY
 wait "$record_pid"
 timeout 30 adb pull /sdcard/puzzle-preview.mp4 build/native-preview/gameplay-animation.mp4
+python3 tool/capture_features.py
 timeout 15 adb logcat -d > build/native-preview/android-logcat.txt
 if rg 'FATAL EXCEPTION|\[ERROR:flutter/runtime' build/native-preview/android-logcat.txt; then
   exit 1

@@ -63,31 +63,54 @@ class _PuzzleAppState extends State<PuzzleApp> {
   void initState() {
     super.initState();
     _palette = PuzzlePalette.fromId(widget.store?.theme);
-    _intro = widget.showIntroduction ?? (widget.store != null && !widget.store!.tutorialCompleted && widget.initialState.moves == 0 && !widget.autoPlay);
+    _intro =
+        widget.showIntroduction ??
+        (widget.store != null &&
+            !widget.store!.tutorialCompleted &&
+            widget.initialState.moves == 0 &&
+            !widget.autoPlay);
   }
+
   Future<void> _theme(PuzzlePalette palette) async {
     await widget.store?.setTheme(palette.id);
     if (mounted) setState(() => _palette = palette);
   }
+
   Future<void> _completeIntro() async {
     setState(() => _intro = false);
     try {
       await widget.store?.completeTutorial();
     } catch (_) {
-      _messenger.currentState?.showSnackBar(const SnackBar(content: Text('You can play, but the introduction preference could not be saved.')));
+      _messenger.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'You can play, but the introduction preference could not be saved.',
+          ),
+        ),
+      );
     }
   }
+
   @override
-  Widget build(BuildContext context) => PuzzleTheme(palette: _palette, onChanged: _theme, child: MaterialApp(
-    title: 'Tilora',
-    scaffoldMessengerKey: _messenger,
-    debugShowCheckedModeBanner: false,
-    theme: _palette.themeData,
-    home: _intro ? TutorialScreen(onComplete: _completeIntro, reduceMotion: widget.store?.reduceMotion ?? false) : GameScreen(
-      engine: widget.engine,
-      initialState: widget.initialState,
-      store: widget.store,
-      autoPlay: widget.autoPlay,
+  Widget build(BuildContext context) => PuzzleTheme(
+    palette: _palette,
+    onChanged: _theme,
+    child: MaterialApp(
+      title: 'Tilora',
+      scaffoldMessengerKey: _messenger,
+      debugShowCheckedModeBanner: false,
+      theme: _palette.themeData,
+      home: _intro
+          ? TutorialScreen(
+              onComplete: _completeIntro,
+              reduceMotion: widget.store?.reduceMotion ?? false,
+            )
+          : GameScreen(
+              engine: widget.engine,
+              initialState: widget.initialState,
+              store: widget.store,
+              autoPlay: widget.autoPlay,
+            ),
     ),
-  ));
+  );
 }

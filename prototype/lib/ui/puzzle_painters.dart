@@ -79,7 +79,11 @@ void paintTile(
 }
 
 class PiecePainter extends CustomPainter {
-  PiecePainter(this.piece, {this.opacity = 1, this.palette = PuzzlePalette.ocean});
+  PiecePainter(
+    this.piece, {
+    this.opacity = 1,
+    this.palette = PuzzlePalette.ocean,
+  });
   final PuzzlePalette palette;
   final Piece piece;
   final double opacity;
@@ -216,7 +220,14 @@ class PuzzleBoardPainter extends CustomPainter {
           scale = 1 + .055 * math.sin(elapsed / 180 * math.pi);
         }
       }
-      paintTile(canvas, rect, color, opacity: opacity, scale: scale, palette: palette);
+      paintTile(
+        canvas,
+        rect,
+        color,
+        opacity: opacity,
+        scale: scale,
+        palette: palette,
+      );
     }
     if (ghost case final piece?) {
       for (final c in piece.cells) {
@@ -372,7 +383,10 @@ class PuzzleBoardPainter extends CustomPainter {
   }
 
   TextPainter _text(String text, TextStyle style) => TextPainter(
-    text: TextSpan(text: text, style: style.copyWith(fontFamily: style.fontFamily ?? 'Roboto')),
+    text: TextSpan(
+      text: text,
+      style: style.copyWith(fontFamily: style.fontFamily ?? 'Roboto'),
+    ),
     textDirection: TextDirection.ltr,
   )..layout();
   void _reward(Canvas canvas, PuzzleMove effect) {
@@ -499,5 +513,6 @@ class PuzzleBoardPainter extends CustomPainter {
       old.ghost != ghost ||
       old.ghostX != ghostX ||
       old.ghostY != ghostY ||
-      old.reduceMotion != reduceMotion || old.palette != palette;
+      old.reduceMotion != reduceMotion ||
+      old.palette != palette;
 }

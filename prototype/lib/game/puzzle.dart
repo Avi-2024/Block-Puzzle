@@ -180,7 +180,12 @@ class PuzzleEngine {
   final Random _random;
   PuzzleState fresh({int best = 0}) {
     final board = List<int>.filled(64, -1);
-    return PuzzleState(board: board, tray: _batch(board), best: best, startingBest: best);
+    return PuzzleState(
+      board: board,
+      tray: _batch(board),
+      best: best,
+      startingBest: best,
+    );
   }
 
   List<Piece?> _batch(List<int> board) {
