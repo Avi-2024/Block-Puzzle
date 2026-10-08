@@ -10,7 +10,7 @@ concurrency:
   group: puzzle-prototype-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  build-and-preview:
+  quality-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     defaults:
@@ -72,11 +72,25 @@ jobs:
             prototype/pubspec.lock
       - name: Build animation capture APK
         run: |
-          flutter build apk --debug -t tool/preview_main.dart
-          cp build/app/outputs/flutter-apk/app-debug.apk build/review/animation-preview.apk
-          ./android/gradlew -p android --stop
+          flutter build apk --release --target-platform android-x64 -t tool/preview_main.dart
+          cp build/app/outputs/flutter-apk/app-release.apk build/review/animation-preview.apk
+      - name: Transfer capture APK to a clean runner
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-puzzle-capture-apk
+          path: prototype/build/review/animation-preview.apk
+          retention-days: 7
+  record-android:
+    needs: quality-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: fresh-puzzle-capture-apk
+          path: prototype/build/review/
       - name: Enable emulator acceleration
-        working-directory: .
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -87,7 +101,7 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_6
-          ram-size: 2048M
+          ram-size: 1536M
           cores: 2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -no-audio
           disable-animations: false
