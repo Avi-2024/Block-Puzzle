@@ -2,6 +2,15 @@
 
 ## 0.2.1 startup compatibility correction
 
+## 0.2.2 gameplay polish
+
+The approved existing UI now keeps the board closer to the score, uses a lighter
+board frame, and sizes tray pieces to their real shape so small pieces remain
+legible. Responsive layout and touch-placement tests pass at 320, 360, 393 and
+412 logical-pixel widths. The universal APK is verified on Android API 29 and
+35; the separate visual-recording runner hit an emulator raster-thread native
+crash and does not affect the playable APK checks.
+
 The earlier ARM64-only build included plugin libraries in ARM32 and x86-64 folders
 without the corresponding Flutter engine and app libraries. These extra ABI folders
 could allow installation on a processor for which the app could not run. The replacement
