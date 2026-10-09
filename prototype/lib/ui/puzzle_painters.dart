@@ -174,8 +174,10 @@ class PuzzleBoardPainter extends CustomPainter {
     this.ghostX = 0,
     this.ghostY = 0,
     this.palette = PuzzlePalette.ocean,
+    this.refinedFrame = false,
   }) : super(repaint: animation);
   final List<int> board;
+  final bool refinedFrame;
   final PuzzlePalette palette;
   final Animation<double> animation;
   final bool reduceMotion;
@@ -189,8 +191,10 @@ class PuzzleBoardPainter extends CustomPainter {
     canvas.save();
     canvas.scale(size.width / 320);
     final bg = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(0, 0, 320, 320),
-      const Radius.circular(15),
+      refinedFrame
+          ? const Rect.fromLTWH(4, 4, 308, 308)
+          : const Rect.fromLTWH(0, 0, 320, 320),
+      Radius.circular(refinedFrame ? 8 : 15),
     );
     canvas.drawRRect(bg, Paint()..color = palette.panel);
     final effect = move;
@@ -204,7 +208,7 @@ class PuzzleBoardPainter extends CustomPainter {
       final x = 8.0 + i % 8 * 38, y = 8.0 + i ~/ 8 * 38;
       final rect = Rect.fromLTWH(x, y, 34, 34);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        RRect.fromRectAndRadius(rect, Radius.circular(refinedFrame ? 3 : 4)),
         Paint()..color = palette.cell,
       );
       final color = visible[i];
@@ -514,5 +518,6 @@ class PuzzleBoardPainter extends CustomPainter {
       old.ghostX != ghostX ||
       old.ghostY != ghostY ||
       old.reduceMotion != reduceMotion ||
+      old.refinedFrame != refinedFrame ||
       old.palette != palette;
 }

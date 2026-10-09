@@ -696,7 +696,15 @@ class _GameScreenState extends State<GameScreen>
     child: Row(
       children: List.generate(3, (slot) {
         final piece = _state.tray[slot], hidden = _dragSlot == slot;
-        final unit = math.min(24.0, (width / 3 - 12) / 5);
+        // Fit the actual shape, rather than reserving five columns for every
+        // piece. Small shapes stay legible; long pieces still fit their slot.
+        final unit = math.min(
+          30.0,
+          math.min(
+            (width / 3 - 20) / math.max(3, piece?.width ?? 3),
+            (height - 24) / math.max(3, piece?.height ?? 3),
+          ),
+        );
         return Expanded(
           child: Listener(
             onPointerDown: (event) => _pointer = event.kind,
@@ -856,9 +864,10 @@ class _GameScreenState extends State<GameScreen>
                               Expanded(
                                 child: LayoutBuilder(
                                   builder: (context, space) {
-                                    final trayHeight = compact ? 76.0 : 108.0,
+                                    final trayHeight = compact ? 88.0 : 124.0,
                                         hintHeight = compact ? 16.0 : 20.0,
-                                        metaHeight = compact ? 22.0 : 30.0;
+                                        metaHeight = compact ? 22.0 : 28.0,
+                                        topGap = compact ? 8.0 : 16.0;
                                     final boardSize = math.max(
                                       80.0,
                                       math.min(
@@ -866,13 +875,15 @@ class _GameScreenState extends State<GameScreen>
                                         space.maxHeight -
                                             trayHeight -
                                             hintHeight -
-                                            metaHeight,
+                                            metaHeight -
+                                            topGap,
                                       ),
                                     );
                                     return Column(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                          MainAxisAlignment.start,
                                       children: [
+                                        SizedBox(height: topGap),
                                         SizedBox(
                                           width: boardSize,
                                           height: metaHeight,
@@ -924,6 +935,7 @@ class _GameScreenState extends State<GameScreen>
                                                     'puzzle-board',
                                                   ),
                                                   painter: PuzzleBoardPainter(
+                                                    refinedFrame: true,
                                                     board: _state.board,
                                                     palette: _palette,
                                                     animation: _fx,

@@ -25,6 +25,11 @@ that preserves the current game; Back to game restores it.
 
 ## Included
 
+Version 0.2.2 refines the existing gameplay layout: a bounded gap below the
+score, a lighter board frame, and larger tray pieces sized to their actual
+shape. Long shapes still fit their slot. Board hit coordinates and scoring
+are unchanged; tutorial and theme-preview frames retain their existing style.
+
 - Original 8×8 Classic game, three-piece batches, row/column clears and combos.
 - Drag with a placement shadow; tap a piece then a board cell also works.
 - Nice, Combo ×2, Amazing and Unstoppable effects, board sweeps, particles,
