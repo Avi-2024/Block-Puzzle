@@ -1,5 +1,12 @@
 # Magic Blocks prototype — approved feature pass
 
+## 0.2.4 Ocean color polish
+
+Applied the approved deeper blue gradient and darker blue, teal, amber, coral
+and purple blocks to the existing Ocean theme. Gameplay tiles, tray pieces,
+theme preview and tutorial use the same palette; the board has a restrained
+edge stroke. Existing layout, scoring, gestures and saved theme IDs are preserved.
+
 ## 0.2.3 branding preview
 
 Added the approved Magic Blocks cube-and-sparkle identity to the Android launcher,

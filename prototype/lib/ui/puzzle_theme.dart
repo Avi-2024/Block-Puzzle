@@ -18,6 +18,7 @@ class PuzzlePalette {
     required this.button,
     required this.buttonInk,
     required this.colors,
+    this.middle,
     this.light = false,
   });
   final String id, name, description;
@@ -32,13 +33,15 @@ class PuzzlePalette {
       button,
       buttonInk;
   final List<Color> colors;
+  final Color? middle;
   final bool light;
   static const ocean = PuzzlePalette(
     id: 'ocean',
     name: 'Ocean',
     description: 'A calm blue. Room to think.',
-    background: Color(0xFF254F7D),
-    end: Color(0xFF183653),
+    background: Color(0xFF173A60),
+    middle: Color(0xFF102C48),
+    end: Color(0xFF0B2138),
     panel: Color(0xFF15344F),
     cell: Color(0xFF254868),
     ink: Color(0xFFF3F7FF),
@@ -48,11 +51,11 @@ class PuzzlePalette {
     button: Color(0xFFF8D58A),
     buttonInk: Color(0xFF223C55),
     colors: [
-      Color(0xFF67A7E2),
-      Color(0xFF68C2AA),
-      Color(0xFFEDC16E),
-      Color(0xFFE38F83),
-      Color(0xFFAE9DDD),
+      Color(0xFF347BD4),
+      Color(0xFF239D83),
+      Color(0xFFD99A2B),
+      Color(0xFFD86855),
+      Color(0xFF8964C5),
     ],
   );
   static const midnight = PuzzlePalette(
@@ -106,9 +109,10 @@ class PuzzlePalette {
   Color tileLight(int index) => Color.lerp(colors[index], Colors.white, .30)!;
   Color tileDark(int index) => Color.lerp(colors[index], Colors.black, .24)!;
   LinearGradient get gradient => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [background, end],
+    begin: middle == null ? Alignment.topLeft : Alignment.topCenter,
+    end: middle == null ? Alignment.bottomRight : Alignment.bottomCenter,
+    colors: [background, if (middle != null) middle!, end],
+    stops: middle == null ? null : const [0, .55, 1],
   );
   SystemUiOverlayStyle get systemStyle => SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,

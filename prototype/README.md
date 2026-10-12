@@ -25,6 +25,10 @@ that preserves the current game; Back to game restores it.
 
 ## Included
 
+Version 0.2.4 applies the approved darker Ocean block colors and deeper blue
+background to the existing UI, with a subtle board edge for definition.
+Board geometry, tray positions and saved theme IDs retain their existing behavior.
+
 Version 0.2.3 adds the approved Magic Blocks identity: a tile-and-sparkle
 mark, animated branded launch screen using the gameplay tile renderer and Ocean
 palette, and matching Android launcher/native splash. The launcher artwork lives

@@ -197,6 +197,15 @@ class PuzzleBoardPainter extends CustomPainter {
       Radius.circular(refinedFrame ? 8 : 15),
     );
     canvas.drawRRect(bg, Paint()..color = palette.panel);
+    if (refinedFrame && palette.id == 'ocean') {
+      canvas.drawRRect(
+        bg.deflate(.5),
+        Paint()
+          ..color = palette.line.withValues(alpha: .38)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
+    }
     final effect = move;
     final visible =
         effect != null &&
