@@ -1,4 +1,4 @@
-name: Verify Existing Tilora APK
+name: Verify Existing Magic Blocks APK
 on:
   workflow_dispatch:
     inputs:

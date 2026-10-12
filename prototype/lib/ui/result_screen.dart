@@ -6,7 +6,7 @@ import 'puzzle_theme.dart';
 import 'theme_screen.dart';
 
 String scoreShareText(PuzzleState state) =>
-    'I scored ${formatScore(state.score)} in Tilora!\n'
+    'I scored ${formatScore(state.score)} in Magic Blocks!\n'
     'Best: ${formatScore(state.best)} · Biggest combo: ×${state.maxCombo} · Lines cleared: ${state.linesCleared}\nA little focus. A few good moves.';
 
 class ResultScreen extends StatelessWidget {
@@ -36,7 +36,7 @@ class ResultScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const TiloraBrand(),
+                            const MagicBlocksBrand(),
                             const Spacer(),
                             IconButton(
                               tooltip: 'Themes',
@@ -300,7 +300,7 @@ class _ShareScoreDialogState extends State<_ShareScoreDialog> {
       final result = await SharePlus.instance.share(
         ShareParams(
           text: scoreShareText(widget.state),
-          subject: 'My Tilora score',
+          subject: 'My Magic Blocks score',
           sharePositionOrigin: box == null
               ? null
               : box.localToGlobal(Offset.zero) & box.size,
@@ -344,7 +344,7 @@ class _ShareScoreDialogState extends State<_ShareScoreDialog> {
       backgroundColor: p.end,
       title: Row(
         children: [
-          const TiloraBrand(),
+          const MagicBlocksBrand(),
           const Spacer(),
           IconButton(
             tooltip: 'Close sharing',

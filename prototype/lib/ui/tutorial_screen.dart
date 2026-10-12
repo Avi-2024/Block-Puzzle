@@ -148,7 +148,7 @@ class _TutorialScreenState extends State<TutorialScreen>
                 children: [
                   Row(
                     children: [
-                      const TiloraBrand(),
+                      const MagicBlocksBrand(),
                       const Spacer(),
                       TextButton(
                         onPressed: widget.onComplete,

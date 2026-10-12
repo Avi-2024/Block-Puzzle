@@ -51,6 +51,7 @@ void main() {
     }
   });
   test('sharing uses the actual round stats', () {
+    expect(scoreShareText(finished()), contains('Magic Blocks'));
     expect(scoreShareText(finished()), contains('8,640'));
     expect(scoreShareText(finished()), contains('×6'));
     expect(scoreShareText(finished()), contains('42'));
@@ -92,7 +93,7 @@ void main() {
         await capture(
           tester,
           key,
-          'tilora-result-${p.id}-${size.width.toInt()}',
+          'magic-blocks-result-${p.id}-${size.width.toInt()}',
         );
         await tester.tap(find.byTooltip('Themes'));
         await tester.pumpAndSettle();
@@ -100,7 +101,7 @@ void main() {
         await capture(
           tester,
           key,
-          'tilora-themes-${p.id}-${size.width.toInt()}',
+          'magic-blocks-themes-${p.id}-${size.width.toInt()}',
         );
         await tester.tap(find.byTooltip('Close themes'));
         await tester.pumpAndSettle();
@@ -111,7 +112,11 @@ void main() {
         expect(store.load(PuzzleEngine()).best, 8640);
         expect(store.load(PuzzleEngine()).maxCombo, 0);
         expect(tester.takeException(), isNull);
-        await capture(tester, key, 'tilora-game-${p.id}-${size.width.toInt()}');
+        await capture(
+          tester,
+          key,
+          'magic-blocks-game-${p.id}-${size.width.toInt()}',
+        );
         await tester.pumpWidget(const SizedBox.shrink());
       });
     }
@@ -193,7 +198,7 @@ void main() {
             .onPressed,
         isNull,
       );
-      await capture(tester, key, 'tilora-tutorial-drag');
+      await capture(tester, key, 'magic-blocks-tutorial-drag');
       final start = tester.getCenter(
             find.byKey(const ValueKey('tutorial-piece')),
           ),
@@ -216,7 +221,7 @@ void main() {
         await capture(
           tester,
           key,
-          'tilora-tutorial-${step == 1 ? 'clear' : 'combo'}',
+          'magic-blocks-tutorial-${step == 1 ? 'clear' : 'combo'}',
         );
         await tester.tap(find.byKey(const ValueKey('tutorial-piece')));
         await tester.pump();

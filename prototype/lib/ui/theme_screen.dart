@@ -53,7 +53,7 @@ class _ThemeScreenState extends State<ThemeScreen> {
                   children: [
                     Row(
                       children: [
-                        TiloraBrand(palette: p),
+                        MagicBlocksBrand(palette: p),
                         const Spacer(),
                         IconButton(
                           tooltip: 'Close themes',
@@ -142,8 +142,7 @@ class _ThemeScreenState extends State<ThemeScreen> {
                                         color: option.end,
                                         borderRadius: BorderRadius.circular(11),
                                       ),
-                                      child: TiloraMark(
-                                        palette: option,
+                                      child: MagicBlocksMark(
                                         size: 25,
                                       ),
                                     ),

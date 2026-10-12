@@ -1,4 +1,11 @@
-# Tilora prototype — approved feature pass
+# Magic Blocks prototype — approved feature pass
+
+## 0.2.3 branding preview
+
+Added the approved Magic Blocks cube-and-sparkle identity to the Android launcher,
+native splash, animated Flutter splash, gameplay header, tutorial, themes and
+round results. The share text now uses Magic Blocks. The previous game rules,
+saved session format, theme palettes and board layout are unchanged.
 
 ## 0.2.1 startup compatibility correction
 
@@ -16,7 +23,7 @@ without the corresponding Flutter engine and app libraries. These extra ABI fold
 could allow installation on a processor for which the app could not run. The replacement
 build includes complete runtimes for all three ABIs and fails CI if any are missing.
 
-The replacement installs separately as **Tilora Preview** so users do not need to
+The replacement installs separately as **Magic Blocks** so users do not need to
 uninstall an older preview signed by another CI runner. Earlier app data stays in the
 earlier package. Renderer selection is now part of the manifest, and the actual
 downloadable release APK receives normal-launch smoke tests on Android API 29 and 35.
@@ -24,7 +31,7 @@ Device-specific failures still require the affected phone model and crash logs.
 
 All work is isolated to `prototype/` on `codex/fresh-puzzle-prototype`. The root application and main branch are unchanged.
 
-- Original Tilora wordmark and five-tile T icon; no extracted third-party APK code or assets.
+- Original Magic Blocks cube-and-sparkle wordmark and launcher icon; no extracted third-party APK code or assets.
 - Ocean, Midnight and Warm Sand palettes, including game board, pieces, UI, result screen and system bars. Theme drafts only persist when applied.
 - Round-complete screen with actual score, personal best, largest clear streak and number of rows/columns cleared. Native text sharing and clipboard fallback require a user tap.
 - Three interactive practice steps: drag, row clear, consecutive-clear combo. Tap-to-place is available too. Completion/skip is remembered, and How to play reopens practice without modifying a saved round.

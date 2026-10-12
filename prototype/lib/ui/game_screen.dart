@@ -590,7 +590,7 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  Widget _mark() => const TiloraMark(size: 25);
+  Widget _mark() => const MagicBlocksMark(size: 25);
   Widget _scores(bool compact) => SizedBox(
     height: compact ? 58 : 74,
     child: Row(
@@ -836,7 +836,7 @@ class _GameScreenState extends State<GameScreen>
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        'TILORA',
+                                        'MAGIC BLOCKS',
                                         maxLines: 1,
                                         style: TextStyle(
                                           fontSize: compact ? 14 : 16,

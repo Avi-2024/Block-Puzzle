@@ -1,4 +1,4 @@
-# Tilora — original block puzzle prototype
+# Magic Blocks — original block puzzle prototype
 
 Fresh Flutter implementation of the approved gameplay, combo animation,
 result screen, first-play guidance and three-theme design. This folder is independent from the existing Blockiva app.
@@ -17,14 +17,18 @@ flutter run
 ```
 
 The compatibility preview has its own package, `com.blockiva.tilora_preview`,
-and installs as **Tilora Preview** alongside the earlier `com.blockiva.puzzle_prototype`
+and installs as **Magic Blocks** alongside the earlier `com.blockiva.puzzle_prototype`
 app. Existing progress in that older app is retained there; it is not migrated
 into the separate preview. The Android namespace remains `com.blockiva.puzzle_prototype`.
-The working title is Tilora. Settings includes a deterministic animation review
+The working title is **Magic Blocks: Combo Puzzle**. Settings includes a deterministic animation review
 that preserves the current game; Back to game restores it.
 
 ## Included
 
+Version 0.2.3 adds the approved Magic Blocks identity: a tile-and-sparkle
+mark, animated branded launch screen using the gameplay tile renderer and Ocean
+palette, and matching Android launcher/native splash. The launcher artwork lives
+in `assets/brand/launcher_icon.webp` and is copied by `tool/brand_android.py`.
 Version 0.2.2 refines the existing gameplay layout: a bounded gap below the
 score, a lighter board frame, and larger tray pieces sized to their actual
 shape. Long shapes still fit their slot. Board hit coordinates and scoring
@@ -49,7 +53,7 @@ and records a separate review APK on Android. Every advertised ABI must contain
 both `libflutter.so` and `libapp.so`. The exact downloadable APK is also installed
 and launched normally on Android API 29 and 35, including first run, cold restart,
 preference restoration and background resume.
-The manual `Verify Existing Tilora APK` workflow can check a retained playable APK
+The manual `Verify Existing Magic Blocks APK` workflow can check a retained playable APK
 on Android 10 by its build run ID, without rebuilding it. Its optional legacy run
 ID also reproduces the earlier missing-engine crash before testing the replacement.
 

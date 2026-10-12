@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'game/puzzle.dart';
 import 'game/puzzle_store.dart';
+import 'ui/brand_splash.dart';
 import 'ui/game_screen.dart';
 import 'ui/puzzle_theme.dart';
 import 'ui/tutorial_screen.dart';
@@ -16,7 +17,7 @@ Future<void> launch({bool autoPlay = false}) async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF19385F),
+      systemNavigationBarColor: Color(0xFF080D34),
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
@@ -45,12 +46,14 @@ class PuzzleApp extends StatefulWidget {
     this.store,
     this.autoPlay = false,
     this.showIntroduction,
+    this.showBrandSplash = true,
   });
   final PuzzleEngine engine;
   final PuzzleState initialState;
   final PuzzleStore? store;
   final bool autoPlay;
   final bool? showIntroduction;
+  final bool showBrandSplash;
   @override
   State<PuzzleApp> createState() => _PuzzleAppState();
 }
@@ -58,11 +61,13 @@ class PuzzleApp extends StatefulWidget {
 class _PuzzleAppState extends State<PuzzleApp> {
   late PuzzlePalette _palette;
   late bool _intro;
+  late bool _showBrandSplash;
   final _messenger = GlobalKey<ScaffoldMessengerState>();
   @override
   void initState() {
     super.initState();
     _palette = PuzzlePalette.fromId(widget.store?.theme);
+    _showBrandSplash = widget.showBrandSplash;
     _intro =
         widget.showIntroduction ??
         (widget.store != null &&
@@ -91,16 +96,22 @@ class _PuzzleAppState extends State<PuzzleApp> {
     }
   }
 
+  void _finishBrandSplash() {
+    if (mounted) setState(() => _showBrandSplash = false);
+  }
+
   @override
   Widget build(BuildContext context) => PuzzleTheme(
     palette: _palette,
     onChanged: _theme,
     child: MaterialApp(
-      title: 'Tilora',
+      title: 'Magic Blocks: Combo Puzzle',
       scaffoldMessengerKey: _messenger,
       debugShowCheckedModeBanner: false,
       theme: _palette.themeData,
-      home: _intro
+      home: _showBrandSplash
+          ? BrandSplash(onFinished: _finishBrandSplash)
+          : _intro
           ? TutorialScreen(
               onComplete: _completeIntro,
               reduceMotion: widget.store?.reduceMotion ?? false,

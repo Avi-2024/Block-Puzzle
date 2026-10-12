@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Original Tilora palettes. Block indices stay stable across saved games.
+/// Original Magic Blocks palettes. Block indices stay stable across saved games.
 class PuzzlePalette {
   const PuzzlePalette({
     required this.id,
@@ -176,64 +176,87 @@ class PuzzleTheme extends InheritedWidget {
       oldWidget.palette != palette;
 }
 
-class TiloraMark extends StatelessWidget {
-  const TiloraMark({super.key, this.size = 28, this.palette});
+class MagicBlocksMark extends StatelessWidget {
+  const MagicBlocksMark({super.key, this.size = 28});
   final double size;
-  final PuzzlePalette? palette;
   @override
   Widget build(BuildContext context) {
-    final p = palette ?? PuzzleTheme.of(context), unit = size / 3;
     return ExcludeSemantics(
-      child: Transform.rotate(
-        angle: -.08,
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            children: [
-              for (final tile in const [
-                (0, 0, 2),
-                (1, 0, 2),
-                (2, 0, 2),
-                (1, 1, 1),
-                (1, 2, 0),
-              ])
-                Positioned(
-                  left: tile.$1 * unit,
-                  top: tile.$2 * unit,
-                  child: Container(
-                    width: unit - 2,
-                    height: unit - 2,
-                    decoration: BoxDecoration(
-                      color: p.colors[tile.$3],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+      child: SizedBox.square(
+        dimension: size,
+        child: Stack(
+          children: [
+            _markTile(size, .34, .01, PuzzlePalette.ocean.colors[2]),
+            _markTile(size, .01, .34, PuzzlePalette.ocean.colors[0]),
+            _markTile(size, .67, .34, PuzzlePalette.ocean.colors[3]),
+            _markTile(size, .34, .67, PuzzlePalette.ocean.colors[1]),
+            Positioned.fill(
+              child: Center(
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  size: size * .30,
+                  color: const Color(0xFFFFF4B5),
+                  shadows: const [
+                    Shadow(color: Color(0xFFFFC83D), blurRadius: 8),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget _markTile(double size, double x, double y, Color color) => Positioned(
+    left: size * x,
+    top: size * y,
+    child: Container(
+      width: size * .32,
+      height: size * .32,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * .037),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.lerp(color, Colors.white, .30)!,
+            color,
+            color,
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: .24),
+          width: size * .009,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color.lerp(color, Colors.black, .24)!,
+            blurRadius: size * .02,
+            offset: Offset(0, size * .02),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
-class TiloraBrand extends StatelessWidget {
-  const TiloraBrand({super.key, this.palette});
+class MagicBlocksBrand extends StatelessWidget {
+  const MagicBlocksBrand({super.key, this.palette});
   final PuzzlePalette? palette;
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      TiloraMark(palette: palette),
-      const SizedBox(width: 10),
+      const MagicBlocksMark(),
+      const SizedBox(width: 9),
       Text(
-        'TILORA',
+        'MAGIC BLOCKS',
         style: TextStyle(
           color: (palette ?? PuzzleTheme.of(context)).ink,
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 2,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: .9,
         ),
       ),
     ],
