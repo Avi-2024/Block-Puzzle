@@ -111,7 +111,7 @@ class PuzzlePalette {
   LinearGradient get gradient => LinearGradient(
     begin: middle == null ? Alignment.topLeft : Alignment.topCenter,
     end: middle == null ? Alignment.bottomRight : Alignment.bottomCenter,
-    colors: [background, if (middle != null) middle!, end],
+    colors: [background, ?middle, end],
     stops: middle == null ? null : const [0, .55, 1],
   );
   SystemUiOverlayStyle get systemStyle => SystemUiOverlayStyle(
