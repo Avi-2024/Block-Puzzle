@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:puzzle_prototype/game/puzzle.dart';
 import 'package:puzzle_prototype/main.dart';
+import 'package:puzzle_prototype/ui/game_screen.dart';
+import 'package:puzzle_prototype/ui/puzzle_theme.dart';
 
 Future<void> capture(WidgetTester tester, GlobalKey key, String name) async {
   if (Platform.environment['PUZZLE_CAPTURE_UI'] != '1') return;
@@ -97,6 +99,42 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Keep playing'));
       await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+  for (final palette in PuzzlePalette.values) {
+    testWidgets('seven-colour board and tray render in ${palette.id}', (tester) async {
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      final original = reviewScene();
+      final board = List<int>.of(original.board)
+        ..[22] = 6
+        ..[35] = 5;
+      final state = PuzzleState(
+        board: board,
+        tray: const [Piece(2, 6), Piece(9, 5), Piece(8, 4)],
+        score: original.score,
+        best: original.best,
+        startingBest: original.startingBest,
+      );
+      final key = GlobalKey();
+      await tester.pumpWidget(RepaintBoundary(
+        key: key,
+        child: PuzzleTheme(
+          palette: palette,
+          onChanged: (_) => Future<void>.value(),
+          child: MaterialApp(theme: palette.themeData, home: GameScreen(engine: PuzzleEngine(), initialState: state)),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(palette.colors.length, puzzleColorCount);
+      expect(find.bySemanticsLabel('Score 1280'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await capture(tester, key, 'palette-${palette.id}-393');
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
@@ -196,3 +234,4 @@ void main() {
     },
   );
 }
+

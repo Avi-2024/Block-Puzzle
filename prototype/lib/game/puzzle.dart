@@ -1,5 +1,8 @@
 import 'dart:math';
 
+// Existing saved colours 0–4 retain their indices; orange and cyan append.
+const puzzleColorCount = 7;
+
 class Cell {
   const Cell(this.x, this.y);
   final int x;
@@ -51,7 +54,7 @@ class Piece {
         shape >= shapes.length ||
         color is! int ||
         color < 0 ||
-        color > 4) {
+        color >= puzzleColorCount) {
       return null;
     }
     return Piece(shape, color);
@@ -100,7 +103,7 @@ class PuzzleState {
     final board = value['board'], tray = value['tray'];
     if (board is! List ||
         board.length != 64 ||
-        board.any((c) => c is! int || c < -1 || c > 4)) {
+        board.any((c) => c is! int || c < -1 || c >= puzzleColorCount)) {
       return null;
     }
     if (tray is! List || tray.length != 3) return null;
@@ -191,7 +194,7 @@ class PuzzleEngine {
   List<Piece?> _batch(List<int> board) {
     final result = List<Piece?>.generate(
       3,
-      (_) => Piece(_random.nextInt(shapes.length), _random.nextInt(5)),
+      (_) => Piece(_random.nextInt(shapes.length), _random.nextInt(puzzleColorCount)),
     );
     if (!result.whereType<Piece>().any((p) => canFitSomewhere(board, p))) {
       final fit = List<int>.generate(
@@ -199,7 +202,7 @@ class PuzzleEngine {
         (i) => i,
       ).where((i) => canFitSomewhere(board, Piece(i, 0))).toList();
       if (fit.isNotEmpty) {
-        result[0] = Piece(fit[_random.nextInt(fit.length)], _random.nextInt(5));
+        result[0] = Piece(fit[_random.nextInt(fit.length)], _random.nextInt(puzzleColorCount));
       }
     }
     return result;
@@ -335,3 +338,4 @@ PuzzleState reviewScene() => PuzzleState(
   best: 2460,
   startingBest: 2460,
 );
+

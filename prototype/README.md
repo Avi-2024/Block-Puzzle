@@ -25,6 +25,17 @@ that preserves the current game; Back to game restores it.
 
 ## Included
 
+Version 0.2.5 adds the user-requested block colour study: seven Ocean face colours
+and explicit highlight/side/shadow values sampled from the supplied APK's dark
+block palette. Only numeric colour values are used. All tile geometry, shaders,
+and effects are our own Flutter code; no reference sprite, font, sound or game
+code is bundled. Orange and cyan append to the existing saved colour indices.
+Midnight and Warm Sand include matching additional colours within their own
+palettes. Board/tray/tutorial/splash tiles share a crisper bevel renderer.
+Combo and Amazing now enter faster, use a thinner outline, a sparkling underline
+and a separate travelling bonus; six-plus chains have a Magic Streak reward.
+See [docs/block-colour-study.md](docs/block-colour-study.md) for palette values.
+
 Version 0.2.4 applies the approved darker Ocean block colors and deeper blue
 background to the existing UI, with a subtle board edge for definition.
 Board geometry, tray positions and saved theme IDs retain their existing behavior.
@@ -77,3 +88,4 @@ production signing, monetization and physical-device performance testing remain
 release work. It makes no FPS, retention or market-performance claim.
 
 See [TILORA_FEATURES.md](TILORA_FEATURES.md) for persistence and migration details.
+

@@ -1,5 +1,21 @@
 # Magic Blocks prototype — approved feature pass
 
+## 0.2.5 block colours and reward motion
+
+The Ocean theme now uses seven sampled block colour values: blue, green, gold,
+red, purple, orange and cyan, with explicit light and dark edge colours.
+The sample palette is documented in `docs/block-colour-study.md`; reference
+artwork and code are not included. The shared renderer uses original rounded
+bevel geometry, cached face shaders, and reusable paint objects. This affects
+the board, tray, drag piece, tutorial, theme preview and splash tiles.
+
+Existing colour indices 0–4 stay in place; 5 and 6 append orange and cyan.
+Version-one sessions remain readable, with regression tests covering both
+new colours and every theme. Shapes, valid placements, scoring and streak
+rules are unchanged. Combo/Amazing lettering is laid out once per painter,
+pops in over 240 ms and fades sooner; points travel independently from the
+clear. Six-plus clears introduce the original Magic Streak label.
+
 ## 0.2.4 Ocean color polish
 
 Applied the approved deeper blue gradient and darker blue, teal, amber, coral
@@ -63,3 +79,4 @@ validation, but the affected physical phone has not yet been tested.
 CI formats, analyzes and tests the original Flutter code, captures real widget screenshots at small and standard sizes, builds the universal APK and runs the animation-review APK on Android. The deterministic preview app is a separate entry point; the playable APK does not auto-play or replace saved games with review data.
 
 This is a test-signed prototype APK, not a Play Store release. Store signing, final package identity, trademark/name clearance, device testing and store privacy declarations remain release work.
+
