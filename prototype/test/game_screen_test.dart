@@ -103,7 +103,9 @@ void main() {
     });
   }
   for (final palette in PuzzlePalette.values) {
-    testWidgets('seven-colour board and tray render in ${palette.id}', (tester) async {
+    testWidgets('seven-colour board and tray render in ${palette.id}', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(393, 852);
       tester.view.devicePixelRatio = 1;
       tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
@@ -122,19 +124,37 @@ void main() {
         startingBest: original.startingBest,
       );
       final key = GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(
-        key: key,
-        child: PuzzleTheme(
-          palette: palette,
-          onChanged: (_) => Future<void>.value(),
-          child: MaterialApp(theme: palette.themeData, home: GameScreen(engine: PuzzleEngine(), initialState: state)),
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: PuzzleTheme(
+            palette: palette,
+            onChanged: (_) => Future<void>.value(),
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: palette.themeData,
+              home: GameScreen(engine: PuzzleEngine(), initialState: state),
+            ),
+          ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
       expect(palette.colors.length, puzzleColorCount);
       expect(find.bySemanticsLabel('Score 1280'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await capture(tester, key, 'palette-${palette.id}-393');
+      if (palette.light) {
+        final rect = tester.getRect(find.byKey(const ValueKey('puzzle-board')));
+        final unit = rect.width * 38 / 320, pad = rect.width * 8 / 320;
+        await tester.tap(find.byKey(const ValueKey('piece-slot-0')));
+        await tester.pump();
+        await tester.tapAt(rect.topLeft + Offset(pad + 2 * unit + 10, pad + 2 * unit + 10));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(tester.takeException(), isNull);
+        await capture(tester, key, 'palette-sand-reward-393');
+        await tester.pumpAndSettle();
+      }
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
@@ -234,4 +254,3 @@ void main() {
     },
   );
 }
-

@@ -6,10 +6,30 @@ import 'puzzle_theme.dart';
 
 // Original unit-space bevel geometry. Reuse paths and shaders while dragging.
 const _bevel = .105;
-final _topBevel = Path()..moveTo(0, 0)..lineTo(1, 0)..lineTo(1 - _bevel, _bevel)..lineTo(_bevel, _bevel)..close();
-final _leftBevel = Path()..moveTo(0, 0)..lineTo(_bevel, _bevel)..lineTo(_bevel, 1 - _bevel)..lineTo(0, 1)..close();
-final _bottomBevel = Path()..moveTo(0, 1)..lineTo(_bevel, 1 - _bevel)..lineTo(1 - _bevel, 1 - _bevel)..lineTo(1, 1)..close();
-final _rightBevel = Path()..moveTo(1, 0)..lineTo(1, 1)..lineTo(1 - _bevel, 1 - _bevel)..lineTo(1 - _bevel, _bevel)..close();
+final _topBevel = Path()
+  ..moveTo(0, 0)
+  ..lineTo(1, 0)
+  ..lineTo(1 - _bevel, _bevel)
+  ..lineTo(_bevel, _bevel)
+  ..close();
+final _leftBevel = Path()
+  ..moveTo(0, 0)
+  ..lineTo(_bevel, _bevel)
+  ..lineTo(_bevel, 1 - _bevel)
+  ..lineTo(0, 1)
+  ..close();
+final _bottomBevel = Path()
+  ..moveTo(0, 1)
+  ..lineTo(_bevel, 1 - _bevel)
+  ..lineTo(1 - _bevel, 1 - _bevel)
+  ..lineTo(1, 1)
+  ..close();
+final _rightBevel = Path()
+  ..moveTo(1, 0)
+  ..lineTo(1, 1)
+  ..lineTo(1 - _bevel, 1 - _bevel)
+  ..lineTo(1 - _bevel, _bevel)
+  ..close();
 final _tileFaceShaders = <PuzzlePalette, List<ui.Shader>>{};
 final _tileFacePaint = Paint();
 final _tileEdgePaint = Paint();
@@ -45,28 +65,37 @@ void paintTile(
   );
   final shaders = _tileFaceShaders.putIfAbsent(
     palette,
-    () => List.generate(palette.colors.length, (i) => LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        Color.lerp(palette.colors[i], Colors.white, .08)!,
-        palette.colors[i],
-        Color.lerp(palette.colors[i], Colors.black, .08)!,
-      ],
-      stops: const [0, .52, 1],
-    ).createShader(unit)),
+    () => List.generate(
+      palette.colors.length,
+      (i) => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(palette.colors[i], Colors.white, .08)!,
+          palette.colors[i],
+          Color.lerp(palette.colors[i], Colors.black, .08)!,
+        ],
+        stops: const [0, .52, 1],
+      ).createShader(unit),
+    ),
   );
   canvas.clipRRect(shape);
-  canvas.drawRRect(shape, _tileFacePaint
-    ..shader = shaders[color]
-    ..color = Colors.white.withValues(alpha: opacity));
+  canvas.drawRRect(
+    shape,
+    _tileFacePaint
+      ..shader = shaders[color]
+      ..color = Colors.white.withValues(alpha: opacity),
+  );
   for (final edge in [
     (_topBevel, palette.tileLight(color)),
     (_leftBevel, palette.tileLeft(color)),
     (_bottomBevel, palette.tileDark(color)),
     (_rightBevel, palette.tileRight(color)),
   ]) {
-    canvas.drawPath(edge.$1, _tileEdgePaint..color = edge.$2.withValues(alpha: opacity));
+    canvas.drawPath(
+      edge.$1,
+      _tileEdgePaint..color = edge.$2.withValues(alpha: opacity),
+    );
   }
   canvas.drawRRect(
     RRect.fromRectAndRadius(unit.deflate(_bevel), const Radius.circular(.025)),
@@ -446,8 +475,7 @@ class PuzzleBoardPainter extends CustomPainter {
         final a = i * 2.399,
             d = 40 + _ease(_clamp(ms / 440)) * (30 + (i % 3) * 12),
             life =
-                _clamp((ms - i * 12) / 110) *
-                _clamp((790 - ms + i * 12) / 250);
+                _clamp((ms - i * 12) / 110) * _clamp((790 - ms + i * 12) / 250);
         _spark(
           canvas,
           Offset(160 + math.cos(a) * d * 1.35, 72 + math.sin(a) * d * .64),
@@ -470,10 +498,26 @@ class PuzzleBoardPainter extends CustomPainter {
     lettering.stroke.paint(canvas, const Offset(0, 2));
     lettering.fill.paint(canvas, Offset.zero);
     canvas.restore();
-    final underline = lettering.fill.width * lettering.fit * (reduceMotion ? 1 : _ease(enter));
+    final underline =
+        lettering.fill.width *
+        lettering.fit *
+        (reduceMotion ? 1 : _ease(enter));
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(-underline / 2, 4, underline, 1.6), const Radius.circular(.8)),
-      Paint()..shader = LinearGradient(colors: [cfg.dark.withValues(alpha: 0), cfg.light, cfg.dark.withValues(alpha: 0)]).createShader(Rect.fromLTWH(-underline / 2, 4, math.max(1, underline), 1.6)),
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(-underline / 2, 4, underline, 1.6),
+        const Radius.circular(.8),
+      ),
+      Paint()
+        ..shader =
+            LinearGradient(
+              colors: [
+                cfg.dark.withValues(alpha: 0),
+                cfg.light,
+                cfg.dark.withValues(alpha: 0),
+              ],
+            ).createShader(
+              Rect.fromLTWH(-underline / 2, 4, math.max(1, underline), 1.6),
+            ),
     );
     lettering.caption.paint(canvas, Offset(-lettering.caption.width / 2, 11));
     canvas.restore();
@@ -488,8 +532,17 @@ class PuzzleBoardPainter extends CustomPainter {
       center /= effect.cleared.length.toDouble();
       final travel = reduceMotion ? 0.0 : t * t;
       final position = Offset.lerp(center, const Offset(32, -8), travel)!;
-      canvas.saveLayer(const Rect.fromLTWH(0, 0, 320, 320), Paint()..color = Colors.white.withValues(alpha: _clamp(t * 8) * math.pow(1 - t, 1.4).toDouble()));
-      lettering.points.paint(canvas, position - Offset(lettering.points.width / 2, lettering.points.height));
+      canvas.saveLayer(
+        const Rect.fromLTWH(0, 0, 320, 320),
+        Paint()
+          ..color = Colors.white.withValues(
+            alpha: _clamp(t * 8) * math.pow(1 - t, 1.4).toDouble(),
+          ),
+      );
+      lettering.points.paint(
+        canvas,
+        position - Offset(lettering.points.width / 2, lettering.points.height),
+      );
       canvas.restore();
     }
   }
@@ -509,7 +562,9 @@ class PuzzleBoardPainter extends CustomPainter {
       cfg.title,
       style.copyWith(
         foreground: Paint()
-          ..color = palette.end.withValues(alpha: .95)
+          ..color = (palette.light ? palette.ink : palette.end).withValues(
+            alpha: .95,
+          )
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.2
           ..strokeJoin = StrokeJoin.round,
@@ -561,8 +616,13 @@ class PuzzleBoardPainter extends CustomPainter {
 }
 
 class _RewardText {
-  const _RewardText(this.stroke, this.fill, this.caption, this.points, this.fit);
+  const _RewardText(
+    this.stroke,
+    this.fill,
+    this.caption,
+    this.points,
+    this.fit,
+  );
   final TextPainter stroke, fill, caption, points;
   final double fit;
 }
-

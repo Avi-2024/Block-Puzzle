@@ -7,26 +7,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  test('orange and cyan round trip without changing existing colour indices', () {
-    final original = reviewScene();
-    final board = List<int>.of(original.board)
-      ..[0] = 5
-      ..[1] = 6;
-    final state = PuzzleState(
-      board: board,
-      tray: const [Piece(2, 6), Piece(9, 5), Piece(8, 4)],
-      score: original.score,
-      best: original.best,
-      startingBest: original.startingBest,
-    );
-    final restored = PuzzleState.decode(jsonDecode(jsonEncode(state.toJson())))!;
-    expect(restored.board, board);
-    expect(restored.tray[0]!.color, 6);
-    expect(restored.tray[1]!.color, 5);
-    expect(restored.score, 1280);
-    expect(Piece.decode({'shape': 0, 'color': puzzleColorCount}), isNull);
-    expect(PuzzleState.decode(state.toJson()..['board'] = List.filled(64, puzzleColorCount)), isNull);
-  });
+  test(
+    'orange and cyan round trip without changing existing colour indices',
+    () {
+      final original = reviewScene();
+      final board = List<int>.of(original.board)
+        ..[0] = 5
+        ..[1] = 6;
+      final state = PuzzleState(
+        board: board,
+        tray: const [Piece(2, 6), Piece(9, 5), Piece(8, 4)],
+        score: original.score,
+        best: original.best,
+        startingBest: original.startingBest,
+      );
+      final restored = PuzzleState.decode(
+        jsonDecode(jsonEncode(state.toJson())),
+      )!;
+      expect(restored.board, board);
+      expect(restored.tray[0]!.color, 6);
+      expect(restored.tray[1]!.color, 5);
+      expect(restored.score, 1280);
+      expect(Piece.decode({'shape': 0, 'color': puzzleColorCount}), isNull);
+      expect(
+        PuzzleState.decode(
+          state.toJson()..['board'] = List.filled(64, puzzleColorCount),
+        ),
+        isNull,
+      );
+    },
+  );
   test('invalid and consumed placements cannot alter a session', () {
     final engine = PuzzleEngine(random: Random(4)), state = reviewScene();
     expect(engine.place(state, 0, 0, 2), isNull);
@@ -210,4 +220,3 @@ void main() {
     },
   );
 }
-

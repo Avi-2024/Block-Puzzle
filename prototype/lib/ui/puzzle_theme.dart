@@ -65,20 +65,40 @@ class PuzzlePalette {
       Color(0xFF29B0E0), // cyan
     ],
     highlights: [
-      Color(0xFF8EB5FF), Color(0xFF83F19B), Color(0xFFFAE577),
-      Color(0xFFEF8686), Color(0xFFD597F0), Color(0xFFFFBE81), Color(0xFF97E9FE),
+      Color(0xFF8EB5FF),
+      Color(0xFF83F19B),
+      Color(0xFFFAE577),
+      Color(0xFFEF8686),
+      Color(0xFFD597F0),
+      Color(0xFFFFBE81),
+      Color(0xFF97E9FE),
     ],
     shadows: [
-      Color(0xFF21358C), Color(0xFF0E711D), Color(0xFFAF7216),
-      Color(0xFF851E25), Color(0xFF5A2682), Color(0xFF9C4609), Color(0xFF066EA5),
+      Color(0xFF21358C),
+      Color(0xFF0E711D),
+      Color(0xFFAF7216),
+      Color(0xFF851E25),
+      Color(0xFF5A2682),
+      Color(0xFF9C4609),
+      Color(0xFF066EA5),
     ],
     leftEdges: [
-      Color(0xFF4466F2), Color(0xFF42C73F), Color(0xFFF8C83B),
-      Color(0xFFD94345), Color(0xFFA066D8), Color(0xFFFD8B37), Color(0xFF3DC0ED),
+      Color(0xFF4466F2),
+      Color(0xFF42C73F),
+      Color(0xFFF8C83B),
+      Color(0xFFD94345),
+      Color(0xFFA066D8),
+      Color(0xFFFD8B37),
+      Color(0xFF3DC0ED),
     ],
     rightEdges: [
-      Color(0xFF284CC4), Color(0xFF0D882F), Color(0xFFCB951B),
-      Color(0xFFAF2825), Color(0xFF7039A0), Color(0xFFC25E17), Color(0xFF1992CC),
+      Color(0xFF284CC4),
+      Color(0xFF0D882F),
+      Color(0xFFCB951B),
+      Color(0xFFAF2825),
+      Color(0xFF7039A0),
+      Color(0xFFC25E17),
+      Color(0xFF1992CC),
     ],
   );
   static const midnight = PuzzlePalette(
@@ -133,10 +153,14 @@ class PuzzlePalette {
   static const values = [ocean, midnight, sand];
   static PuzzlePalette fromId(String? id) =>
       values.firstWhere((p) => p.id == id, orElse: () => ocean);
-  Color tileLight(int index) => highlights?[index] ?? Color.lerp(colors[index], Colors.white, .32)!;
-  Color tileDark(int index) => shadows?[index] ?? Color.lerp(colors[index], Colors.black, .30)!;
-  Color tileLeft(int index) => leftEdges?[index] ?? Color.lerp(colors[index], Colors.white, .16)!;
-  Color tileRight(int index) => rightEdges?[index] ?? Color.lerp(colors[index], Colors.black, .16)!;
+  Color tileLight(int index) =>
+      highlights?[index] ?? Color.lerp(colors[index], Colors.white, .32)!;
+  Color tileDark(int index) =>
+      shadows?[index] ?? Color.lerp(colors[index], Colors.black, .30)!;
+  Color tileLeft(int index) =>
+      leftEdges?[index] ?? Color.lerp(colors[index], Colors.white, .16)!;
+  Color tileRight(int index) =>
+      rightEdges?[index] ?? Color.lerp(colors[index], Colors.black, .16)!;
   LinearGradient get gradient => LinearGradient(
     begin: middle == null ? Alignment.topLeft : Alignment.topCenter,
     end: middle == null ? Alignment.bottomRight : Alignment.bottomCenter,
@@ -252,11 +276,7 @@ class MagicBlocksMark extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(color, Colors.white, .30)!,
-            color,
-            color,
-          ],
+          colors: [Color.lerp(color, Colors.white, .30)!, color, color],
         ),
         border: Border.all(
           color: Colors.white.withValues(alpha: .24),
@@ -326,4 +346,3 @@ String formatScore(int score) => score.toString().replaceAllMapped(
   RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
   (m) => '${m[1]},',
 );
-

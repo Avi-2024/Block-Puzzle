@@ -194,7 +194,10 @@ class PuzzleEngine {
   List<Piece?> _batch(List<int> board) {
     final result = List<Piece?>.generate(
       3,
-      (_) => Piece(_random.nextInt(shapes.length), _random.nextInt(puzzleColorCount)),
+      (_) => Piece(
+        _random.nextInt(shapes.length),
+        _random.nextInt(puzzleColorCount),
+      ),
     );
     if (!result.whereType<Piece>().any((p) => canFitSomewhere(board, p))) {
       final fit = List<int>.generate(
@@ -202,7 +205,10 @@ class PuzzleEngine {
         (i) => i,
       ).where((i) => canFitSomewhere(board, Piece(i, 0))).toList();
       if (fit.isNotEmpty) {
-        result[0] = Piece(fit[_random.nextInt(fit.length)], _random.nextInt(puzzleColorCount));
+        result[0] = Piece(
+          fit[_random.nextInt(fit.length)],
+          _random.nextInt(puzzleColorCount),
+        );
       }
     }
     return result;
@@ -338,4 +344,3 @@ PuzzleState reviewScene() => PuzzleState(
   best: 2460,
   startingBest: 2460,
 );
-
