@@ -20,8 +20,9 @@ Future<void> capture(WidgetTester tester, GlobalKey key, String name) async {
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     final directory = Directory('build/prototype-review')
       ..createSync(recursive: true);
-    File('${directory.path}/$name.png')
-        .writeAsBytesSync(bytes!.buffer.asUint8List());
+    File(
+      '${directory.path}/$name.png',
+    ).writeAsBytesSync(bytes!.buffer.asUint8List());
     image.dispose();
   });
 }

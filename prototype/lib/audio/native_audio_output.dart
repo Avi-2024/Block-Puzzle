@@ -183,18 +183,20 @@ class NativeAudioOutput extends GameAudioOutput {
       if (_voice != null) _voice!.stop(),
       for (final player in _effects.values) player.stop(),
     ];
-    await Future.wait(stopping);
+    await Future.wait(stopping.map((work) => work.catchError((Object _) {})));
     try {
       await _initializing;
     } catch (_) {
       /* Initialization may have failed. */
     }
     await Future.wait(_subscriptions.map((sub) => sub.cancel()));
-    await Future.wait([
-      if (_music != null) _music!.dispose(),
-      if (_voice != null) _voice!.dispose(),
-      for (final player in _effects.values) player.dispose(),
-    ]);
+    await Future.wait(
+      <Future<void>>[
+        if (_music != null) _music!.dispose(),
+        if (_voice != null) _voice!.dispose(),
+        for (final player in _effects.values) player.dispose(),
+      ].map((work) => work.catchError((Object _) {})),
+    );
     await _session?.setActive(false);
     await _signals.close();
   }

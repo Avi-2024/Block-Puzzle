@@ -129,8 +129,9 @@ class SoundSheet extends StatelessWidget {
                                 ),
                               ),
                               onChangeEnd: (_) {
-                                if (bus == AudioBus.effects)
+                                if (bus == AudioBus.effects) {
                                   audio.effect(GameEffect.place);
+                                }
                                 if (bus == AudioBus.voice) audio.previewVoice();
                               },
                             ),

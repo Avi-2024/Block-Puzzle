@@ -212,7 +212,7 @@ void main() {
       await audio.start(active: true);
       await tester.pump();
       audio.previewVoice(Callout.good);
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
       audio.move(state(score: 950), reward(score: 1060));
       await tester.pump(const Duration(milliseconds: 180));
       expect(output.words.map((word) => word.$2), [
@@ -257,7 +257,7 @@ void main() {
         ),
       );
       audio.previewVoice();
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
       expect(output.words.last.$1, VoiceStyle.warm);
       audio.update(audio.settings.change(bus: AudioBus.music, volume: .6));
       await tester.pump();

@@ -111,7 +111,7 @@ void main() {
           await tester.pumpAndSettle();
           await tester.ensureVisible(find.text('Amazing'));
           await tester.tap(find.text('Amazing'));
-          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 20));
           expect(output.words.last, (VoiceStyle.warm, Callout.amazing));
           output.completeSpeech();
           await tester.pump();
