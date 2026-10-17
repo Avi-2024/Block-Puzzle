@@ -1,0 +1,129 @@
+{
+  "model": "Kokoro v1.0",
+  "model_license": "Apache-2.0",
+  "wrapper_license": "MIT",
+  "wrapper_version": "0.6.1",
+  "sample_rate": 24000,
+  "clips": [
+    {
+      "style": "bright",
+      "voice": "af_heart",
+      "id": "good",
+      "text": "Good!",
+      "speed": 1.0,
+      "duration_seconds": 0.6768,
+      "peak_dbfs": -6.32,
+      "wav_sha256": "35d603b49cc5231139c645d8eac2bc770febd110e5dd25a1a831b20dbfaf8036"
+    },
+    {
+      "style": "bright",
+      "voice": "af_heart",
+      "id": "great",
+      "text": "Great!",
+      "speed": 1.0,
+      "duration_seconds": 0.7688,
+      "peak_dbfs": -3.68,
+      "wav_sha256": "ad826253a8b1d94d73add70af025c37e9e3bf8b32f329ac7780f877bad45f346"
+    },
+    {
+      "style": "bright",
+      "voice": "af_heart",
+      "id": "combo",
+      "text": "Combo!",
+      "speed": 1.04,
+      "duration_seconds": 0.776,
+      "peak_dbfs": -4.52,
+      "wav_sha256": "dab70d94085fb4ba746a43a3913eebe16a17e9cd99c42a50050b66824ea4b360"
+    },
+    {
+      "style": "bright",
+      "voice": "af_heart",
+      "id": "amazing",
+      "text": "Amazing!",
+      "speed": 0.98,
+      "duration_seconds": 0.8776,
+      "peak_dbfs": -4.09,
+      "wav_sha256": "bdeb313fff751294ed59a056298aa501eddb63db51afa8a33062bad3d9fbe49a"
+    },
+    {
+      "style": "bright",
+      "voice": "af_heart",
+      "id": "incredible",
+      "text": "Incredible!",
+      "speed": 1.03,
+      "duration_seconds": 0.8838,
+      "peak_dbfs": -4.48,
+      "wav_sha256": "65bd6235a264b7773e16d682b07948952d0a0064b3145cc16405a059009cedc0"
+    },
+    {
+      "style": "bright",
+      "voice": "af_heart",
+      "id": "new-best",
+      "text": "New best!",
+      "speed": 1.02,
+      "duration_seconds": 0.8779,
+      "peak_dbfs": -3.71,
+      "wav_sha256": "17a73da2c0a9ad11cf1b96d04d200c511bfe1f20a301c8f93b3e2ff18ae8647b"
+    },
+    {
+      "style": "warm",
+      "voice": "am_puck",
+      "id": "good",
+      "text": "Good!",
+      "speed": 1.0,
+      "duration_seconds": 0.7012,
+      "peak_dbfs": -4.11,
+      "wav_sha256": "eb1321d59b5707500e3f62a905de7c410c5b51e9a7986b7904625b50811d3a8e"
+    },
+    {
+      "style": "warm",
+      "voice": "am_puck",
+      "id": "great",
+      "text": "Great!",
+      "speed": 1.0,
+      "duration_seconds": 0.773,
+      "peak_dbfs": -5.08,
+      "wav_sha256": "df11f17f60f4ea12165c36dcfd3e56334089a52dc7f3a78859befd165e0c7bcc"
+    },
+    {
+      "style": "warm",
+      "voice": "am_puck",
+      "id": "combo",
+      "text": "Combo!",
+      "speed": 1.04,
+      "duration_seconds": 0.8578,
+      "peak_dbfs": -3.37,
+      "wav_sha256": "2d0c31065fd677b15cb479d752d2b0dbc3cbdea4f5342c02de5bf9360b387bb5"
+    },
+    {
+      "style": "warm",
+      "voice": "am_puck",
+      "id": "amazing",
+      "text": "Amazing!",
+      "speed": 0.98,
+      "duration_seconds": 0.952,
+      "peak_dbfs": -4.57,
+      "wav_sha256": "2f4b852e18c868c14b678c03f1e143c73cf4f6ab48dc13eeb9713c1a1ca44fb0"
+    },
+    {
+      "style": "warm",
+      "voice": "am_puck",
+      "id": "incredible",
+      "text": "Incredible!",
+      "speed": 1.03,
+      "duration_seconds": 0.9748,
+      "peak_dbfs": -3.3,
+      "wav_sha256": "cc352c561e32efcf4d7425bc88d78a42245e6d6e749d9eb6dd60b0e1e90d1a6b"
+    },
+    {
+      "style": "warm",
+      "voice": "am_puck",
+      "id": "new-best",
+      "text": "New best!",
+      "speed": 1.02,
+      "duration_seconds": 0.8657,
+      "peak_dbfs": -3.44,
+      "wav_sha256": "064862ee169cefdfc018239e6513b7f898327a97b6645f60da3769f392e32b7d"
+    }
+  ]
+}

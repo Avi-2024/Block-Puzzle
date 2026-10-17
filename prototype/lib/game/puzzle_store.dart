@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../audio/audio_settings.dart';
 import 'puzzle.dart';
 
 class PuzzleStore {
@@ -9,6 +12,30 @@ class PuzzleStore {
   static const sessionKey = 'puzzle.prototype.session.v1';
   static const bestKey = 'puzzle.prototype.best';
   Future<void> _writes = Future<void>.value();
+  Future<void> _audioWrites = Future<void>.value();
+  static const audioKey = 'puzzle.prototype.audio.v1';
+
+  AudioSettings get audio {
+    try {
+      final raw = preferences.get(audioKey);
+      return raw is String
+          ? AudioSettings.decode(jsonDecode(raw))
+          : const AudioSettings();
+    } on FormatException {
+      return const AudioSettings();
+    }
+  }
+
+  Future<void> setAudio(AudioSettings settings) {
+    final encoded = jsonEncode(settings.toJson());
+    _audioWrites = _audioWrites.catchError((Object _) {}).then((_) async {
+      if (!await preferences.setString(audioKey, encoded)) {
+        throw StateError('Sound settings could not be saved');
+      }
+    });
+    return _audioWrites;
+  }
+
   PuzzleState load(PuzzleEngine engine) {
     final best = preferences.getInt(bestKey) ?? 0;
     try {

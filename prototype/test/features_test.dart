@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,11 +8,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:puzzle_prototype/game/puzzle.dart';
 import 'package:puzzle_prototype/game/puzzle_store.dart';
 import 'package:puzzle_prototype/main.dart';
+import 'package:puzzle_prototype/audio/audio_settings.dart';
+import 'package:puzzle_prototype/audio/game_audio.dart';
 import 'package:puzzle_prototype/ui/puzzle_theme.dart';
 import 'package:puzzle_prototype/ui/puzzle_painters.dart';
 import 'package:puzzle_prototype/ui/result_screen.dart';
 import 'package:puzzle_prototype/ui/tutorial_screen.dart';
+
 import 'game_screen_test.dart' show capture;
+import 'audio_test.dart' show FakeAudioOutput;
 
 PuzzleState finished({bool record = true}) => PuzzleState(
   board: List<int>.filled(64, 0),
@@ -57,6 +62,85 @@ void main() {
     expect(scoreShareText(finished()), contains('42'));
     expect(scoreShareText(finished(record: false)), contains('10,000'));
   });
+  for (final size in [const Size(320, 568), const Size(393, 852)]) {
+    for (final palette in PuzzlePalette.values) {
+      testWidgets(
+        'saved sound mix and voice previews fit ${palette.id} $size',
+        (tester) async {
+          phone(tester, size);
+          SharedPreferences.setMockInitialValues({
+            'puzzle.prototype.theme': palette.id,
+            'puzzle.prototype.tutorial': true,
+          });
+          final store = PuzzleStore(await SharedPreferences.getInstance());
+          await store.save(reviewScene());
+          final saved = store.preferences.getString(PuzzleStore.sessionKey);
+          final output = FakeAudioOutput(), key = GlobalKey();
+          await tester.pumpWidget(
+            RepaintBoundary(
+              key: key,
+              child: PuzzleApp(
+                engine: PuzzleEngine(),
+                initialState: store.load(PuzzleEngine()),
+                store: store,
+                audioOutput: output,
+                showBrandSplash: false,
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Settings'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Sound & voice'));
+          await tester.pumpAndSettle();
+          expect(find.byType(Slider), findsNWidgets(3));
+          expect(tester.takeException(), isNull);
+          await capture(
+            tester,
+            key,
+            'magic-blocks-audio-${palette.id}-${size.width.toInt()}',
+          );
+          await tester.tap(find.byKey(const ValueKey('mute-music')));
+          await tester.pumpAndSettle();
+          expect(output.playing, isFalse);
+          expect(store.audio.musicMuted, isTrue);
+          expect(store.audio.effectsMuted, isFalse);
+          expect(store.audio.voiceMuted, isFalse);
+          await tester.ensureVisible(find.text('Warm'));
+          await tester.tap(find.text('Warm'));
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(find.text('Amazing'));
+          await tester.tap(find.text('Amazing'));
+          await tester.pump();
+          expect(output.words.last, (VoiceStyle.warm, Callout.amazing));
+          output.completeSpeech();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(store.audio.style, VoiceStyle.warm);
+          final voiceSlider = find.byKey(const ValueKey('volume-voice'));
+          await tester.ensureVisible(voiceSlider);
+          final sliderRect = tester.getRect(voiceSlider);
+          await tester.tapAt(
+            sliderRect.centerLeft + Offset(sliderRect.width * .5, 0),
+          );
+          await tester.pumpAndSettle();
+          expect(store.audio.voice, closeTo(.5, .05));
+          output.completeSpeech();
+          await tester.ensureVisible(find.byTooltip('Close sound settings'));
+          await tester.tap(find.byTooltip('Close sound settings'));
+          await tester.pumpAndSettle();
+          expect(find.bySemanticsLabel('Score 1280'), findsOneWidget);
+          expect(store.preferences.getString(PuzzleStore.sessionKey), saved);
+          await tester.pumpWidget(const SizedBox.shrink());
+          final restored = PuzzleStore(await SharedPreferences.getInstance());
+          expect(restored.audio.style, VoiceStyle.warm);
+          expect(restored.audio.musicMuted, isTrue);
+          expect(restored.audio.voice, closeTo(.5, .05));
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
   for (final size in [const Size(320, 568), const Size(393, 852)]) {
     for (final p in PuzzlePalette.values) {
       testWidgets('result, theme choices and restart fit ${p.id} $size', (
@@ -132,6 +216,7 @@ void main() {
       Future<void> settings() async {
         await tester.tap(find.byTooltip('Settings'));
         await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Themes'));
         await tester.tap(find.text('Themes'));
         await tester.pumpAndSettle();
       }
@@ -237,6 +322,7 @@ void main() {
       expect(find.bySemanticsLabel('Score 1280'), findsOneWidget);
       await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('How to play'));
       await tester.tap(find.text('How to play'));
       await tester.pumpAndSettle();
       expect(find.text('A few good moves'), findsOneWidget);

@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../audio/audio_settings.dart';
+import '../audio/game_audio.dart';
 import '../game/puzzle.dart';
 import '../game/puzzle_store.dart';
 import 'puzzle_painters.dart';
 import 'puzzle_theme.dart';
 import 'result_screen.dart';
+import 'sound_sheet.dart';
 import 'theme_screen.dart';
 import 'tutorial_screen.dart';
 
@@ -18,11 +23,13 @@ class GameScreen extends StatefulWidget {
     required this.initialState,
     this.store,
     this.autoPlay = false,
+    this.audioOutput,
   });
   final PuzzleEngine engine;
   final PuzzleState initialState;
   final PuzzleStore? store;
   final bool autoPlay;
+  final GameAudioOutput? audioOutput;
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
@@ -30,6 +37,7 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late PuzzleState _state;
+  late final GameAudio _audio;
   late final AnimationController _fx, _flight, _refill;
   final _boardKey = GlobalKey(), _rootKey = GlobalKey();
   final _slotKeys = List.generate(3, (_) => GlobalKey());
@@ -60,6 +68,15 @@ class _GameScreenState extends State<GameScreen>
     _shownFrom = _state.score;
     _haptics = widget.store?.haptics ?? true;
     _reduce = widget.store?.reduceMotion ?? false;
+    _active =
+        WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    _audio = GameAudio(
+      output: widget.audioOutput ?? GameAudioOutput(),
+      settings: widget.store?.audio ?? const AudioSettings(),
+      save: widget.store?.setAudio,
+    );
+    unawaited(_audio.start(active: _active));
     _fx = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1750),
@@ -103,12 +120,14 @@ class _GameScreenState extends State<GameScreen>
     _fx.dispose();
     _flight.dispose();
     _refill.dispose();
+    _audio.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _active = state == AppLifecycleState.resumed;
+    _audio.setActive(_active);
     if (!_active) {
       _settleTimer?.cancel();
       _outcomeTimer?.cancel();
@@ -169,6 +188,7 @@ class _GameScreenState extends State<GameScreen>
       _previewAt(_floatingGlobal!);
     });
     if (_haptics) unawaited(HapticFeedback.selectionClick());
+    _audio.effect(GameEffect.pickup);
   }
 
   void _updateDrag(int slot, DragUpdateDetails details) {
@@ -180,6 +200,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<void> _returnPiece() async {
+    _audio.effect(GameEffect.invalid);
     final slot = _dragSlot, piece = _floatingPiece, rect = _boardRect;
     if (slot == null || piece == null || rect == null) {
       _clearDrag();
@@ -232,6 +253,7 @@ class _GameScreenState extends State<GameScreen>
 
   void _select(int slot) {
     if (!_input || _dragSlot != null || _state.tray[slot] == null) return;
+    _audio.effect(GameEffect.pickup);
     setState(() {
       _selected = _selected == slot ? null : slot;
       _status = _selected == null
@@ -248,6 +270,7 @@ class _GameScreenState extends State<GameScreen>
     final x = ((p.dx - pad) / _unit).floor(),
         y = ((p.dy - pad) / _unit).floor();
     if (!_commit(_selected!, x, y)) {
+      _audio.effect(GameEffect.invalid);
       setState(() {
         _status = 'That space is occupied';
       });
@@ -299,6 +322,7 @@ class _GameScreenState extends State<GameScreen>
           : '+${result.points} · Nice placement';
     });
     _fx.forward(from: 0);
+    _audio.move(old, result);
     if (refill) _refill.forward(from: 0);
     if (_haptics && _active) {
       unawaited(
@@ -346,6 +370,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void _resetState(PuzzleState state) {
+    _audio.cancelFeedback();
     _settleTimer?.cancel();
     _outcomeTimer?.cancel();
     _flight.stop(canceled: true);
@@ -383,6 +408,7 @@ class _GameScreenState extends State<GameScreen>
       return;
     }
     if (_state.moves > 0 && !_gameOver) {
+      _audio.cancelFeedback();
       final yes = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -464,6 +490,7 @@ class _GameScreenState extends State<GameScreen>
 
   Future<void> _settings() async {
     _clearDrag();
+    _audio.cancelFeedback();
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -486,6 +513,15 @@ class _GameScreenState extends State<GameScreen>
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.graphic_eq_rounded),
+                    title: const Text('Sound & voice'),
+                    subtitle: const Text('Music, effects and spoken rewards'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      unawaited(_soundSettings());
+                    },
                   ),
                   SwitchListTile(
                     title: const Text('Haptics'),
@@ -522,7 +558,7 @@ class _GameScreenState extends State<GameScreen>
                     subtitle: Text(_palette.name),
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      unawaited(openThemes(this.context));
+                      unawaited(_audioRoute(() => openThemes(this.context)));
                     },
                   ),
                   ListTile(
@@ -532,12 +568,14 @@ class _GameScreenState extends State<GameScreen>
                     onTap: () {
                       Navigator.pop(sheetContext);
                       unawaited(
-                        Navigator.of(this.context).push<void>(
-                          MaterialPageRoute(
-                            builder: (guideContext) => TutorialScreen(
-                              replay: true,
-                              reduceMotion: _reduced,
-                              onComplete: () => Navigator.pop(guideContext),
+                        _audioRoute(
+                          () => Navigator.of(this.context).push<void>(
+                            MaterialPageRoute(
+                              builder: (guideContext) => TutorialScreen(
+                                replay: true,
+                                reduceMotion: _reduced,
+                                onComplete: () => Navigator.pop(guideContext),
+                              ),
                             ),
                           ),
                         ),
@@ -588,6 +626,29 @@ class _GameScreenState extends State<GameScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _soundSettings() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: _palette.end,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * .92,
+      ),
+      builder: (_) => SoundSheet(audio: _audio),
+    );
+    if (mounted) _audio.cancelFeedback();
+  }
+
+  Future<void> _audioRoute(Future<void> Function() open) async {
+    _audio.setVisible(false);
+    try {
+      await open();
+    } finally {
+      if (mounted) _audio.setVisible(true);
+    }
   }
 
   Widget _mark() => const MagicBlocksMark(size: 25);

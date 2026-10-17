@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -19,9 +20,8 @@ Future<void> capture(WidgetTester tester, GlobalKey key, String name) async {
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     final directory = Directory('build/prototype-review')
       ..createSync(recursive: true);
-    File(
-      '${directory.path}/$name.png',
-    ).writeAsBytesSync(bytes!.buffer.asUint8List());
+    File('${directory.path}/$name.png')
+        .writeAsBytesSync(bytes!.buffer.asUint8List());
     image.dispose();
   });
 }
@@ -97,6 +97,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Reduce motion'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('Keep playing'));
       await tester.tap(find.text('Keep playing'));
       await tester.pumpAndSettle();
       await tester.pumpWidget(const SizedBox.shrink());
@@ -148,7 +149,9 @@ void main() {
         final unit = rect.width * 38 / 320, pad = rect.width * 8 / 320;
         await tester.tap(find.byKey(const ValueKey('piece-slot-0')));
         await tester.pump();
-        await tester.tapAt(rect.topLeft + Offset(pad + 2 * unit + 10, pad + 2 * unit + 10));
+        await tester.tapAt(
+          rect.topLeft + Offset(pad + 2 * unit + 10, pad + 2 * unit + 10),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(tester.takeException(), isNull);

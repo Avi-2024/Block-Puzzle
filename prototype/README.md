@@ -25,6 +25,16 @@ that preserves the current game; Back to game restores it.
 
 ## Included
 
+Version 0.2.6 adds the approved original Ocean Steps music loop, six synthesized
+block/clear effects and six spoken rewards in Bright and Warm voices. Open
+Settings → Sound & voice for independent saved Music / Effects / Voice sliders,
+channel mute, voice selection and individual word previews. Voice is one channel,
+record callouts only occur when crossing the round's previous best, and music
+ducks during speech. Audio pauses on background/focus loss; headset disconnect
+requires an explicit Resume audio. See [audio provenance](assets/audio/README.md).
+The existing haptics setting stays independent. Audio preferences use a separate
+versioned key; saved game state and score rules retain their format.
+
 Version 0.2.5 adds the user-requested block colour study: seven Ocean face colours
 and explicit highlight/side/shadow values sampled from the supplied APK's dark
 block palette. Only numeric colour values are used. All tile geometry, shaders,
@@ -83,7 +93,7 @@ renderer overrides. The recording is a visual review, not a device performance b
 manual `Puzzle Android Recording` workflow can reuse a capture APK by passing
 its build run ID while that artifact is retained.
 
-This is a review prototype, not a store release. Sound design, brand/name clearance,
+This is a review prototype, not a store release. Physical-device audio listening, brand/name clearance,
 production signing, monetization and physical-device performance testing remain
 release work. It makes no FPS, retention or market-performance claim.
 

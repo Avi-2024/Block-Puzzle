@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'audio/game_audio.dart';
+import 'audio/native_audio_output.dart';
 import 'game/puzzle.dart';
 import 'game/puzzle_store.dart';
 import 'ui/brand_splash.dart';
@@ -34,6 +37,7 @@ Future<void> launch({bool autoPlay = false}) async {
       store: store,
       initialState: store?.load(engine) ?? engine.fresh(),
       autoPlay: autoPlay,
+      audioOutput: NativeAudioOutput(),
     ),
   );
 }
@@ -47,6 +51,7 @@ class PuzzleApp extends StatefulWidget {
     this.autoPlay = false,
     this.showIntroduction,
     this.showBrandSplash = true,
+    this.audioOutput,
   });
   final PuzzleEngine engine;
   final PuzzleState initialState;
@@ -54,6 +59,7 @@ class PuzzleApp extends StatefulWidget {
   final bool autoPlay;
   final bool? showIntroduction;
   final bool showBrandSplash;
+  final GameAudioOutput? audioOutput;
   @override
   State<PuzzleApp> createState() => _PuzzleAppState();
 }
@@ -121,6 +127,7 @@ class _PuzzleAppState extends State<PuzzleApp> {
               initialState: widget.initialState,
               store: widget.store,
               autoPlay: widget.autoPlay,
+              audioOutput: widget.audioOutput,
             ),
     ),
   );
