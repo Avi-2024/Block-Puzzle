@@ -8,18 +8,7 @@ namespace = 'com.blockiva.puzzle_prototype'
 gradle = Path('android/app/build.gradle.kts')
 gradle_text = gradle.read_text().replace(
     f'applicationId = "{namespace}"', f'applicationId = "{application_id}"')
-# The native preferences bridge is invoked through JNI. Preserve its method
-# signatures in release builds; R8 cannot infer those calls from Dart code.
-# Observed regression: SharedPreferencesApiRegistrar.getAll NoSuchMethodError.
-if '"proguard-rules.pro"' not in gradle_text:
-    if 'release {' not in gradle_text:
-        raise RuntimeError('Android release block was not found')
-    gradle_text = gradle_text.replace('release {', '''release {
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")''', 1)
 gradle.write_text(gradle_text)
-Path('android/app/proguard-rules.pro').write_text('''# Native preference methods are resolved by JNI at runtime.
--keep class io.flutter.plugins.sharedpreferences.** { *; }
-''')
 manifest = Path('android/app/src/main/AndroidManifest.xml')
 text = manifest.read_text().replace('android:label="puzzle_prototype"', 'android:label="Magic Blocks"')
 text = text.replace('android:name=".MainActivity"', f'android:name="{namespace}.MainActivity" android:screenOrientation="portrait"')
