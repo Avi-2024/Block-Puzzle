@@ -37,6 +37,7 @@ jobs:
         run: |
           flutter pub get --enforce-lockfile
           sha256sum pubspec.lock > /tmp/puzzle-dependency-lock.sha256
+          cp pubspec.lock /tmp/puzzle-tested-pubspec.lock
       - name: Format original Dart sources
         run: |
           dart format lib test tool
@@ -64,17 +65,20 @@ jobs:
           if-no-files-found: ignore
       - name: Generate isolated Android preview app
         run: |
+          sha256sum --check /tmp/puzzle-dependency-lock.sha256 || { diff -u /tmp/puzzle-tested-pubspec.lock pubspec.lock; exit 1; }
           flutter create --no-pub --platforms=android --org com.blockiva --project-name puzzle_prototype .
           python3 tool/brand_android.py
+          sha256sum --check /tmp/puzzle-dependency-lock.sha256 || { diff -u /tmp/puzzle-tested-pubspec.lock pubspec.lock; exit 1; }
       - name: Build playable APK
         run: |
           flutter build apk --no-pub --release --target-platform android-arm,android-arm64,android-x64
-          sha256sum --check /tmp/puzzle-dependency-lock.sha256
           mkdir -p build/review
           cp build/app/outputs/flutter-apk/app-release.apk build/review/block-puzzle-prototype.apk
+          sha256sum --check /tmp/puzzle-dependency-lock.sha256 || { diff -u /tmp/puzzle-tested-pubspec.lock pubspec.lock; exit 1; }
           python3 tool/check_apk_abis.py build/review/block-puzzle-prototype.apk
           python3 tool/check_apk_audio.py build/review/block-puzzle-prototype.apk
       - name: Upload playable APK and dependency lock
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fresh-puzzle-playable-apk
@@ -84,7 +88,7 @@ jobs:
       - name: Build animation capture APK
         run: |
           flutter build apk --no-pub --release --target-platform android-x64 -t tool/preview_main.dart
-          sha256sum --check /tmp/puzzle-dependency-lock.sha256
+          sha256sum --check /tmp/puzzle-dependency-lock.sha256 || { diff -u /tmp/puzzle-tested-pubspec.lock pubspec.lock; exit 1; }
           cp build/app/outputs/flutter-apk/app-release.apk build/review/animation-preview.apk
       - name: Transfer capture APK to a clean runner
         uses: actions/upload-artifact@v4
