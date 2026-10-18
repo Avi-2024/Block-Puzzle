@@ -75,7 +75,6 @@ class SoundSheet extends StatelessWidget {
                         children: [
                           Icon(
                             switch (bus) {
-                              AudioBus.music => Icons.music_note_rounded,
                               AudioBus.effects => Icons.auto_awesome_rounded,
                               AudioBus.voice => Icons.record_voice_over_rounded,
                             },
@@ -175,15 +174,15 @@ class SoundSheet extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 4,
                 children: [
-                  for (final word in Callout.values)
+                  for (final word in RewardKind.values)
                     ActionChip(
                       label: Text(switch (word) {
-                        Callout.good => 'Good',
-                        Callout.great => 'Great',
-                        Callout.combo => 'Combo',
-                        Callout.amazing => 'Amazing',
-                        Callout.incredible => 'Incredible',
-                        Callout.newBest => 'New best',
+                        RewardKind.good => 'Good',
+                        RewardKind.great => 'Great',
+                        RewardKind.combo => 'Combo',
+                        RewardKind.amazing => 'Amazing',
+                        RewardKind.incredible => 'Incredible',
+                        RewardKind.newBest => 'New best',
                       }),
                       onPressed:
                           settings.gain(AudioBus.voice) > 0 && !audio.paused
@@ -194,7 +193,7 @@ class SoundSheet extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Music softens during spoken rewards. Haptics stay separate.',
+                'Female voice and block effects. Haptics stay separate.',
                 style: TextStyle(color: p.muted, fontSize: 12, height: 1.4),
               ),
             ],
@@ -205,7 +204,6 @@ class SoundSheet extends StatelessWidget {
   );
 
   String _label(AudioBus bus) => switch (bus) {
-    AudioBus.music => 'Music',
     AudioBus.effects => 'Effects',
     AudioBus.voice => 'Voice',
   };

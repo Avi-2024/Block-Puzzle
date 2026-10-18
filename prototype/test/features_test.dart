@@ -93,25 +93,24 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.text('Sound & voice'));
           await tester.pumpAndSettle();
-          expect(find.byType(Slider), findsNWidgets(3));
+          expect(find.byType(Slider), findsNWidgets(2));
           expect(tester.takeException(), isNull);
           await capture(
             tester,
             key,
             'magic-blocks-audio-${palette.id}-${size.width.toInt()}',
           );
-          await tester.tap(find.byKey(const ValueKey('mute-music')));
+          await tester.tap(find.byKey(const ValueKey('mute-effects')));
           await tester.pumpAndSettle();
-          expect(output.playing, isFalse);
-          expect(store.audio.musicMuted, isTrue);
-          expect(store.audio.effectsMuted, isFalse);
+          expect(find.text('Music'), findsNothing);
+          expect(store.audio.effectsMuted, isTrue);
           expect(store.audio.voiceMuted, isFalse);
           expect(find.byType(SegmentedButton<VoiceStyle>), findsNothing);
           expect(find.text('Bright female voice'), findsOneWidget);
           await tester.ensureVisible(find.text('Amazing'));
           await tester.tap(find.text('Amazing'));
           await tester.pump(const Duration(milliseconds: 20));
-          expect(output.words.last, (VoiceStyle.bright, Callout.amazing));
+          expect(output.words.last, (VoiceStyle.bright, RewardKind.amazing));
           output.completeSpeech();
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 300));
@@ -133,7 +132,7 @@ void main() {
           await tester.pumpWidget(const SizedBox.shrink());
           final restored = PuzzleStore(await SharedPreferences.getInstance());
           expect(restored.audio.style, VoiceStyle.bright);
-          expect(restored.audio.musicMuted, isTrue);
+          expect(restored.audio.effectsMuted, isTrue);
           expect(restored.audio.voice, closeTo(.5, .05));
           expect(tester.takeException(), isNull);
         },

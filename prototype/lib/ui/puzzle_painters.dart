@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../game/puzzle.dart';
+import '../game/move_feedback.dart';
 import 'puzzle_theme.dart';
 
 // Original unit-space bevel geometry. Reuse paths and shaders while dragging.
@@ -156,45 +157,24 @@ class RewardStyle {
   final double fontSize;
   final int duration;
   static RewardStyle forMove(PuzzleMove move) {
-    final chain = move.state.combo;
-    if (chain <= 1) {
-      return const RewardStyle(
-        'NICE!',
-        'CLEAN MOVE',
-        Color(0xFFEDFFF6),
-        Color(0xFF81DBB8),
-        30,
-        820,
-      );
-    }
-    if (chain == 2) {
-      return const RewardStyle(
-        'COMBO ×2',
-        'KEEP IT GOING',
-        Color(0xFFEAFFFA),
-        Color(0xFF5CDBBC),
-        34,
-        1040,
-      );
-    }
-    if (chain == 3) {
-      return const RewardStyle(
-        'AMAZING!',
-        'COMBO ×3',
-        Color(0xFFFFF4BD),
-        Color(0xFFFFC34F),
-        37,
-        1140,
-      );
-    }
-    return RewardStyle(
-      chain >= 6 ? 'MAGIC STREAK!' : 'UNSTOPPABLE!',
-      'COMBO ×$chain${move.allClear ? ' · ALL CLEAR' : ''}',
-      const Color(0xFFFFF3B4),
-      const Color(0xFFFF977D),
-      29,
-      1240,
-    );
+    final reward = rewardForMove(move) ?? RewardKind.good;
+    final caption = move.state.combo > 1
+        ? 'COMBO ×${move.state.combo}${move.allClear ? ' · ALL CLEAR' : ''}'
+        : move.lines > 1 ? '${move.lines} LINES CLEARED' : 'CLEAN MOVE';
+    return switch (reward) {
+      RewardKind.good => RewardStyle('GOOD!', caption,
+        const Color(0xFFE6FFF7), const Color(0xFF48E3AC), 32, 900),
+      RewardKind.great => RewardStyle('GREAT!', caption,
+        const Color(0xFFE4FAFF), const Color(0xFF51CFFF), 34, 980),
+      RewardKind.combo => RewardStyle('COMBO ×${move.state.combo}', 'KEEP IT GOING',
+        const Color(0xFFF5F0FF), const Color(0xFFB693FF), 34, 1040),
+      RewardKind.amazing => RewardStyle('AMAZING!', caption,
+        const Color(0xFFFFF6C5), const Color(0xFFFFC54D), 37, 1140),
+      RewardKind.incredible => RewardStyle('INCREDIBLE!', caption,
+        const Color(0xFFFFEEF9), const Color(0xFFFF75B6), 33, 1240),
+      RewardKind.newBest => const RewardStyle('NEW BEST!', 'PERSONAL RECORD',
+        Color(0xFFFFF4BE), Color(0xFFFFB844), 35, 1400),
+    };
   }
 }
 
@@ -220,6 +200,11 @@ class PuzzleBoardPainter extends CustomPainter {
   final int ghostX;
   final int ghostY;
   _RewardText? _rewardText;
+  late final ClearFeedback _hover = ghost == null
+      ? const ClearFeedback()
+      : ClearFeedback.preview(board, ghost!, ghostX, ghostY);
+  late final ClearFeedback _clear = move == null
+      ? const ClearFeedback() : ClearFeedback.forMove(move!);
   double get elapsed => animation.value * 1750;
   @override
   void paint(Canvas canvas, Size size) {
@@ -242,12 +227,9 @@ class PuzzleBoardPainter extends CustomPainter {
       );
     }
     final effect = move;
-    final visible =
-        effect != null &&
-            effect.lines > 0 &&
-            elapsed < (reduceMotion ? 100 : 420)
-        ? effect.beforeClear
-        : board;
+    final clearing = effect != null && effect.lines > 0 &&
+        elapsed < (reduceMotion ? 100 : 420);
+    final visible = clearing ? effect.beforeClear : board;
     for (var i = 0; i < 64; i++) {
       final x = 8.0 + i % 8 * 38, y = 8.0 + i ~/ 8 * 38;
       final rect = Rect.fromLTWH(x, y, 34, 34);
@@ -255,11 +237,16 @@ class PuzzleBoardPainter extends CustomPainter {
         RRect.fromRectAndRadius(rect, Radius.circular(refinedFrame ? 3 : 4)),
         Paint()..color = palette.cell,
       );
-      final color = visible[i];
+      // Only the rendered clear projection changes colour; stored cells retain
+      // their original material until the engine removes the completed lines.
+      final originalColor = visible[i];
+      final color = !_hover.isEmpty
+          ? _hover.colorAt(i, originalColor)
+          : clearing ? _clear.colorAt(i, originalColor) : originalColor;
       if (color < 0) continue;
       var opacity = 1.0, scale = 1.0;
       if (!reduceMotion && effect != null) {
-        if (effect.cleared.contains(i)) {
+        if (clearing && effect.cleared.contains(i)) {
           final axis = effect.rows.contains(i ~/ 8) ? i % 8 : i ~/ 8;
           final t = _clamp((elapsed - axis * 15 - 75) / 210);
           opacity = 1 - t;
@@ -277,6 +264,7 @@ class PuzzleBoardPainter extends CustomPainter {
         palette: palette,
       );
     }
+    if (!_hover.isEmpty) _lineGlow(canvas, _hover, .75);
     if (ghost case final piece?) {
       for (final c in piece.cells) {
         final rect = Rect.fromLTWH(
@@ -285,7 +273,9 @@ class PuzzleBoardPainter extends CustomPainter {
           34,
           34,
         );
-        paintTile(canvas, rect, piece.color, opacity: .32, palette: palette);
+        final inClear = _hover.cells.contains((ghostY + c.y) * 8 + ghostX + c.x);
+        paintTile(canvas, rect, piece.color,
+            opacity: inClear ? .92 : .32, palette: palette);
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect.deflate(.5), const Radius.circular(4)),
           Paint()
@@ -295,22 +285,84 @@ class PuzzleBoardPainter extends CustomPainter {
         );
       }
     }
-    if (effect != null && effect.lines > 0) {
-      if (!reduceMotion) _clearFx(canvas, effect);
-      _reward(canvas, effect);
+    if (effect != null) {
+      if (effect.lines > 0 && !reduceMotion) _clearFx(canvas, effect);
+      if (rewardForMove(effect) != null) _reward(canvas, effect);
     }
     canvas.restore();
   }
 
+  void _lineGlow(Canvas canvas, ClearFeedback feedback, double opacity) {
+    final color = feedback.color;
+    if (color == null) return;
+    final hue = palette.colors[color], light = palette.tileLight(color);
+    for (final rect in [
+      for (final row in feedback.rows) Rect.fromLTWH(7, 7 + row * 38.0, 306, 36),
+      for (final column in feedback.columns) Rect.fromLTWH(7 + column * 38.0, 7, 36, 306),
+    ]) {
+      final shape = RRect.fromRectAndRadius(rect, const Radius.circular(3));
+      canvas.drawRRect(shape, Paint()
+        ..color = hue.withValues(alpha: .18 * opacity)
+        ..style = PaintingStyle.stroke ..strokeWidth = 7);
+      canvas.drawRRect(shape, Paint()
+        ..color = light.withValues(alpha: opacity)
+        ..style = PaintingStyle.stroke ..strokeWidth = 1.5);
+    }
+  }
+
+  void _rewardSparks(Canvas canvas, double ms, RewardStyle cfg, PuzzleMove effect) {
+    const rainbow = [Color(0xFF59E7FF), Color(0xFFFF78C8), Color(0xFFFFD66B),
+      Color(0xFF8CFFBD), Color(0xFFB99AFF), Color(0xFFFFA06B)];
+    final kind = rewardForMove(effect);
+    final count = kind == RewardKind.good ? 18 : 28;
+    const center = Offset(160, 56);
+    final line = Paint()..strokeCap = StrokeCap.round;
+    for (var i = 0; i < count; i++) {
+      final t = (ms - (i % 4) * 18) / 680;
+      if (t < 0 || t >= 1) continue;
+      final alpha = _clamp(t * 10) * math.pow(1 - t, .8).toDouble();
+      final angle = i * math.pi * 2 / count + .13;
+      final direction = Offset(math.cos(angle), math.sin(angle) * .48);
+      final radius = 35 + _ease(t) * (78 + (i % 3) * 7);
+      final length = (18 + (i % 5) * 6) * (1 - t * .65);
+      final head = center + direction * radius;
+      final tail = center + direction * (radius - length);
+      final hue = rainbow[i % rainbow.length];
+      final color = palette.light ? Color.lerp(hue, Colors.black, .20)! : hue;
+      canvas.drawLine(tail, head, line
+        ..shader = null ..strokeWidth = 6.0 + i % 3
+        ..color = color.withValues(alpha: alpha * .16));
+      canvas.drawLine(tail, head, line
+        ..strokeWidth = 1.3 + (i % 3) * .4
+        ..shader = ui.Gradient.linear(tail, head,
+          [color.withValues(alpha: 0), color.withValues(alpha: alpha),
+           Colors.white.withValues(alpha: alpha * .9)], const [0, .72, 1]));
+      if (i % 3 == 0) {
+        _spark(canvas, head, 2.1 + (i % 4) * .45,
+          hue.withValues(alpha: alpha), angle + t);
+      }
+    }
+    final t = _clamp(ms / 440);
+    if (t < 1) {
+      canvas.drawOval(Rect.fromCenter(center: center,
+        width: 64 + 170 * _ease(t), height: 18 + 46 * _ease(t)),
+        Paint()..color = cfg.light.withValues(alpha: (1 - t) * .35)
+          ..style = PaintingStyle.stroke ..strokeWidth = 1.2);
+    }
+  }
+
   void _clearFx(Canvas canvas, PuzzleMove effect) {
     final reward = RewardStyle.forMove(effect);
+    final color = _clear.color ?? 0;
+    final light = palette.tileLight(color);
+    if (elapsed < 340) _lineGlow(canvas, _clear, (1 - elapsed / 340) * .85);
     if (elapsed < 420) {
       final x = -50 + _clamp(elapsed / 340) * 430;
       final paint = Paint()
         ..shader = LinearGradient(
           colors: [
             Colors.transparent,
-            const Color(0xADFFF7D3),
+            light.withValues(alpha: .85),
             Colors.transparent,
           ],
           stops: const [0, .65, 1],
@@ -359,7 +411,7 @@ class PuzzleBoardPainter extends CustomPainter {
         final alpha = math.pow(1 - t, 1.25).toDouble() * .9;
         final color = i % 3 == 0
             ? reward.light
-            : palette.tileLight(effect.beforeClear[cell]);
+            : light;
         if (i % 5 == 0) {
           _spark(
             canvas,
@@ -458,33 +510,7 @@ class PuzzleBoardPainter extends CustomPainter {
           ],
         ).createShader(const Rect.fromLTWH(35, -45, 250, 250)),
     );
-    if (!reduceMotion && effect.state.combo > 1) {
-      final wave = _clamp(ms / 450);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: const Offset(160, 72),
-          width: 66 + 166 * _ease(wave),
-          height: 22 + 56 * _ease(wave),
-        ),
-        Paint()
-          ..color = cfg.dark.withValues(alpha: (1 - wave) * .32)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
-      );
-      for (var i = 0; i < math.min(effect.state.combo, 4) * 4; i++) {
-        final a = i * 2.399,
-            d = 40 + _ease(_clamp(ms / 440)) * (30 + (i % 3) * 12),
-            life =
-                _clamp((ms - i * 12) / 110) * _clamp((790 - ms + i * 12) / 250);
-        _spark(
-          canvas,
-          Offset(160 + math.cos(a) * d * 1.35, 72 + math.sin(a) * d * .64),
-          2 + (i % 3) * 1.1,
-          cfg.light.withValues(alpha: life * .85),
-          a + ms * .001,
-        );
-      }
-    }
+    if (!reduceMotion) _rewardSparks(canvas, ms, cfg, effect);
     canvas.translate(
       160,
       reduceMotion ? 66 : 66 + 9 * (1 - _ease(enter)) - 16 * _ease(exit),

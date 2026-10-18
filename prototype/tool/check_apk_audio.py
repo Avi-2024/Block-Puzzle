@@ -12,14 +12,16 @@ def check(path):
         actual = {name for name in apk.namelist() if name.startswith(prefix + 'voice/')}
         if actual != expected:
             raise ValueError(f'Female voice assets differ: missing {expected - actual}, extra {actual - expected}')
-        for name in expected | {prefix + 'music/ocean-steps.ogg'}:
+        if any(name.startswith(prefix + 'music/') for name in apk.namelist()):
+            raise ValueError('Background music must not be packaged')
+        for name in expected:
             if not apk.read(name).startswith(b'OggS'):
                 raise ValueError(f'Invalid bundled audio: {name}')
         for effect in ('pickup', 'place', 'invalid', 'clear', 'combo', 'record'):
             name = prefix + 'effects/' + effect + '.wav'
             if not apk.read(name).startswith(b'RIFF'):
                 raise ValueError(f'Invalid bundled effect: {name}')
-    print(f'{Path(path).name}: six female voice clips, music and six effects verified')
+    print(f'{Path(path).name}: six female voice clips and six effects verified; no background music')
 
 
 if __name__ == '__main__':

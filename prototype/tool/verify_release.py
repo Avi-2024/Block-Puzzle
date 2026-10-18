@@ -100,9 +100,11 @@ try:
     capture('playable-board')
     tap('Settings')
     tap('Sound & voice')
-    wait_for('Music')
+    wait_for('Effects')
+    if 'Music' in labels(nodes()):
+        raise AssertionError('Removed music control is still visible')
     capture('sound-controls')
-    tap('Mute music')
+    tap('Mute effects')
     wait_for('Bright female voice')
     tap('Amazing')
     time.sleep(1.2)
@@ -125,7 +127,7 @@ try:
     wait_for('Midnight')
     capture('persisted-theme')
     tap('Sound & voice')
-    wait_for('Unmute music')
+    wait_for('Unmute effects')
     wait_for('Bright female voice')
     capture('persisted-sound')
     adb('shell', 'input', 'keyevent', '4')
@@ -137,7 +139,7 @@ try:
     logs = adb('logcat', '-d').decode(errors='replace')
     if any(marker in logs for marker in ('FATAL EXCEPTION', '[ERROR:flutter/runtime', 'Fatal signal', 'Game audio unavailable:', 'AudioPlayerException', 'Local progress storage unavailable:', 'NoSuchMethodError')):
         raise AssertionError('Release startup smoke test recorded a runtime failure')
-    metadata['checks'] = ['fresh launcher start', 'first-play guide', 'skip to playable board', 'theme apply', 'cold relaunch', 'preference restore', 'sound controls', 'native voice preview', 'saved music mute and female voice', 'background resume']
+    metadata['checks'] = ['fresh launcher start', 'first-play guide', 'skip to playable board', 'theme apply', 'cold relaunch', 'preference restore', 'sound controls', 'native voice preview', 'saved effects mute and female voice', 'background resume']
     metadata['android_api'] = adb('shell', 'getprop', 'ro.build.version.sdk').decode().strip()
     (out / 'verification.json').write_text(json.dumps(metadata, indent=2))
 finally:

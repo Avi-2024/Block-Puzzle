@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import '../audio/audio_settings.dart';
 import '../audio/game_audio.dart';
 import '../game/puzzle.dart';
+import '../game/feedback_review.dart';
+import '../game/move_feedback.dart';
 import '../game/puzzle_store.dart';
 import 'puzzle_painters.dart';
 import 'puzzle_theme.dart';
@@ -106,7 +108,7 @@ class _GameScreenState extends State<GameScreen>
     if (widget.autoPlay) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Future<void>.delayed(const Duration(seconds: 3));
-        if (mounted && _active) unawaited(_playDemo());
+        if (mounted && _active) unawaited(_playFeedbackReview());
       });
     }
   }
@@ -309,7 +311,7 @@ class _GameScreenState extends State<GameScreen>
       _shownFrom = old.score;
       _state = result!.state;
       _move = result;
-      _newBest = _state.score > old.best;
+      _newBest = rewardForMove(result) == RewardKind.newBest;
       _busy = result.lines > 0;
       _selected = null;
       _dragSlot = null;
@@ -317,7 +319,7 @@ class _GameScreenState extends State<GameScreen>
       _floatingPiece = null;
       _ghostX = null;
       _ghostY = null;
-      _status = result.lines > 0
+      _status = rewardForMove(result) != null
           ? '${RewardStyle.forMove(result).title} · +${result.points}'
           : '+${result.points} · Nice placement';
     });
@@ -488,6 +490,24 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
+  Future<void> _playFeedbackReview() async {
+    if (_demoPlaying) return;
+    _savedPlayState = _state;
+    _demo = true;
+    _demoPlaying = true;
+    final token = ++_demoToken;
+    for (final scene in feedbackReviews) {
+      _resetState(scene.state);
+      if (!await _pause(500, token)) return;
+      if (!await _demoPlacement(0, scene.x, scene.y, token)) return;
+      if (!await _pause(1700, token)) return;
+    }
+    setState(() {
+      _demoPlaying = false;
+      _status = 'Feedback preview complete · New best';
+    });
+  }
+
   Future<void> _settings() async {
     _clearDrag();
     _audio.cancelFeedback();
@@ -517,7 +537,7 @@ class _GameScreenState extends State<GameScreen>
                   ListTile(
                     leading: const Icon(Icons.graphic_eq_rounded),
                     title: const Text('Sound & voice'),
-                    subtitle: const Text('Music, effects and spoken rewards'),
+                    subtitle: const Text('Block effects and female voice'),
                     onTap: () {
                       Navigator.pop(sheetContext);
                       unawaited(_soundSettings());

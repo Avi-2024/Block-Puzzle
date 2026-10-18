@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../game/puzzle.dart';
+import '../game/move_feedback.dart';
 import 'audio_settings.dart';
 
-enum GameEffect { pickup, place, invalid, clear, combo, record }
+export '../game/move_feedback.dart' show RewardKind;
 
-enum Callout { good, great, combo, amazing, incredible, newBest }
+enum GameEffect { pickup, place, invalid, clear, combo, record }
 
 enum AudioSignal { interrupted, resumed }
 
@@ -17,11 +18,10 @@ class GameAudioOutput {
   Stream<AudioSignal> get signals => const Stream.empty();
   Future<void> initialize() async {}
   Future<bool> focus(bool active) async => active;
-  Future<void> music(bool playing, double volume) async {}
   Future<void> effect(GameEffect effect, double volume) async {}
 
   /// Completes when speech finishes or is cancelled, not when it starts.
-  Future<void> speak(VoiceStyle style, Callout callout, double volume) async {}
+  Future<void> speak(VoiceStyle style, RewardKind callout, double volume) async {}
   Future<void> voiceVolume(double volume) async {}
   Future<void> effectsVolume(double volume) async {}
   Future<void> stopVoice() async {}
@@ -97,7 +97,6 @@ class GameAudio extends ChangeNotifier {
     final token = ++_focusToken;
     if (!_wanted) {
       _focused = false;
-      _run(() => output.music(false, 0));
     }
     if (!_ready || _disposed) return;
     // Keep the existing focus request during a temporary interruption so the
@@ -117,17 +116,9 @@ class GameAudio extends ChangeNotifier {
             _interrupted = true;
             _notify();
           }
-          _syncMusic();
         })
         .catchError((Object e) => _report(e));
   }
-
-  void _syncMusic() => _run(
-    () => output.music(
-      _canPlay && settings.gain(AudioBus.music) > 0,
-      settings.gain(AudioBus.music) * (_speaking ? .5 : 1),
-    ),
-  );
 
   void update(AudioSettings value) {
     if (_disposed) return;
@@ -140,7 +131,6 @@ class GameAudio extends ChangeNotifier {
     _run(() => output.effectsVolume(value.gain(AudioBus.effects)));
     if (value.gain(AudioBus.effects) == 0) _run(output.stopEffects);
     if (old.audible != value.audible) _reconcileFocus();
-    _syncMusic();
     _notify();
     final token = ++_saveToken;
     if (save != null) {
@@ -172,10 +162,8 @@ class GameAudio extends ChangeNotifier {
   /// startingBest is persisted with the round. Crossing it exactly once avoids
   /// repeating "New best" on every move, even after an app restart or demo.
   void move(PuzzleState before, PuzzleMove move) {
-    final record =
-        before.startingBest > 0 &&
-        before.score <= before.startingBest &&
-        move.state.score > before.startingBest;
+    final reward = rewardForMove(move, previousScore: before.score);
+    final record = reward == RewardKind.newBest;
     effect(
       record
           ? GameEffect.record
@@ -185,23 +173,14 @@ class GameAudio extends ChangeNotifier {
           ? GameEffect.combo
           : GameEffect.clear,
     );
-    if (record) {
-      _say(Callout.newBest, priority: true);
-    } else if (move.lines > 0) {
-      _say(switch (move.state.combo) {
-        <= 1 => move.lines > 1 ? Callout.great : Callout.good,
-        2 => Callout.combo,
-        3 => Callout.amazing,
-        _ => Callout.incredible,
-      });
-    }
+    if (reward != null) _say(reward, priority: record);
   }
 
-  void previewVoice([Callout callout = Callout.amazing]) =>
+  void previewVoice([RewardKind callout = RewardKind.amazing]) =>
       _say(callout, priority: true, delay: Duration.zero);
 
   void _say(
-    Callout callout, {
+    RewardKind callout, {
     bool priority = false,
     Duration delay = const Duration(milliseconds: 160),
   }) {
@@ -212,7 +191,6 @@ class GameAudio extends ChangeNotifier {
     _voiceDelay = Timer(delay, () async {
       if (!_canPlay || token != _voiceToken) return;
       _speaking = true;
-      _syncMusic();
       _notify();
       try {
         await output.speak(
@@ -226,7 +204,6 @@ class GameAudio extends ChangeNotifier {
         if (!_disposed && token == _voiceToken) {
           _speaking = false;
           _cooldown = Timer(const Duration(milliseconds: 250), () {});
-          _syncMusic();
           _notify();
         }
       }
@@ -239,7 +216,6 @@ class GameAudio extends ChangeNotifier {
     _cooldown?.cancel();
     _speaking = false;
     _run(output.stopVoice);
-    _syncMusic();
   }
 
   void cancelFeedback() {
