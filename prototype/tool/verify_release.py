@@ -103,7 +103,7 @@ try:
     wait_for('Music')
     capture('sound-controls')
     tap('Mute music')
-    tap('Warm')
+    wait_for('Bright female voice')
     tap('Amazing')
     time.sleep(1.2)
     # Record native decoder/player diagnostics; emulator capture has no speakers.
@@ -126,12 +126,8 @@ try:
     capture('persisted-theme')
     tap('Sound & voice')
     wait_for('Unmute music')
-    current = wait_for('Warm')
+    wait_for('Bright female voice')
     capture('persisted-sound')
-    # Check selection using Android accessibility state, not a hardcoded label.
-    warm = [n for n in current if 'Warm' in (n.get('text', '') + '\n' + n.get('content-desc', '')).splitlines()]
-    if not any(n.get('checked') == 'true' or n.get('selected') == 'true' for n in warm):
-        raise AssertionError('Voice style did not persist after cold relaunch')
     adb('shell', 'input', 'keyevent', '4')
     adb('shell', 'input', 'keyevent', '3')
     time.sleep(1)
@@ -139,9 +135,9 @@ try:
     wait_for('Find your next move')
     adb('shell', 'pidof', PACKAGE)
     logs = adb('logcat', '-d').decode(errors='replace')
-    if any(marker in logs for marker in ('FATAL EXCEPTION', '[ERROR:flutter/runtime', 'Fatal signal', 'Game audio unavailable:', 'AudioPlayerException')):
+    if any(marker in logs for marker in ('FATAL EXCEPTION', '[ERROR:flutter/runtime', 'Fatal signal', 'Game audio unavailable:', 'AudioPlayerException', 'Local progress storage unavailable:', 'NoSuchMethodError')):
         raise AssertionError('Release startup smoke test recorded a runtime failure')
-    metadata['checks'] = ['fresh launcher start', 'first-play guide', 'skip to playable board', 'theme apply', 'cold relaunch', 'preference restore', 'sound controls', 'native voice preview', 'saved music mute and voice style', 'background resume']
+    metadata['checks'] = ['fresh launcher start', 'first-play guide', 'skip to playable board', 'theme apply', 'cold relaunch', 'preference restore', 'sound controls', 'native voice preview', 'saved music mute and female voice', 'background resume']
     metadata['android_api'] = adb('shell', 'getprop', 'ro.build.version.sdk').decode().strip()
     (out / 'verification.json').write_text(json.dumps(metadata, indent=2))
 finally:

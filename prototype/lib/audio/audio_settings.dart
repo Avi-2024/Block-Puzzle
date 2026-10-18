@@ -1,6 +1,7 @@
 enum AudioBus { music, effects, voice }
 
-enum VoiceStyle { bright, warm }
+// The approved female voice is the only runtime voice.
+enum VoiceStyle { bright }
 
 /// Volume is remembered independently of mute, so unmuting restores the mix.
 class AudioSettings {
@@ -77,7 +78,8 @@ class AudioSettings {
       musicMuted: value['musicMuted'] == true,
       effectsMuted: value['effectsMuted'] == true,
       voiceMuted: value['voiceMuted'] == true,
-      style: value['style'] == 'warm' ? VoiceStyle.warm : VoiceStyle.bright,
+      // Older Warm selections migrate without changing volume or mute.
+      style: VoiceStyle.bright,
     );
   }
 }

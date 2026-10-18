@@ -105,6 +105,24 @@ PuzzleMove reward({
 );
 
 void main() {
+  test('older male voice settings migrate to the female voice without losing the mix', () async {
+    SharedPreferences.setMockInitialValues({
+      PuzzleStore.audioKey: jsonEncode({
+        'style': 'warm', 'music': .2, 'effects': .4, 'voice': .6,
+        'musicMuted': true, 'voiceMuted': true,
+      }),
+    });
+    final store = PuzzleStore(await SharedPreferences.getInstance());
+    expect(VoiceStyle.values, [VoiceStyle.bright]);
+    expect(store.audio.style, VoiceStyle.bright);
+    expect(store.audio.music, .2);
+    expect(store.audio.effects, .4);
+    expect(store.audio.voice, .6);
+    expect(store.audio.musicMuted, isTrue);
+    expect(store.audio.voiceMuted, isTrue);
+    await store.setAudio(store.audio);
+    expect(jsonDecode(store.preferences.getString(PuzzleStore.audioKey)!)['style'], 'bright');
+  });
   test(
     'audio settings survive rapid writes independently of the saved game',
     () async {
@@ -119,7 +137,7 @@ void main() {
             AudioSettings(
               music: i / 20,
               voiceMuted: true,
-              style: VoiceStyle.warm,
+              style: VoiceStyle.bright,
             ),
           ),
         );
@@ -130,7 +148,7 @@ void main() {
       expect(restored.audio.effects, .65);
       expect(restored.audio.voiceMuted, isTrue);
       expect(restored.audio.voice, .85);
-      expect(restored.audio.style, VoiceStyle.warm);
+      expect(restored.audio.style, VoiceStyle.bright);
       expect(store.preferences.getString(PuzzleStore.sessionKey), savedGame);
       expect(
         restored.audio
@@ -235,7 +253,7 @@ void main() {
   );
 
   testWidgets(
-    'mute, style changes and background cancel delayed and active speech',
+    'mute and background cancel delayed and active female speech',
     (tester) async {
       final output = FakeAudioOutput();
       final audio = GameAudio(output: output);
@@ -253,12 +271,12 @@ void main() {
         audio.settings.change(
           bus: AudioBus.voice,
           muted: false,
-          style: VoiceStyle.warm,
+          style: VoiceStyle.bright,
         ),
       );
       audio.previewVoice();
       await tester.pump(const Duration(milliseconds: 20));
-      expect(output.words.last.$1, VoiceStyle.warm);
+      expect(output.words.last.$1, VoiceStyle.bright);
       audio.update(audio.settings.change(bus: AudioBus.music, volume: .6));
       await tester.pump();
       expect(output.musicGain, .3); // Changed level stays ducked during speech.

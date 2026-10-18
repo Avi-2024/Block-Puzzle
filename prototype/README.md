@@ -25,10 +25,13 @@ that preserves the current game; Back to game restores it.
 
 ## Included
 
+Version 0.2.7 keeps only the approved female voice, migrates older voice preferences
+and preserves native preference methods during Android release shrinking.
+
 Version 0.2.6 adds the approved original Ocean Steps music loop, six synthesized
-block/clear effects and six spoken rewards in Bright and Warm voices. Open
+block/clear effects and six spoken rewards in the Bright female voice. Open
 Settings → Sound & voice for independent saved Music / Effects / Voice sliders,
-channel mute, voice selection and individual word previews. Voice is one channel,
+channel mute and individual female word previews. Voice is one channel,
 record callouts only occur when crossing the round's previous best, and music
 ducks during speech. Audio pauses on background/focus loss; headset disconnect
 requires an explicit Resume audio. See [audio provenance](assets/audio/README.md).

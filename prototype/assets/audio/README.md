@@ -9,10 +9,10 @@ All runtime audio is bundled for offline use. No audio was taken from a referenc
 - `effects/*.wav`: original synthesized pickup, placement, invalid placement,
   clear, combo and record cues. Regenerate with `python3 tool/compose_game_effects.py`.
   Mono PCM16, 24 kHz, no borrowed samples.
-- `voice/{bright,warm}/*.ogg`: newly generated English stock synthetic voices.
-  Bright uses Kokoro `af_heart`; Warm uses `am_puck`. Six phrases per style:
+- `voice/bright/*.ogg`: newly generated English stock synthetic female voice.
+  Bright uses Kokoro `af_heart`. The six approved phrases are:
   Good, Great, Combo, Amazing, Incredible, New best.
-  These are stock AI voices, not exclusive human actor recordings or a clone of
+  This is a stock AI voice, not an exclusive human actor recording or a clone of
   the reference game's speaker. `voice/manifest.json` records generation settings,
   original WAV hashes, durations and peaks.
 
@@ -25,7 +25,8 @@ Wrapper: https://github.com/thewh1teagle/kokoro-onnx
 Model SHA-256: `beb0d1848dee9a49da392cc3df26958d46cfa35d321edf434f52949153f0df3a`
 Voices SHA-256: `bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d`
 
-Default mix: Music 30%, Effects 65%, Voice 85%, Bright voice. Mute is independent
+Default mix: Music 30%, Effects 65%, Voice 85%, Bright female voice. No male recordings are packaged. Older Warm preferences
+migrate to Bright while retaining volumes and mute settings. Mute is independent
 of each saved slider level. Speech ducks music by 6 dB (80 ms down / 200 ms up).
 Speech begins 160 ms after a clear, allowing the clear sound to lead. Ordinary
 rewards do not interrupt an active word; a record has priority. A record is only

@@ -152,7 +152,7 @@ class SoundSheet extends StatelessWidget {
                 ),
               const SizedBox(height: 8),
               Text(
-                'VOICE STYLE',
+                'VOICE PREVIEW',
                 style: TextStyle(
                   color: p.muted,
                   fontSize: 11,
@@ -161,22 +161,8 @@ class SoundSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<VoiceStyle>(
-                  segments: const [
-                    ButtonSegment(
-                      value: VoiceStyle.bright,
-                      label: Text('Bright'),
-                    ),
-                    ButtonSegment(value: VoiceStyle.warm, label: Text('Warm')),
-                  ],
-                  selected: {settings.style},
-                  onSelectionChanged: (value) {
-                    audio.update(settings.change(style: value.first));
-                  },
-                ),
-              ),
+              Text('Bright female voice', style: TextStyle(color: p.ink,
+                fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 14),
               Text(
                 settings.gain(AudioBus.voice) == 0
