@@ -67,6 +67,10 @@ jobs:
         run: |
           sha256sum --check /tmp/puzzle-dependency-lock.sha256 || { diff -u /tmp/puzzle-tested-pubspec.lock pubspec.lock; exit 1; }
           flutter create --no-pub --platforms=android --org com.blockiva --project-name puzzle_prototype .
+          # Flutter 3.47's create command seeds a new SDK lock even with --no-pub.
+          # Restore the tested app lock before resolving native plugin metadata.
+          cp /tmp/puzzle-tested-pubspec.lock pubspec.lock
+          flutter pub get --enforce-lockfile
           python3 tool/brand_android.py
           sha256sum --check /tmp/puzzle-dependency-lock.sha256 || { diff -u /tmp/puzzle-tested-pubspec.lock pubspec.lock; exit 1; }
       - name: Build playable APK
