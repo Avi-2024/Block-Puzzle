@@ -160,8 +160,14 @@ class SoundSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Text('Bright female voice', style: TextStyle(color: p.ink,
-                fontSize: 16, fontWeight: FontWeight.w600)),
+              Text(
+                'Bright female voice',
+                style: TextStyle(
+                  color: p.ink,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 14),
               Text(
                 settings.gain(AudioBus.voice) == 0

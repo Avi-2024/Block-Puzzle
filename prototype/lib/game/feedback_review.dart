@@ -4,8 +4,15 @@ import 'puzzle.dart';
 /// Deterministic moves for the separate Android review build and visual tests.
 /// The ordinary app continues to start from the player's saved session.
 class FeedbackReview {
-  const FeedbackReview(this.reward, this.piece, this.x, this.y,
-      this.rows, this.columns, this.combo);
+  const FeedbackReview(
+    this.reward,
+    this.piece,
+    this.x,
+    this.y,
+    this.rows,
+    this.columns,
+    this.combo,
+  );
   final RewardKind reward;
   final Piece piece;
   final int x, y, combo;
@@ -16,12 +23,21 @@ class FeedbackReview {
     final gaps = {for (final c in piece.cells) (y + c.y) * 8 + x + c.x};
     for (var i = 0; i < 64; i++) {
       if ((rows.contains(i ~/ 8) || columns.contains(i % 8)) &&
-          !gaps.contains(i)) board[i] = (i * 3 + i ~/ 8) % puzzleColorCount;
+          !gaps.contains(i)) {
+        board[i] = (i * 3 + i ~/ 8) % puzzleColorCount;
+      }
     }
     board[0] = 4; // Keep an unrelated block to check its colour never changes.
     final best = reward == RewardKind.newBest ? 1050 : 5000;
-    return PuzzleState(board: board, tray: [piece, const Piece(8, 0), const Piece(2, 4)],
-      score: 1000, best: best, startingBest: best, combo: combo, maxCombo: combo);
+    return PuzzleState(
+      board: board,
+      tray: [piece, const Piece(8, 0), const Piece(2, 4)],
+      score: 1000,
+      best: best,
+      startingBest: best,
+      combo: combo,
+      maxCombo: combo,
+    );
   }
 }
 

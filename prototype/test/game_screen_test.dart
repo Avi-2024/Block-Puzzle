@@ -49,40 +49,65 @@ void main() {
     }
   });
   for (final scene in feedbackReviews) {
-    testWidgets('${scene.reward.name} shows its clear preview and matching reward', (tester) async {
-      tester.view.physicalSize = const Size(393, 852);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      final key = GlobalKey(), state = scene.state;
-      final result = PuzzleEngine(random: Random(8)).place(state, 0, scene.x, scene.y)!;
-      await tester.pumpWidget(RepaintBoundary(key: key, child: PuzzleApp(
-        engine: PuzzleEngine(random: Random(8)), initialState: state, showBrandSplash: false)));
-      await tester.pumpAndSettle();
-      final rect = tester.getRect(find.byKey(const ValueKey('puzzle-board')));
-      final unit = rect.width * 38 / 320, pad = rect.width * 8 / 320;
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('piece-slot-0'))), kind: ui.PointerDeviceKind.touch);
-      await gesture.moveBy(const Offset(0, -22));
-      await tester.pump();
-      await gesture.moveTo(rect.topLeft + Offset(
-        pad + (scene.x + scene.piece.width / 2) * unit,
-        pad + (scene.y + scene.piece.height / 2) * unit + 54));
-      await tester.pump();
-      await capture(tester, key, 'feedback-${scene.reward.name}-hover');
-      await gesture.up();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 60));
-      await capture(tester, key, 'feedback-${scene.reward.name}-clear');
-      await tester.pump(const Duration(milliseconds: 240));
-      expect(find.bySemanticsLabel('Score ${result.state.score}'), findsOneWidget);
-      expect(find.textContaining(RewardStyle.forMove(result).title), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      await capture(tester, key, 'feedback-${scene.reward.name}-sparks');
-      await tester.pumpAndSettle();
-      expect(tester.binding.hasScheduledFrame, isFalse);
-      await tester.pumpWidget(const SizedBox.shrink());
-    });
+    testWidgets(
+      '${scene.reward.name} shows its clear preview and matching reward',
+      (tester) async {
+        tester.view.physicalSize = const Size(393, 852);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final key = GlobalKey(), state = scene.state;
+        final result = PuzzleEngine(
+          random: Random(8),
+        ).place(state, 0, scene.x, scene.y)!;
+        await tester.pumpWidget(
+          RepaintBoundary(
+            key: key,
+            child: PuzzleApp(
+              engine: PuzzleEngine(random: Random(8)),
+              initialState: state,
+              showBrandSplash: false,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final rect = tester.getRect(find.byKey(const ValueKey('puzzle-board')));
+        final unit = rect.width * 38 / 320, pad = rect.width * 8 / 320;
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byKey(const ValueKey('piece-slot-0'))),
+          kind: ui.PointerDeviceKind.touch,
+        );
+        await gesture.moveBy(const Offset(0, -22));
+        await tester.pump();
+        await gesture.moveTo(
+          rect.topLeft +
+              Offset(
+                pad + (scene.x + scene.piece.width / 2) * unit,
+                pad + (scene.y + scene.piece.height / 2) * unit + 54,
+              ),
+        );
+        await tester.pump();
+        await capture(tester, key, 'feedback-${scene.reward.name}-hover');
+        await gesture.up();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 60));
+        await capture(tester, key, 'feedback-${scene.reward.name}-clear');
+        await tester.pump(const Duration(milliseconds: 240));
+        expect(
+          find.bySemanticsLabel('Score ${result.state.score}'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining(RewardStyle.forMove(result).title),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        await capture(tester, key, 'feedback-${scene.reward.name}-sparks');
+        await tester.pumpAndSettle();
+        expect(tester.binding.hasScheduledFrame, isFalse);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
   }
   testWidgets('brand splash shows the approved name then opens the game', (
     tester,

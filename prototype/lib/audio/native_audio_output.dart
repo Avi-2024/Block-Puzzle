@@ -119,7 +119,11 @@ class NativeAudioOutput extends GameAudioOutput {
   }
 
   @override
-  Future<void> speak(VoiceStyle style, RewardKind callout, double volume) async {
+  Future<void> speak(
+    VoiceStyle style,
+    RewardKind callout,
+    double volume,
+  ) async {
     if (_disposed || _voice == null) return;
     _finishSpeech();
     final done = _spoken = Completer<void>();
@@ -249,9 +253,11 @@ class _PlayerSlot {
     if (_disposed) return;
     _volume = target;
     final token = ++_gainRevision;
-    unawaited(_queue(() async {
-      if (token == _gainRevision) await player.setVolume(target);
-    }).catchError((Object _) {}));
+    unawaited(
+      _queue(() async {
+        if (token == _gainRevision) await player.setVolume(target);
+      }).catchError((Object _) {}),
+    );
   }
 
   Future<void> stop() {

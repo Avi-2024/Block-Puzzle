@@ -21,7 +21,11 @@ class GameAudioOutput {
   Future<void> effect(GameEffect effect, double volume) async {}
 
   /// Completes when speech finishes or is cancelled, not when it starts.
-  Future<void> speak(VoiceStyle style, RewardKind callout, double volume) async {}
+  Future<void> speak(
+    VoiceStyle style,
+    RewardKind callout,
+    double volume,
+  ) async {}
   Future<void> voiceVolume(double volume) async {}
   Future<void> effectsVolume(double volume) async {}
   Future<void> stopVoice() async {}
