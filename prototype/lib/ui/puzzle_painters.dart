@@ -72,9 +72,9 @@ void paintTile(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Color.lerp(palette.colors[i], Colors.white, .08)!,
+          Color.lerp(palette.colors[i], Colors.white, .045)!,
           palette.colors[i],
-          Color.lerp(palette.colors[i], Colors.black, .08)!,
+          Color.lerp(palette.colors[i], Colors.black, .10)!,
         ],
         stops: const [0, .52, 1],
       ).createShader(unit),
@@ -167,48 +167,48 @@ class RewardStyle {
       RewardKind.good => RewardStyle(
         'GOOD!',
         caption,
-        const Color(0xFFE6FFF7),
-        const Color(0xFF48E3AC),
+        const Color(0xFFBAFFE1),
+        const Color(0xFF16E892),
         32,
         900,
       ),
       RewardKind.great => RewardStyle(
         'GREAT!',
         caption,
-        const Color(0xFFE4FAFF),
-        const Color(0xFF51CFFF),
+        const Color(0xFFC1F6FF),
+        const Color(0xFF1EC9FF),
         34,
         980,
       ),
       RewardKind.combo => RewardStyle(
         'COMBO ×${move.state.combo}',
         'KEEP IT GOING',
-        const Color(0xFFF5F0FF),
-        const Color(0xFFB693FF),
+        const Color(0xFFE7C9FF),
+        const Color(0xFFBB65FF),
         34,
         1040,
       ),
       RewardKind.amazing => RewardStyle(
         'AMAZING!',
         caption,
-        const Color(0xFFFFF6C5),
-        const Color(0xFFFFC54D),
+        const Color(0xFFFFF0A3),
+        const Color(0xFFFFAD19),
         37,
         1140,
       ),
       RewardKind.incredible => RewardStyle(
         'INCREDIBLE!',
         caption,
-        const Color(0xFFFFEEF9),
-        const Color(0xFFFF75B6),
+        const Color(0xFFFFD1E9),
+        const Color(0xFFFF3F9F),
         33,
         1240,
       ),
       RewardKind.newBest => const RewardStyle(
         'NEW BEST!',
         'PERSONAL RECORD',
-        Color(0xFFFFF4BE),
-        Color(0xFFFFB844),
+        Color(0xFFFFE798),
+        Color(0xFFFF9B1F),
         35,
         1400,
       ),
@@ -377,12 +377,12 @@ class PuzzleBoardPainter extends CustomPainter {
     PuzzleMove effect,
   ) {
     const rainbow = [
-      Color(0xFF59E7FF),
-      Color(0xFFFF78C8),
-      Color(0xFFFFD66B),
-      Color(0xFF8CFFBD),
-      Color(0xFFB99AFF),
-      Color(0xFFFFA06B),
+      Color(0xFF19DFFF),
+      Color(0xFFFF3FAD),
+      Color(0xFFFFD12C),
+      Color(0xFF32F58A),
+      Color(0xFFA970FF),
+      Color(0xFFFF9238),
     ];
     final kind = rewardForMove(effect);
     final count = kind == RewardKind.good ? 18 : 28;
@@ -406,7 +406,7 @@ class PuzzleBoardPainter extends CustomPainter {
         line
           ..shader = null
           ..strokeWidth = 4.5 + (i % 3) * .5
-          ..color = color.withValues(alpha: alpha * .12),
+          ..color = color.withValues(alpha: alpha * .14),
       );
       canvas.drawLine(
         tail,
@@ -420,7 +420,7 @@ class PuzzleBoardPainter extends CustomPainter {
             [
               color.withValues(alpha: 0),
               color.withValues(alpha: alpha),
-              Colors.white.withValues(alpha: alpha * .9),
+              Color.lerp(color, Colors.white, .5)!.withValues(alpha: alpha * .9),
             ],
             const [0, .72, 1],
           ),
@@ -702,7 +702,7 @@ class PuzzleBoardPainter extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [cfg.light, cfg.light, cfg.dark],
-            stops: const [0, .55, 1],
+            stops: const [0, .35, 1],
           ).createShader(Rect.fromLTWH(0, 0, title.width, title.height)),
       ),
     );

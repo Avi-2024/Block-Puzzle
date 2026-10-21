@@ -47,8 +47,8 @@ class PuzzlePalette {
     background: Color(0xFF173A60),
     middle: Color(0xFF102C48),
     end: Color(0xFF0B2138),
-    panel: Color(0xFF15344F),
-    cell: Color(0xFF203E5C),
+    panel: Color(0xFF102A43),
+    cell: Color(0xFF19334F),
     ink: Color(0xFFF3F7FF),
     muted: Color(0xFFBCCFE4),
     line: Color(0xFF426487),
@@ -56,49 +56,49 @@ class PuzzlePalette {
     button: Color(0xFFF8D58A),
     buttonInk: Color(0xFF223C55),
     colors: [
-      Color(0xFF3B5DE2), // blue
-      Color(0xFF30B43A), // green
-      Color(0xFFE6AE32), // gold
-      Color(0xFFC73032), // red
-      Color(0xFF8853D3), // purple
-      Color(0xFFE56F1F), // orange
-      Color(0xFF29B0E0), // cyan
+      Color(0xFF4271FF), // blue
+      Color(0xFF22CF50), // green
+      Color(0xFFFFC12E), // gold
+      Color(0xFFF23D55), // red
+      Color(0xFFA64DF4), // purple
+      Color(0xFFFF7D22), // orange
+      Color(0xFF17C7F3), // cyan
     ],
     highlights: [
-      Color(0xFF8EB5FF),
-      Color(0xFF83F19B),
-      Color(0xFFFAE577),
-      Color(0xFFEF8686),
-      Color(0xFFD597F0),
-      Color(0xFFFFBE81),
-      Color(0xFF97E9FE),
+      Color(0xFF87B7FF),
+      Color(0xFF86FF9F),
+      Color(0xFFFFE982),
+      Color(0xFFFF93AC),
+      Color(0xFFDA9DFF),
+      Color(0xFFFFC46E),
+      Color(0xFF85F3FF),
     ],
     shadows: [
-      Color(0xFF21358C),
-      Color(0xFF0E711D),
-      Color(0xFFAF7216),
-      Color(0xFF851E25),
-      Color(0xFF5A2682),
-      Color(0xFF9C4609),
-      Color(0xFF066EA5),
+      Color(0xFF1833A5),
+      Color(0xFF067333),
+      Color(0xFFA86408),
+      Color(0xFF9A1733),
+      Color(0xFF5E1C9F),
+      Color(0xFFA44405),
+      Color(0xFF0578AE),
     ],
     leftEdges: [
-      Color(0xFF4466F2),
-      Color(0xFF42C73F),
-      Color(0xFFF8C83B),
-      Color(0xFFD94345),
-      Color(0xFFA066D8),
-      Color(0xFFFD8B37),
-      Color(0xFF3DC0ED),
+      Color(0xFF5B85FF),
+      Color(0xFF42E86B),
+      Color(0xFFFFD44B),
+      Color(0xFFFF5972),
+      Color(0xFFBE72FF),
+      Color(0xFFFF9B43),
+      Color(0xFF40DFFF),
     ],
     rightEdges: [
-      Color(0xFF284CC4),
-      Color(0xFF0D882F),
-      Color(0xFFCB951B),
-      Color(0xFFAF2825),
-      Color(0xFF7039A0),
-      Color(0xFFC25E17),
-      Color(0xFF1992CC),
+      Color(0xFF284DD6),
+      Color(0xFF13A43C),
+      Color(0xFFDC930E),
+      Color(0xFFC92B40),
+      Color(0xFF8330CD),
+      Color(0xFFDA5C10),
+      Color(0xFF0A9DCB),
     ],
   );
   static const midnight = PuzzlePalette(
@@ -108,7 +108,7 @@ class PuzzlePalette {
     background: Color(0xFF1C233C),
     end: Color(0xFF101527),
     panel: Color(0xFF101729),
-    cell: Color(0xFF29324C),
+    cell: Color(0xFF202B43),
     ink: Color(0xFFF0F1FF),
     muted: Color(0xFFBDC5DF),
     line: Color(0xFF414965),
@@ -116,13 +116,13 @@ class PuzzlePalette {
     button: Color(0xFFD4C0FF),
     buttonInk: Color(0xFF292139),
     colors: [
-      Color(0xFF779AE3),
-      Color(0xFF70C6B4),
-      Color(0xFFE5BF7B),
-      Color(0xFFDB93A9),
-      Color(0xFFB5A0ED),
-      Color(0xFFE7A05B),
-      Color(0xFF55BAD8),
+      Color(0xFF6486FF),
+      Color(0xFF2DD88E),
+      Color(0xFFFFD05B),
+      Color(0xFFFF557A),
+      Color(0xFFB977FF),
+      Color(0xFFFF933A),
+      Color(0xFF22D5F4),
     ],
   );
   static const sand = PuzzlePalette(
@@ -133,7 +133,7 @@ class PuzzlePalette {
     background: Color(0xFFF4EAD9),
     end: Color(0xFFE7D7BD),
     panel: Color(0xFFB9A183),
-    cell: Color(0xFFE0CEB1),
+    cell: Color(0xFFE9D9BF),
     ink: Color(0xFF342D27),
     muted: Color(0xFF6E5B48),
     line: Color(0xFFC5AE91),
@@ -141,13 +141,13 @@ class PuzzlePalette {
     button: Color(0xFF315E50),
     buttonInk: Color(0xFFFFF9ED),
     colors: [
-      Color(0xFF5489A8),
-      Color(0xFF438B76),
-      Color(0xFFC99539),
-      Color(0xFFBB7461),
-      Color(0xFF9977A9),
-      Color(0xFFC47735),
-      Color(0xFF347F99),
+      Color(0xFF266CCA),
+      Color(0xFF187C50),
+      Color(0xFFA66A08),
+      Color(0xFFC13F43),
+      Color(0xFF8246B6),
+      Color(0xFFBC570D),
+      Color(0xFF067C9C),
     ],
   );
   static const values = [ocean, midnight, sand];
