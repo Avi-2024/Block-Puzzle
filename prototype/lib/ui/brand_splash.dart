@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:math' show Point;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'puzzle_painters.dart';
 import 'puzzle_theme.dart';
 
-/// A short launch scene using the same tile renderer and Ocean colors as play.
+/// The approved launch composition, drawn with the actual gameplay tiles.
 class BrandSplash extends StatefulWidget {
   const BrandSplash({super.key, required this.onFinished});
 
@@ -31,7 +32,7 @@ class _BrandSplashState extends State<BrandSplash>
     )..addStatusListener(_onStatus);
     _fade = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(.17, .7, curve: Curves.easeOut),
+      curve: const Interval(.22, .55, curve: Curves.easeOutCubic),
     );
     _controller.forward();
   }
@@ -53,24 +54,26 @@ class _BrandSplashState extends State<BrandSplash>
     value: const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF080D34),
+      systemNavigationBarColor: Color(0xFF0B153D),
       systemNavigationBarIconBrightness: Brightness.light,
     ),
     child: Scaffold(
-      backgroundColor: const Color(0xFF080D34),
+      backgroundColor: const Color(0xFF070E2D),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final width = constraints.maxWidth;
+          final width = math.min(constraints.maxWidth, constraints.maxHeight * .68);
           final height = constraints.maxHeight;
-          final titleSize = math.min(46.0, width * .118);
+          final titleSize = math.min(76.0, width * .145);
           return Stack(
             fit: StackFit.expand,
             children: [
-              CustomPaint(painter: _SplashArtPainter(_controller)),
+              RepaintBoundary(
+                child: CustomPaint(painter: _SplashArtPainter(_controller)),
+              ),
               Positioned(
-                top: height * .54,
-                left: 12,
-                right: 12,
+                top: height * .55,
+                left: 20,
+                right: 20,
                 child: FadeTransition(
                   opacity: _fade,
                   child: Column(
@@ -79,31 +82,38 @@ class _BrandSplashState extends State<BrandSplash>
                       Text(
                         'MAGIC\nBLOCKS',
                         textAlign: TextAlign.center,
+                        textScaler: TextScaler.noScaling,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: const Color(0xFFFFFDF8),
                           fontSize: titleSize,
-                          height: .91,
+                          height: 1.02,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: .8,
+                          letterSpacing: .7,
                           shadows: const [
                             Shadow(
-                              color: Color(0xFF3266E9),
-                              blurRadius: 20,
-                              offset: Offset(0, 4),
+                              color: Color(0xFF1964B6),
+                              offset: Offset(0, 1.8),
+                            ),
+                            Shadow(
+                              color: Color(0x99030A29),
+                              blurRadius: 14,
+                              offset: Offset(0, 5),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: width * .035),
                       Text(
                         'COMBO PUZZLE',
+                        textScaler: TextScaler.noScaling,
                         style: TextStyle(
-                          color: const Color(0xFFFFD577),
-                          fontSize: math.min(13.0, width * .033),
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 3.7,
+                          color: const Color(0xFFFFD16C),
+                          fontSize: math.min(17.0, width * .035),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: width * .011,
                           shadows: const [
-                            Shadow(color: Color(0x77E89B2E), blurRadius: 9),
+                            Shadow(color: Color(0x55040B27), blurRadius: 6,
+                                offset: Offset(0, 2)),
                           ],
                         ),
                       ),
@@ -129,84 +139,110 @@ class _SplashArtPainter extends CustomPainter {
   static const _zigzag = [Point(0, 0), Point(1, 0), Point(1, 1), Point(2, 1)];
   static const _bar = [Point(0, 0), Point(1, 0), Point(2, 0)];
 
+  double _entrance(double start, double end) => Curves.easeOutCubic.transform(
+    ((animation.value - start) / (end - start)).clamp(0.0, 1.0),
+  );
+
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final entrance = Curves.easeOutCubic.transform(animation.value);
+    final h = size.height;
+    final w = math.min(size.width, h * .68);
+    final light = _entrance(.04, .62);
     canvas.drawRect(
       Offset.zero & size,
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF060B2E), Color(0xFF102881), Color(0xFF070C37)],
-          stops: [0, .56, 1],
+          colors: [Color(0xFF070E2D), Color(0xFF123B86),
+            Color(0xFF10276B), Color(0xFF0B153D)],
+          stops: [0, .37, .61, 1],
         ).createShader(Offset.zero & size),
     );
 
-    _glow(canvas, Offset(w * .50, h * .38), w * .72,
-        const Color(0xFF1354EA), .36);
-    _glow(canvas, Offset(w * .48, h * .95), w * .68,
-        const Color(0xFF6937B7), .23);
-    _ray(canvas, Offset(w * .49, h * .36), Offset(-w * .28, h * .08),
-        const Color(0xFF2785FF));
-    _ray(canvas, Offset(w * .51, h * .36), Offset(w * 1.22, h * .06),
-        const Color(0xFF5E54DB));
-    _ray(canvas, Offset(w * .50, h * .37), Offset(w * .16, h * .68),
-        const Color(0xFF3477F9));
-    _ray(canvas, Offset(w * .50, h * .37), Offset(w * .91, h * .68),
-        const Color(0xFF7558C7));
+    canvas.save();
+    canvas.translate((size.width - w) / 2, 0);
+    final center = Offset(w * .50, h * .375);
+    _glow(canvas, center, w * .65, const Color(0xFF1766EC), .22);
+    _glow(canvas, Offset(w * .04, h * .91), w * .55,
+        const Color(0xFF712CCB), .25);
+    _glow(canvas, Offset(w * .98, h * .94), w * .45,
+        const Color(0xFF087BD1), .10);
 
-    final unit = math.min(w * .116, h * .056);
-    _piece(canvas, Offset(w * .43, h * .16), unit, 2, _goldL, entrance);
-    _piece(canvas, Offset(w * .20, h * .30), unit, 0, _square, entrance,
-        angle: -.14);
-    _piece(canvas, Offset(w * .70, h * .30), unit * .86, 1, _zigzag,
-        entrance, angle: .13);
-    _piece(canvas, Offset(w * .34, h * .45), unit * .95, 3, _bar, entrance,
-        angle: .09);
+    // Narrow streaks sit behind the hero and stay clear of the title.
+    for (final ray in const [
+      (.07, .12, Color(0xFF17C7F3)),
+      (.94, .12, Color(0xFF4271FF)),
+      (.81, .23, Color(0xFFFFC12E)),
+      (.08, .56, Color(0xFFFFC12E)),
+      (.94, .55, Color(0xFFA64DF4)),
+      (.30, .53, Color(0xFF17C7F3)),
+    ]) {
+      _ray(canvas, center, Offset(w * ray.$1, h * ray.$2),
+          ray.$3, light, w);
+    }
 
-    // The lower edge echoes the approved art with front-facing game tiles.
-    final bottomUnit = unit * .90;
-    _piece(canvas, Offset(-w * .04, h * .80), bottomUnit, 0, _square,
-        entrance * .86);
-    _piece(canvas, Offset(w * .18, h * .90), bottomUnit, 4, _square,
-        entrance * .78);
-    _piece(canvas, Offset(w * .72, h * .85), bottomUnit, 3, _goldL,
-        entrance * .88, angle: -.17);
-    _piece(canvas, Offset(w * .92, h * .78), bottomUnit, 1, _bar,
-        entrance * .72);
+    final unit = math.min(w * .105, h * .056);
+    _piece(canvas, Offset(w * .405, h * .156), unit, 2, _goldL,
+        _entrance(.02, .34));
+    _piece(canvas, Offset(w * .158, h * .30), unit, 0, _square,
+        _entrance(.07, .39), angle: -.14);
+    _piece(canvas, Offset(w * .665, h * .30), unit * .88, 1, _zigzag,
+        _entrance(.11, .43), angle: .13);
+    _piece(canvas, Offset(w * .335, h * .45), unit * .99, 3, _bar,
+        _entrance(.15, .47), angle: .07);
 
-    for (var i = 0; i < 20; i++) {
-      final x = ((i * 73 + 19) % 97) / 97.0 * w;
-      final y = ((i * 47 + 11) % 89) / 89.0 * h;
+    // Edge decorations remain anchored on taller phones without cropping
+    // the hero or stretching any of the gameplay tiles.
+    final edge = _entrance(.20, .65);
+    _piece(canvas, Offset(-w * .045, h * .86), unit * 1.03, 4,
+        _square, edge * .86, angle: -.18);
+    _piece(canvas, Offset(w * .78, h * .89), unit, 6, _bar,
+        edge * .78, angle: .17);
+
+    for (final dot in const [
+      (.31, .185), (.12, .43), (.86, .29), (.69, .40),
+      (.79, .46), (.81, .59), (.13, .76), (.33, .88),
+    ]) {
       canvas.drawCircle(
-        Offset(x, y),
-        i.isEven ? 1.0 : .65,
-        Paint()..color = Colors.white.withValues(alpha: .15 + .16 * entrance),
+        Offset(w * dot.$1, h * dot.$2),
+        w * .0016,
+        Paint()..color = const Color(0xFF23CFFF).withValues(alpha: .65 * light),
       );
     }
-    _sparkle(canvas, Offset(w * .50, h * .37), unit * .52,
-        const Color(0xFFFFF6DC), entrance);
-    _sparkle(canvas, Offset(w * .30, h * .25), unit * .14,
-        const Color(0xFF8CE8FF), entrance);
-    _sparkle(canvas, Offset(w * .80, h * .22), unit * .16,
-        const Color(0xFFFFD577), entrance);
-    _sparkle(canvas, Offset(w * .52, h * .91), unit * .12,
-        const Color(0xFFFFD577), entrance);
+    _sparkle(canvas, center, unit * .46, const Color(0xFFFFE5A8), light);
+    _sparkle(canvas, Offset(w * .275, h * .245), unit * .14,
+        const Color(0xFF4DE0FF), light);
+    _sparkle(canvas, Offset(w * .78, h * .225), unit * .16,
+        const Color(0xFFFFDA7D), light);
+    _sparkle(canvas, Offset(w * .28, h * .52), unit * .10,
+        const Color(0xFFFFDA7D), light);
+    _sparkle(canvas, Offset(w * .57, h * .845), unit * .10,
+        const Color(0xFFFFDA7D), edge);
+    canvas.restore();
   }
 
   void _piece(Canvas canvas, Offset origin, double unit, int color,
       List<Point<int>> cells, double opacity, {double angle = 0}) {
+    if (opacity <= 0) return;
     canvas.save();
-    canvas.translate(origin.dx, origin.dy);
+    canvas.translate(origin.dx, origin.dy + unit * .10 * (1 - opacity));
     canvas.rotate(angle);
-    _glow(canvas, Offset(unit * 1.2, unit * .85), unit * 2.6,
-        _palette.colors[color], .21 * opacity);
+    final silhouette = Path();
+    for (final cell in cells) {
+      silhouette.addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(cell.x * unit, cell.y * unit, unit * .96, unit * .96),
+        Radius.circular(unit * .065),
+      ));
+    }
+    canvas.drawShadow(silhouette,
+        Colors.black.withValues(alpha: .36 * opacity), unit * .13, false);
+    _glow(canvas, Offset(unit, unit), unit * 2.0,
+        _palette.colors[color], .075 * opacity);
     for (final cell in cells) {
       paintTile(
         canvas,
-        Rect.fromLTWH(cell.x * unit, cell.y * unit, unit * .92, unit * .92),
+        Rect.fromLTWH(cell.x * unit, cell.y * unit, unit * .96, unit * .96),
         color,
         palette: _palette,
         opacity: opacity,
@@ -228,18 +264,32 @@ class _SplashArtPainter extends CustomPainter {
     );
   }
 
-  void _ray(Canvas canvas, Offset from, Offset to, Color color) {
+  void _ray(Canvas canvas, Offset center, Offset end, Color color,
+      double opacity, double width) {
+    final direction = end - center;
+    final length = direction.distance;
+    if (length == 0 || opacity <= 0) return;
+    final normal = Offset(-direction.dy, direction.dx) / length;
+    final start = center + direction * .12;
+    final tip = center + direction * .48;
     final path = Path()
-      ..moveTo(from.dx, from.dy)
-      ..lineTo(to.dx, to.dy)
-      ..lineTo(to.dx + 12, to.dy + 9)
+      ..moveTo(start.dx, start.dy)
+      ..lineTo(tip.dx + normal.dx * width * .003,
+          tip.dy + normal.dy * width * .003)
+      ..lineTo(end.dx, end.dy)
+      ..lineTo(tip.dx - normal.dx * width * .003,
+          tip.dy - normal.dy * width * .003)
       ..close();
-    canvas.drawPath(path, Paint()..color = color.withValues(alpha: .09));
+    canvas.drawPath(path, Paint()..shader = ui.Gradient.linear(start, end, [
+      color.withValues(alpha: 0),
+      color.withValues(alpha: .55 * opacity),
+      color.withValues(alpha: 0),
+    ], const [0, .45, 1]));
   }
 
   void _sparkle(Canvas canvas, Offset center, double radius, Color color,
       double opacity) {
-    _glow(canvas, center, radius * 2.8, color, .40 * opacity);
+    _glow(canvas, center, radius * 2.8, color, .25 * opacity);
     final path = Path()
       ..moveTo(center.dx, center.dy - radius)
       ..quadraticBezierTo(center.dx + radius * .18, center.dy - radius * .18,
@@ -251,7 +301,13 @@ class _SplashArtPainter extends CustomPainter {
       ..quadraticBezierTo(center.dx - radius * .18, center.dy - radius * .18,
           center.dx, center.dy - radius)
       ..close();
-    canvas.drawPath(path, Paint()..color = color.withValues(alpha: opacity));
+    canvas.drawPath(path, Paint()
+      ..color = Colors.white.withValues(alpha: opacity)
+      ..shader = LinearGradient(
+        colors: [const Color(0xFFFFF8DF), color],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromCircle(center: center, radius: radius)));
   }
 
   @override

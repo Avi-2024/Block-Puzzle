@@ -109,21 +109,31 @@ void main() {
       },
     );
   }
-  testWidgets('brand splash shows the approved name then opens the game', (
+  for (final size in [const Size(320, 568), const Size(393, 852)]) {
+  testWidgets('brand splash fits $size then opens the saved game', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(393, 852);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    final splashKey = GlobalKey();
     await tester.pumpWidget(
-      PuzzleApp(
+      RepaintBoundary(
+        key: splashKey,
+        child: PuzzleApp(
         engine: PuzzleEngine(random: Random(8)),
         initialState: reviewScene(),
+        ),
       ),
     );
     expect(find.text('MAGIC\nBLOCKS'), findsOneWidget);
     expect(find.text('COMBO PUZZLE'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(tester.getRect(find.text('MAGIC\nBLOCKS')).left, greaterThan(0));
+    expect(tester.getRect(find.text('MAGIC\nBLOCKS')).right, lessThan(size.width));
+    expect(tester.takeException(), isNull);
+    await capture(tester, splashKey, 'magic-blocks-splash-${size.width.toInt()}');
     await tester.pumpAndSettle();
     expect(find.text('MAGIC\nBLOCKS'), findsNothing);
     expect(find.text('MAGIC BLOCKS'), findsOneWidget);
@@ -131,6 +141,7 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+  }
   for (final size in [
     const Size(320, 568),
     const Size(360, 640),

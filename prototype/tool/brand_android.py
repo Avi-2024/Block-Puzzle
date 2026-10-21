@@ -30,7 +30,7 @@ for directory in ['drawable', 'drawable-v21']:
     target = resources / directory
     target.mkdir(parents=True, exist_ok=True)
     (target / 'launch_background.xml').write_text('''<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item><shape><solid android:color="#080D34" /></shape></item>
+    <item><shape><solid android:color="#070E2D" /></shape></item>
     <item android:drawable="@drawable/puzzle_icon" android:gravity="center"
         android:width="176dp" android:height="176dp" />
 </layer-list>''')
@@ -39,7 +39,7 @@ for directory in ['values-v31', 'values-night-v31']:
     target.mkdir(parents=True, exist_ok=True)
     (target / 'styles.xml').write_text('''<resources>
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowSplashScreenBackground">#080D34</item>
+        <item name="android:windowSplashScreenBackground">#070E2D</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/puzzle_icon</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
